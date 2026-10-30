@@ -33,27 +33,31 @@ Observações:
 
 ## Resultados — fluxo completo com infraestrutura real (30/10/2026)
 
-Medido pelo E2E `e2e/tests/large-file.spec.ts`, que envia `vendas_100000.csv` pela interface com o Docker Compose completo (Caddy → API → MinIO → Redis → worker Celery → PostgreSQL). A CI registra os números na linha `BENCHMARK_E2E` do log ([execução 41124382410](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41124382410), commit `34a5abb`).
+Medido pelo E2E `e2e/tests/large-file.spec.ts`, que envia `vendas_100000.csv` pela interface com o Docker Compose completo (Caddy → API → MinIO → Redis → worker Celery → PostgreSQL). A CI registra os números na linha `BENCHMARK_E2E` do log.
 
-**Ambiente:** GitHub Actions, `ubuntu-24.04`, 4 vCPUs, 15 GiB de RAM. Worker limitado a 2 CPUs e 2 GB (padrões do Compose), concorrência 2. PostgreSQL 17, Redis 8.8, MinIO (Chainguard), Chromium via Playwright.
+**Ambiente:** GitHub Actions, `ubuntu-24.04`, 4 vCPUs, 15 GiB de RAM. Worker limitado a 2 CPUs e 2 GB, concorrência 2. PostgreSQL 17, Redis 8.8, MinIO (Chainguard), Chromium via Playwright.
 
-**Arquivo:** 8,06 MB, 100.000 registros → 100.000 válidos, 0 rejeitados. É **uma única execução** em um runner compartilhado: trate como ordem de grandeza, não como média.
+**Arquivo:** 8,06 MB, 100.000 registros → 100.000 válidos, 0 rejeitados, nas três execuções.
 
-| Etapa | Tempo | O que mede |
-| --- | --- | --- |
-| Upload pela interface | 308 ms | Do envio no navegador até a tela mostrar o arquivo armazenado no MinIO. |
-| Recebimento no servidor | 40 ms | Gravação em disco e inspeção (hash, UTF-8, delimitador). Parte do upload acima. |
-| Leitura e validação no worker | 31 ms | Baixar o original do MinIO e conferir o SHA-256. |
-| Processamento | 681 ms | Leitura e tokenização 451 ms, conversão de tipos 166 ms, escrita Parquet 42 ms. |
-| Persistência | 11 ms | Checksum e envio do Parquet ao MinIO. Não inclui a transação de publicação no PostgreSQL. |
-| **Total do job** | **741 ms** | Do início da execução no worker até a publicação da versão: **~135 mil registros/s**. |
-| Do clique até o resultado na tela | 2.163 ms | Inclui a fila e o intervalo de atualização da tela (1,5 s). Limite superior, não comparável ao total do job. |
-| Consulta com cache vazio | 69 ms | `page=2000` (`OFFSET 99.950`), ordenada por decimal, incluindo baixar o Parquet para o cache. |
-| Consulta com cache | 60 ms | A mesma consulta, medida a partir do cliente, passando pelo Caddy. |
+| Etapa | [Dev, `34a5abb`](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41124382410) | [Dev, `a11e2fd`](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41126313886) | [Produção com HTTPS, `a11e2fd`](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41126313886) | O que mede |
+| --- | --- | --- | --- | --- |
+| Upload pela interface | 308 ms | 250 ms | 363 ms | Do envio no navegador até a tela mostrar o arquivo armazenado no MinIO. |
+| Recebimento no servidor | 40 ms | 46 ms | 114 ms | Gravação em disco e inspeção (hash, UTF-8, delimitador). Parte do upload acima. |
+| Leitura e validação no worker | 31 ms | 42 ms | 30 ms | Baixar o original do MinIO e conferir o SHA-256. |
+| Processamento | 681 ms | 957 ms | 888 ms | Leitura e tokenização, conversão de tipos e escrita Parquet. |
+| Persistência | 11 ms | 18 ms | 14 ms | Checksum e envio do Parquet ao MinIO. Não inclui a transação de publicação no PostgreSQL. |
+| **Total do job** | **741 ms** | **1.046 ms** | **955 ms** | Do início da execução no worker até a publicação da versão. |
+| **Registros/s** | **134.953** | **95.602** | **104.712** | Registros recebidos ÷ total do job. |
+| Do clique até o resultado na tela | 2.163 ms | 2.248 ms | 2.226 ms | Inclui a fila e o intervalo de atualização da tela (1,5 s). Limite superior, não comparável ao total do job. |
+| Consulta com cache vazio | 69 ms | 124 ms | 88 ms | `page=2000` (`OFFSET 99.950`), ordenada por decimal, incluindo baixar o Parquet para o cache. |
+| Consulta com cache | 60 ms | 102 ms | 97 ms | A mesma consulta, medida a partir do cliente, passando pelo Caddy. |
+| Pico de RSS do worker | 312,9 MB | 312,3 MB | 312,7 MB | Ver a observação abaixo. |
 
-**Memória:** pico de **312,9 MB de RSS** no processo do worker. É o pico do processo desde que ele iniciou: inclui o interpretador e as bibliotecas nativas (Polars, Arrow) e pode incluir jobs anteriores do mesmo processo, pois outros testes E2E rodaram antes. Não é o custo isolado deste job. Os ~40 MB da tabela anterior são outra medida: só o heap Python (`tracemalloc`), sem a memória nativa.
+**Como ler:** são três execuções em runners compartilhados, com variação de cerca de 40% no total do job. Trate como ordem de grandeza. A amostra não permite afirmar diferença entre desenvolvimento e produção: o resultado de produção ficou entre os dois de desenvolvimento.
+
+**Memória:** o pico foi estável, em torno de 313 MB, mas é o pico do processo desde que ele iniciou: inclui o interpretador e as bibliotecas nativas (Polars, Arrow) e pode incluir jobs anteriores do mesmo processo, pois outros testes E2E rodaram antes. Não é o custo isolado deste job. Os ~40 MB da tabela anterior são outra medida: só o heap Python (`tracemalloc`), sem a memória nativa.
 
 ## Pendente
 
 - Medições com 1 milhão de linhas e com arquivos próximos do limite de 100 MB. Até lá, não há evidência de como a memória e o tempo escalam acima de 100 mil linhas.
-- Repetir a medição várias vezes para obter média e variação.
+- Mais repetições em um ambiente dedicado, para obter média e variação confiáveis.

@@ -112,7 +112,7 @@ Para ver rejeições rastreáveis, importe `samples/qualidade_1000.csv` e defina
 ## Testes
 
 ```bash
-cd backend && uv run pytest                   # 58 testes (SQLite + S3/Redis simulados)
+cd backend && uv run pytest                   # 64 testes (SQLite + S3/Redis simulados)
 TEST_DATABASE_URL=postgresql+psycopg://dataflow:dataflow@localhost:5432/dataflow_test uv run pytest
 cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app
 
@@ -123,7 +123,7 @@ cd e2e && pnpm install && pnpm exec playwright install chromium
 E2E_BASE_URL=http://localhost:8080 pnpm test  # com o Docker Compose em execução
 ```
 
-A CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) roda lint, formatação, tipos, testes com PostgreSQL real, migrations em banco descartável (upgrade → check → downgrade → upgrade), build, validação dos arquivos Compose, subida do ambiente completo e E2E.
+A CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) roda lint, formatação, tipos, testes com PostgreSQL real, migrations em banco descartável (upgrade → check → downgrade → upgrade), build e a subida dos Compose de desenvolvimento e de produção (em HTTPS com a CA interna do Caddy), com E2E nos dois.
 
 ## Dados de demonstração
 
@@ -165,7 +165,7 @@ Base `/api/v1`, documentação interativa em `/api/docs`. Erros sempre no format
 
 ## Benchmark
 
-Fluxo completo com Caddy, PostgreSQL, Redis, MinIO e Celery reais, medido na CI (GitHub Actions, worker limitado a 2 CPUs e 2 GB): **job de 100 mil linhas (8 MB) em 0,74 s**, cerca de 135 mil registros/s, pico de 313 MB de RSS no worker e consulta ordenada no fim do dataset em ~60 ms. É uma única execução em runner compartilhado; método, ressalvas e reprodução em [docs/benchmark.md](docs/benchmark.md).
+Fluxo completo com Caddy, PostgreSQL, Redis, MinIO e Celery reais, medido na CI (GitHub Actions, worker limitado a 2 CPUs e 2 GB): **job de 100 mil linhas (8 MB) entre 0,74 s e 1,05 s** em três execuções, de 95 a 135 mil registros/s, pico de 313 MB de RSS no worker e consulta ordenada no fim do dataset em 60 a 100 ms. Os runners são compartilhados, então trate como ordem de grandeza; método, ressalvas e reprodução em [docs/benchmark.md](docs/benchmark.md).
 
 ## Limitações conhecidas
 
@@ -175,7 +175,7 @@ Fluxo completo com Caddy, PostgreSQL, Redis, MinIO e Celery reais, medido na CI 
 - Gestão de membros, exportações, auditoria na interface e retenção de arquivos: Fase 5.
 - Gráfico da visão geral agrupa por dia em UTC (fuso por workspace chega com as configurações).
 - O MinIO Community foi arquivado; o projeto usa a imagem mantida pela Chainguard (ver ADR-006).
-- A CI valida o ambiente completo em contêineres, mas o envio real de e-mail e o Compose de produção em execução ainda não foram exercitados; ver PROGRESS.md.
+- A CI usa a CA interna do Caddy e o Mailpit: certificado público com domínio real e SMTP real com TLS ainda não foram exercitados; ver PROGRESS.md.
 
 ## Roadmap
 

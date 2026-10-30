@@ -31,6 +31,12 @@ curl -fsS https://$SITE_ADDRESS/health/ready
 
 Ordem de inicialização garantida pelo Compose: `postgres` saudável → `migrate` (Alembic `upgrade head`) → `minio-perms` → `minio` → `storage-setup` (aguarda S3 e cria bucket) → `api`, `worker`, `beat` → `web` (Caddy).
 
+## O que a CI valida
+
+A cada push na `main`, o job `docker-prod` segue este guia: cria o `.env` a partir do `.env.example`, gera os segredos e sobe o `docker-compose.prod.yml` com `SITE_ADDRESS=localhost`, em que o Caddy emite o certificado pela própria CA interna. Depois confere se todos os serviços ficam saudáveis, o redirecionamento de HTTP para HTTPS, os cookies `Secure`, as portas de infraestrutura fechadas e o Redis exigindo senha, e roda o E2E nesse ambiente.
+
+Ainda não foram exercitados: certificado público com domínio real, SMTP real com TLS e autenticação, atualização de uma instalação existente e restauração de backup.
+
 ## Atualização
 
 ```bash

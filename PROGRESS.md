@@ -1,12 +1,12 @@
 # PROGRESS — DataFlow Analytics
 
-Documento de retomada. Atualizado em **29/10/2026**.
+Documento de retomada. Atualizado em **30/10/2026**.
 
 ## Fases
 
 | Fase | Status |
 | --- | --- |
-| 1 — Fundação e primeiro dataset | ✅ Implementada e validada na CI com PostgreSQL, Compose, Celery e MinIO reais (restam os itens abaixo) |
+| 1 — Fundação e primeiro dataset | ✅ Concluída e validada na CI com a infraestrutura real, nos Compose de desenvolvimento e de produção |
 | 2 — Motor ETL (XLSX, transformações, deduplicação, reprocessamento) | ⏳ Próxima |
 | 3 — Qualidade e Data Explorer completo | Pendente |
 | 4 — Business Intelligence (dashboards) | Pendente |
@@ -29,18 +29,20 @@ Documento de retomada. Atualizado em **29/10/2026**.
 - [x] Testes: backend (Pytest), frontend (Vitest), E2E (Playwright); CI no GitHub Actions.
 - [x] Documentação: README, `docs/architecture.md`, `decisions.md`, `security.md`, `data-pipeline.md`, `deploy.md`, `benchmark.md`.
 
-## Testes executados na CI (30/10/2026, commit `34a5abb`, [execução 41124382410](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41124382410))
+## Testes executados na CI (30/10/2026, commit `a11e2fd`, [execução 41126313886](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41126313886))
 
 | Verificação | Resultado |
 | --- | --- |
-| Backend contra **PostgreSQL 17 real** | **58 passed**, cobertura de 86% |
+| Backend contra **PostgreSQL 17 real** | **64 passed**, cobertura de 87% |
 | Alembic: `upgrade` → `check` → `downgrade` → `upgrade` no PostgreSQL | OK, sem divergência entre modelos e migration |
 | Ruff e mypy estrito | sem problemas |
 | Frontend: formatação, lint, tipos, Vitest, build | OK, **22 passed** |
-| `docker compose up --build --wait` | todos os serviços saudáveis; os de execução única concluíram |
-| `GET /health/ready` pelo Caddy | banco, Redis e armazenamento OK |
-| E2E pelo Caddy, com Celery e MinIO reais | **5 passed**, 1 ignorado (capturas de tela, só sob demanda). Inclui 100 mil linhas (8 MB) pela interface e a recusa de corpos acima de 2 MB fora da rota de upload |
-| Fluxo completo medido | job de 100 mil linhas em 741 ms; detalhes em `docs/benchmark.md` |
+| Compose de **desenvolvimento**, a partir do `.env.example` | todos os serviços saudáveis |
+| E2E em desenvolvimento, com Celery e MinIO reais | **6 passed**, 1 ignorado (capturas de tela, só sob demanda). Inclui 100 mil linhas (8 MB) pela interface, a recusa de corpos acima de 2 MB fora da rota de upload e a recuperação de senha com o e-mail entregue ao Mailpit por SMTP |
+| Compose de **produção**, a partir do `.env.example`, em HTTPS com a CA interna do Caddy | todos os serviços saudáveis; `/health/ready` OK |
+| Borda de produção | HTTP responde 308 para HTTPS; cookies `Secure`; portas 5432, 6379, 8000, 8025, 8080, 9000 e 9001 fechadas; Redis responde `NOAUTH` sem senha |
+| E2E em produção | **5 passed**, 2 ignorados (e-mail, pois produção não tem Mailpit, e capturas de tela) |
+| Fluxo completo medido | job de 100 mil linhas entre 741 ms e 1.046 ms em 3 execuções; detalhes em `docs/benchmark.md` |
 
 ## Testes executados localmente (29/10/2026, Windows 10, sem Docker)
 
@@ -59,12 +61,13 @@ Documento de retomada. Atualizado em **29/10/2026**.
 
 **Observação sobre o E2E local:** sem Docker na máquina, o E2E rodou contra o frontend real (Vite) e a API real, com um harness temporário **fora do repositório** que substituiu apenas a infraestrutura: SQLite no lugar do PostgreSQL, moto (S3 em memória) no lugar do MinIO, fakeredis no lugar do Redis e o `run_import_job` do worker numa thread no lugar do Celery. Todo o código de domínio executado é o mesmo da produção. As capturas de `docs/screenshots/` foram geradas nesse mesmo fluxo.
 
-## Pendente na Fase 1
+## Fora do alcance da CI
 
-A CI roda a cada push na `main` e cobre contêineres, PostgreSQL e E2E. Ainda não foram exercitados em nenhum ambiente:
+Não bloqueiam a Fase 2, mas ainda não foram exercitados em nenhum ambiente, porque dependem de uma implantação real:
 
-1. **E-mail de recuperação de senha pelo SMTP real** (Mailpit). Os testes capturam a publicação da tarefa, não o envio.
-2. **`docker-compose.prod.yml` em execução** (HTTPS, Redis com senha). A CI só valida a sintaxe do arquivo.
+- Certificado público (Let's Encrypt) com domínio real; a CI usa a CA interna do Caddy.
+- SMTP real com TLS e autenticação; a CI usa o Mailpit, sem TLS.
+- Atualização de uma instalação existente e restauração de backup.
 
 O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (`Docker Desktop is unable to start`, em 30/10/2026). Enquanto isso, o ambiente em contêineres só roda na CI.
 
@@ -101,4 +104,13 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 
 ## Próxima tarefa
 
-Cobrir os itens pendentes acima. Em seguida, **Fase 2**: suporte a XLSX (openpyxl em modo somente leitura, sem fórmulas/macros, limites de descompressão, seleção de abas), motor de transformações configuráveis (`TransformationSet`/`TransformationRule`), deduplicação com prévia e reprocessamento a partir de versões.
+**Fase 2 — Motor ETL.** Escopo definido no prompt mestre, registrado aqui para retomar sem depender da conversa:
+
+- **XLSX:** limite de 25 MB configurável; selecionar a aba; visualizar colunas e identificar o intervalo de dados; processar abas diferentes em importações independentes. Não executar macros nem fórmulas; fórmula sem valor calculado é dado ausente ou inválido, de forma explícita. Validar conteúdo real, recusar XLSX malformado, limitar a descompressão interna (zip bomb) e tratar planilhas criptografadas. Reconhecer as limitações de memória da biblioteca de leitura.
+- **Mapeamento:** além de nome, tipo e formato (já prontos), coluna obrigatória e regra para valores nulos.
+- **Transformações configuráveis** (`TransformationSet` e `TransformationRule`), só com operações conhecidas e validadas no backend, sem `eval` nem código enviado pelo usuário: remover espaços excedentes, normalizar texto, padronizar maiúsculas e minúsculas, converter tipos, tratar nulos, remover linhas totalmente vazias, padronizar datas, corrigir formatos numéricos, filtrar registros, identificar e remover duplicidades, renomear colunas e criar colunas derivadas com operações permitidas.
+- **Deduplicação:** comparar por todas as colunas ou por colunas selecionadas; manter o primeiro ou o último registro; prévia dos duplicados e contagem de afetados. Registrar claramente se duplicados entram ou não nos válidos, com categorias da reconciliação mutuamente consistentes (hoje `duplicates` é `null`, com `duplicates_policy: "nao_aplicada"`).
+- **Reprocessamento e versionamento:** novas versões a partir de versões existentes (ex.: v2 trata nulos, v3 remove duplicidades), cada uma identificando origem, transformações, data e responsável. Versões publicadas seguem imutáveis e os dados originais nunca são sobrescritos.
+- **Histórico:** cada execução registra quem iniciou, início e fim, arquivo de origem, configuração, versão das regras, totais recebido, preservado, rejeitado e duplicado, e erros encontrados.
+- **Interface:** a tela Transformações sai de "Em desenvolvimento"; a importação passa a aceitar XLSX, hoje recusado com aviso.
+- **Critério de conclusão:** implementado e integrado de ponta a ponta, utilizável na interface, com dados persistidos, testes executados, compilando, erros conhecidos documentados e README atualizado.
