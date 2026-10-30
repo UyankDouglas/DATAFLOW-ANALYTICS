@@ -40,7 +40,7 @@ As migrations rodam automaticamente no serviço `migrate` antes de API e worker.
 
 ## Escala
 
-- **Workers**: `WORKER_REPLICAS`, `WORKER_CONCURRENCY`, `WORKER_CPUS`, `WORKER_MEMORY`. O processamento é por lotes e cada job usa memória limitada (~40–60 MB por 100 mil linhas medidos, ver `benchmark.md`).
+- **Workers**: `WORKER_REPLICAS`, `WORKER_CONCURRENCY`, `WORKER_CPUS`, `WORKER_MEMORY`. O processamento é por lotes de 50 mil registros. Referência medida: pico de ~313 MB de RSS no processo do worker com 100 mil linhas (ver `benchmark.md`); ainda não há medição com arquivos maiores, então confira o uso real antes de reduzir `WORKER_MEMORY`.
 - **API**: stateless (sessões no PostgreSQL); o cache de Parquet é local por contêiner e se recompõe sob demanda.
 - **Beat**: manter **uma** instância.
 

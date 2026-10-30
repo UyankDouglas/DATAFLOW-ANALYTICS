@@ -31,7 +31,29 @@ Observações:
 - Uma otimização registrada: a primeira versão do leitor fazia `append` por célula (4,7 s para 100 mil linhas, medidos com `tracemalloc` ativo). A transposição por lote com `zip` reduziu a leitura para ~0,5 s.
 - O pico do processo (RSS) é medido por `resource` e só está disponível em Linux; no Windows o campo fica `null`.
 
+## Resultados — fluxo completo com infraestrutura real (30/10/2026)
+
+Medido pelo E2E `e2e/tests/large-file.spec.ts`, que envia `vendas_100000.csv` pela interface com o Docker Compose completo (Caddy → API → MinIO → Redis → worker Celery → PostgreSQL). A CI registra os números na linha `BENCHMARK_E2E` do log ([execução 41124382410](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41124382410), commit `34a5abb`).
+
+**Ambiente:** GitHub Actions, `ubuntu-24.04`, 4 vCPUs, 15 GiB de RAM. Worker limitado a 2 CPUs e 2 GB (padrões do Compose), concorrência 2. PostgreSQL 17, Redis 8.8, MinIO (Chainguard), Chromium via Playwright.
+
+**Arquivo:** 8,06 MB, 100.000 registros → 100.000 válidos, 0 rejeitados. É **uma única execução** em um runner compartilhado: trate como ordem de grandeza, não como média.
+
+| Etapa | Tempo | O que mede |
+| --- | --- | --- |
+| Upload pela interface | 308 ms | Do envio no navegador até a tela mostrar o arquivo armazenado no MinIO. |
+| Recebimento no servidor | 40 ms | Gravação em disco e inspeção (hash, UTF-8, delimitador). Parte do upload acima. |
+| Leitura e validação no worker | 31 ms | Baixar o original do MinIO e conferir o SHA-256. |
+| Processamento | 681 ms | Leitura e tokenização 451 ms, conversão de tipos 166 ms, escrita Parquet 42 ms. |
+| Persistência | 11 ms | Checksum e envio do Parquet ao MinIO. Não inclui a transação de publicação no PostgreSQL. |
+| **Total do job** | **741 ms** | Do início da execução no worker até a publicação da versão: **~135 mil registros/s**. |
+| Do clique até o resultado na tela | 2.163 ms | Inclui a fila e o intervalo de atualização da tela (1,5 s). Limite superior, não comparável ao total do job. |
+| Consulta com cache vazio | 69 ms | `page=2000` (`OFFSET 99.950`), ordenada por decimal, incluindo baixar o Parquet para o cache. |
+| Consulta com cache | 60 ms | A mesma consulta, medida a partir do cliente, passando pelo Caddy. |
+
+**Memória:** pico de **312,9 MB de RSS** no processo do worker. É o pico do processo desde que ele iniciou: inclui o interpretador e as bibliotecas nativas (Polars, Arrow) e pode incluir jobs anteriores do mesmo processo, pois outros testes E2E rodaram antes. Não é o custo isolado deste job. Os ~40 MB da tabela anterior são outra medida: só o heap Python (`tracemalloc`), sem a memória nativa.
+
 ## Pendente
 
-- **Fluxo completo com infraestrutura real** (upload HTTP → MinIO → worker Celery → PostgreSQL → consulta via API) dentro do Docker Compose: depende de um host com Docker. O job já registra essas métricas em `metrics.timings_ms` (envio, leitura e validação, processamento, persistência, total, registros/s e memória), visíveis na tela do processamento. A tabela acima será complementada com essa medição.
-- Testes com 1 milhão de linhas e com arquivos próximos do limite de 100 MB.
+- Medições com 1 milhão de linhas e com arquivos próximos do limite de 100 MB. Até lá, não há evidência de como a memória e o tempo escalam acima de 100 mil linhas.
+- Repetir a medição várias vezes para obter média e variação.

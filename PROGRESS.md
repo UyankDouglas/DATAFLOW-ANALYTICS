@@ -29,7 +29,7 @@ Documento de retomada. Atualizado em **29/10/2026**.
 - [x] Testes: backend (Pytest), frontend (Vitest), E2E (Playwright); CI no GitHub Actions.
 - [x] Documentação: README, `docs/architecture.md`, `decisions.md`, `security.md`, `data-pipeline.md`, `deploy.md`, `benchmark.md`.
 
-## Testes executados na CI (30/10/2026, commit `b7c1e7e`, [execução 41122812894](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41122812894))
+## Testes executados na CI (30/10/2026, commit `34a5abb`, [execução 41124382410](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41124382410))
 
 | Verificação | Resultado |
 | --- | --- |
@@ -39,7 +39,8 @@ Documento de retomada. Atualizado em **29/10/2026**.
 | Frontend: formatação, lint, tipos, Vitest, build | OK, **22 passed** |
 | `docker compose up --build --wait` | todos os serviços saudáveis; os de execução única concluíram |
 | `GET /health/ready` pelo Caddy | banco, Redis e armazenamento OK |
-| E2E pelo Caddy, com Celery e MinIO reais | **3 passed**, 1 ignorado (capturas de tela, só sob demanda) |
+| E2E pelo Caddy, com Celery e MinIO reais | **5 passed**, 1 ignorado (capturas de tela, só sob demanda). Inclui 100 mil linhas (8 MB) pela interface e a recusa de corpos acima de 2 MB fora da rota de upload |
+| Fluxo completo medido | job de 100 mil linhas em 741 ms; detalhes em `docs/benchmark.md` |
 
 ## Testes executados localmente (29/10/2026, Windows 10, sem Docker)
 
@@ -62,9 +63,8 @@ Documento de retomada. Atualizado em **29/10/2026**.
 
 A CI roda a cada push na `main` e cobre contêineres, PostgreSQL e E2E. Ainda não foram exercitados em nenhum ambiente:
 
-1. **Upload acima de 2 MB pelo Caddy**, incluindo o fluxo de 100 mil linhas pela interface. O limite foi corrigido, mas o E2E usa arquivos de 1.000 linhas (82 KB). Essa execução também completa `docs/benchmark.md` com a medição ponta a ponta.
-2. **E-mail de recuperação de senha pelo SMTP real** (Mailpit). Os testes capturam a publicação da tarefa, não o envio.
-3. **`docker-compose.prod.yml` em execução** (HTTPS, Redis com senha). A CI só valida a sintaxe do arquivo.
+1. **E-mail de recuperação de senha pelo SMTP real** (Mailpit). Os testes capturam a publicação da tarefa, não o envio.
+2. **`docker-compose.prod.yml` em execução** (HTTPS, Redis com senha). A CI só valida a sintaxe do arquivo.
 
 O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (`Docker Desktop is unable to start`, em 30/10/2026). Enquanto isso, o ambiente em contêineres só roda na CI.
 

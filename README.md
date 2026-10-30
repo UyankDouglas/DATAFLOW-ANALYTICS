@@ -118,6 +118,7 @@ cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy
 
 cd apps/web && pnpm test && pnpm lint && pnpm typecheck && pnpm build
 
+python scripts/generate_samples.py --rows 100000 --only vendas  # habilita o E2E de 100 mil linhas
 cd e2e && pnpm install && pnpm exec playwright install chromium
 E2E_BASE_URL=http://localhost:8080 pnpm test  # com o Docker Compose em execução
 ```
@@ -164,7 +165,7 @@ Base `/api/v1`, documentação interativa em `/api/docs`. Erros sempre no format
 
 ## Benchmark
 
-Medido nesta fase (pipeline em processo, Windows, Python 3.13): **100 mil linhas em ~0,74–0,90 s** (110–136 mil registros/s), pico de ~40 MB de memória Python, consulta paginada e ordenada em ~0,13 s. Método, ambiente e reprodução em [docs/benchmark.md](docs/benchmark.md). A medição ponta a ponta com a infraestrutura em contêineres está pendente.
+Fluxo completo com Caddy, PostgreSQL, Redis, MinIO e Celery reais, medido na CI (GitHub Actions, worker limitado a 2 CPUs e 2 GB): **job de 100 mil linhas (8 MB) em 0,74 s**, cerca de 135 mil registros/s, pico de 313 MB de RSS no worker e consulta ordenada no fim do dataset em ~60 ms. É uma única execução em runner compartilhado; método, ressalvas e reprodução em [docs/benchmark.md](docs/benchmark.md).
 
 ## Limitações conhecidas
 
@@ -174,7 +175,7 @@ Medido nesta fase (pipeline em processo, Windows, Python 3.13): **100 mil linhas
 - Gestão de membros, exportações, auditoria na interface e retenção de arquivos: Fase 5.
 - Gráfico da visão geral agrupa por dia em UTC (fuso por workspace chega com as configurações).
 - O MinIO Community foi arquivado; o projeto usa a imagem mantida pela Chainguard (ver ADR-006).
-- A CI valida o ambiente completo em contêineres, mas uploads acima de 2 MB pelo proxy, o envio real de e-mail e o Compose de produção em execução ainda não foram exercitados; ver PROGRESS.md.
+- A CI valida o ambiente completo em contêineres, mas o envio real de e-mail e o Compose de produção em execução ainda não foram exercitados; ver PROGRESS.md.
 
 ## Roadmap
 
