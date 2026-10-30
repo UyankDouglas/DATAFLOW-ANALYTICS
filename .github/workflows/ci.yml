@@ -94,6 +94,12 @@ jobs:
         run: docker compose up --build --detach --wait --wait-timeout 300
       - name: Health check pela borda (Caddy → API → Postgres/Redis/MinIO)
         run: curl --fail --silent http://localhost:8080/health/ready
+      - name: Gerar arquivo de 100 mil linhas (acima do limite geral de 2 MB do proxy)
+        run: python3 scripts/generate_samples.py --rows 100000 --only vendas
+      - name: Registrar o ambiente das medições
+        run: |
+          nproc
+          free -h
       - uses: pnpm/action-setup@v6
         with:
           version: 10.34.7
