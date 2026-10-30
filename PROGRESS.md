@@ -6,7 +6,7 @@ Documento de retomada. Atualizado em **29/10/2026**.
 
 | Fase | Status |
 | --- | --- |
-| 1 — Fundação e primeiro dataset | ✅ Implementada e testada (validação em contêineres pendente — ver abaixo) |
+| 1 — Fundação e primeiro dataset | ✅ Implementada e validada na CI com PostgreSQL, Compose, Celery e MinIO reais (restam os itens abaixo) |
 | 2 — Motor ETL (XLSX, transformações, deduplicação, reprocessamento) | ⏳ Próxima |
 | 3 — Qualidade e Data Explorer completo | Pendente |
 | 4 — Business Intelligence (dashboards) | Pendente |
@@ -29,7 +29,19 @@ Documento de retomada. Atualizado em **29/10/2026**.
 - [x] Testes: backend (Pytest), frontend (Vitest), E2E (Playwright); CI no GitHub Actions.
 - [x] Documentação: README, `docs/architecture.md`, `decisions.md`, `security.md`, `data-pipeline.md`, `deploy.md`, `benchmark.md`.
 
-## Testes executados (29/10/2026, Windows 10, sem Docker)
+## Testes executados na CI (30/10/2026, commit `b7c1e7e`, [execução 41122812894](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41122812894))
+
+| Verificação | Resultado |
+| --- | --- |
+| Backend contra **PostgreSQL 17 real** | **58 passed**, cobertura de 86% |
+| Alembic: `upgrade` → `check` → `downgrade` → `upgrade` no PostgreSQL | OK, sem divergência entre modelos e migration |
+| Ruff e mypy estrito | sem problemas |
+| Frontend: formatação, lint, tipos, Vitest, build | OK, **22 passed** |
+| `docker compose up --build --wait` | todos os serviços saudáveis; os de execução única concluíram |
+| `GET /health/ready` pelo Caddy | banco, Redis e armazenamento OK |
+| E2E pelo Caddy, com Celery e MinIO reais | **3 passed**, 1 ignorado (capturas de tela, só sob demanda) |
+
+## Testes executados localmente (29/10/2026, Windows 10, sem Docker)
 
 | Comando | Resultado |
 | --- | --- |
@@ -46,17 +58,15 @@ Documento de retomada. Atualizado em **29/10/2026**.
 
 **Observação sobre o E2E local:** sem Docker na máquina, o E2E rodou contra o frontend real (Vite) e a API real, com um harness temporário **fora do repositório** que substituiu apenas a infraestrutura: SQLite no lugar do PostgreSQL, moto (S3 em memória) no lugar do MinIO, fakeredis no lugar do Redis e o `run_import_job` do worker numa thread no lugar do Celery. Todo o código de domínio executado é o mesmo da produção. As capturas de `docs/screenshots/` foram geradas nesse mesmo fluxo.
 
-## Pendente na Fase 1 (bloqueado pelo ambiente)
+## Pendente na Fase 1
 
-O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (`Docker Desktop is unable to start`, em 30/10/2026). Quando estiver funcionando:
+A CI roda a cada push na `main` e cobre contêineres, PostgreSQL e E2E. Ainda não foram exercitados em nenhum ambiente:
 
-1. `docker compose up --build` e verificar todos os healthchecks (em especial `minio-perms` + imagem Chainguard do MinIO e o healthcheck do worker).
-2. `cd backend && TEST_DATABASE_URL=postgresql+psycopg://dataflow:dataflow@localhost:5432/dataflow_test uv run pytest` (suíte contra PostgreSQL real; o banco `dataflow_test` precisa ser criado).
-3. `uv run alembic upgrade head && uv run alembic check` contra o PostgreSQL do Compose.
-4. `cd e2e && pnpm test` contra http://localhost:8080 (Caddy → API → Celery real).
-5. Medir o fluxo ponta a ponta com 100 mil linhas pela interface e completar `docs/benchmark.md` (valida também o limite de upload do Caddy acima de 2 MB, que o E2E com 1.000 linhas não exercita).
+1. **Upload acima de 2 MB pelo Caddy**, incluindo o fluxo de 100 mil linhas pela interface. O limite foi corrigido, mas o E2E usa arquivos de 1.000 linhas (82 KB). Essa execução também completa `docs/benchmark.md` com a medição ponta a ponta.
+2. **E-mail de recuperação de senha pelo SMTP real** (Mailpit). Os testes capturam a publicação da tarefa, não o envio.
+3. **`docker-compose.prod.yml` em execução** (HTTPS, Redis com senha). A CI só valida a sintaxe do arquivo.
 
-A CI roda a cada push na `main` e cobre os itens 1–4 sem depender desta máquina: acompanhe o resultado em https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions.
+O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (`Docker Desktop is unable to start`, em 30/10/2026). Enquanto isso, o ambiente em contêineres só roda na CI.
 
 ## Arquivos relevantes
 
@@ -91,4 +101,4 @@ A CI roda a cada push na `main` e cobre os itens 1–4 sem depender desta máqui
 
 ## Próxima tarefa
 
-Validar o ambiente em contêineres (itens pendentes acima). Em seguida, **Fase 2**: suporte a XLSX (openpyxl em modo somente leitura, sem fórmulas/macros, limites de descompressão, seleção de abas), motor de transformações configuráveis (`TransformationSet`/`TransformationRule`), deduplicação com prévia e reprocessamento a partir de versões.
+Cobrir os itens pendentes acima. Em seguida, **Fase 2**: suporte a XLSX (openpyxl em modo somente leitura, sem fórmulas/macros, limites de descompressão, seleção de abas), motor de transformações configuráveis (`TransformationSet`/`TransformationRule`), deduplicação com prévia e reprocessamento a partir de versões.

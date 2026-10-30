@@ -174,7 +174,7 @@ Medido nesta fase (pipeline em processo, Windows, Python 3.13): **100 mil linhas
 - Gestão de membros, exportações, auditoria na interface e retenção de arquivos: Fase 5.
 - Gráfico da visão geral agrupa por dia em UTC (fuso por workspace chega com as configurações).
 - O MinIO Community foi arquivado; o projeto usa a imagem mantida pela Chainguard (ver ADR-006).
-- Fluxo com contêineres ainda não executado no ambiente de desenvolvimento original (sem Docker); ver PROGRESS.md.
+- A CI valida o ambiente completo em contêineres, mas uploads acima de 2 MB pelo proxy, o envio real de e-mail e o Compose de produção em execução ainda não foram exercitados; ver PROGRESS.md.
 
 ## Roadmap
 
