@@ -85,11 +85,10 @@ jobs:
     needs: [backend, frontend]
     steps:
       - uses: actions/checkout@v7
-      - name: Validar arquivos Compose
-        run: |
-          docker compose config --quiet
-          POSTGRES_USER=x POSTGRES_PASSWORD=x REDIS_PASSWORD=x MINIO_ROOT_USER=x MINIO_ROOT_PASSWORD=x \
-          SECRET_KEY=x SITE_ADDRESS=example.com docker compose -f docker-compose.prod.yml config --quiet
+      - name: Preparar o .env como no README
+        run: cp .env.example .env
+      - name: Validar o arquivo Compose
+        run: docker compose config --quiet
       - name: Build e subida do ambiente completo
         run: docker compose up --build --detach --wait --wait-timeout 300
       - name: Health check pela borda (Caddy → API → Postgres/Redis/MinIO)
@@ -123,6 +122,87 @@ jobs:
         if: failure()
         with:
           name: playwright-report
+          path: e2e/playwright-report
+          retention-days: 7
+      - name: Encerrar ambiente
+        if: always()
+        run: docker compose down --volumes
+
+  docker-prod:
+    name: Compose de produção + E2E (HTTPS)
+    runs-on: ubuntu-24.04
+    needs: [backend, frontend]
+    env:
+      COMPOSE_FILE: docker-compose.prod.yml
+    steps:
+      - uses: actions/checkout@v7
+      - name: Preparar o .env como em docs/deploy.md
+        # "localhost" faz o Caddy emitir o certificado pela própria CA interna:
+        # exercita HTTPS sem depender de um domínio público.
+        run: |
+          set_env() { sed -i "s|^$1=.*|$1=$2|" .env; }
+          cp .env.example .env
+          set_env SITE_ADDRESS localhost
+          set_env SECRET_KEY "$(openssl rand -hex 32)"
+          set_env POSTGRES_PASSWORD "$(openssl rand -hex 16)"
+          set_env REDIS_PASSWORD "$(openssl rand -hex 16)"
+          set_env MINIO_ROOT_PASSWORD "$(openssl rand -hex 16)"
+          set_env SMTP_HOST ""
+      - name: Validar o arquivo Compose
+        run: docker compose config --quiet
+      - name: Build e subida do ambiente completo
+        run: docker compose up --build --detach --wait --wait-timeout 300
+      - name: API responde em HTTPS pela borda
+        run: >-
+          curl --fail --silent --show-error --insecure --retry 20 --retry-delay 2
+          --retry-all-errors https://localhost/health/ready
+      - name: HTTP redireciona para HTTPS
+        run: |
+          redirect="$(curl --silent --output /dev/null --write-out '%{http_code} %{redirect_url}' http://localhost/)"
+          echo "$redirect"
+          [[ "$redirect" == 308\ https://localhost/* ]]
+      - name: Cookies marcados como Secure
+        run: curl --silent --insecure --include https://localhost/api/v1/auth/csrf | grep -iE '^set-cookie:\s*df_csrf=.*;\s*secure'
+      - name: Só a borda fica exposta
+        run: |
+          for port in 5432 6379 8000 8025 8080 9000 9001; do
+            if timeout 2 bash -c "exec 3<>/dev/tcp/127.0.0.1/$port" 2>/dev/null; then
+              echo "A porta $port não deveria estar exposta"
+              exit 1
+            fi
+          done
+      - name: Redis exige senha
+        run: |
+          reply="$(docker compose exec -T redis redis-cli ping 2>&1 || true)"
+          echo "$reply"
+          grep -q NOAUTH <<<"$reply"
+      - name: Gerar arquivo de 100 mil linhas (acima do limite geral de 2 MB do proxy)
+        run: python3 scripts/generate_samples.py --rows 100000 --only vendas
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.34.7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: e2e/pnpm-lock.yaml
+      - name: E2E
+        working-directory: e2e
+        env:
+          E2E_BASE_URL: https://localhost
+          E2E_IGNORE_HTTPS_ERRORS: "1"
+          E2E_MAILPIT_URL: ""
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+          pnpm test
+      - name: Logs dos contêineres em caso de falha
+        if: failure()
+        run: docker compose logs --no-color --tail 300
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report-prod
           path: e2e/playwright-report
           retention-days: 7
       - name: Encerrar ambiente

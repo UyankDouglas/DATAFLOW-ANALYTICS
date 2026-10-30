@@ -6,6 +6,12 @@ test('login → upload → preview → processamento → resultado → explorer'
   const user = newUser('Fluxo')
   await register(page, user)
 
+  // A sessão nunca fica acessível ao JavaScript e, em HTTPS, só trafega por conexão segura.
+  const cookies = await page.context().cookies()
+  const session = cookies.find((cookie) => cookie.name === 'df_session')
+  expect(session?.httpOnly).toBe(true)
+  expect(session?.secure).toBe(page.url().startsWith('https:'))
+
   // Logout e login explícitos (cobre o fluxo de autenticação com CSRF).
   await page.getByRole('button', { name: 'Menu do usuário' }).click()
   await page.getByRole('menuitem', { name: 'Sair' }).click()
