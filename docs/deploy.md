@@ -19,7 +19,9 @@ Preencha no `.env` (obrigatórios no `docker-compose.prod.yml`):
 | `REDIS_PASSWORD` | Senha do Redis interno. |
 | `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD` | Credenciais do MinIO (também usadas pela API como chave S3). |
 | `MINIO_IMAGE` | Recomendado fixar digest: `cgr.dev/chainguard/minio@sha256:…` (ADR-006). |
-| `SMTP_*` | Servidor SMTP real para e-mails de redefinição de senha. |
+| `SMTP_*` | Servidor SMTP real para e-mails de redefinição de senha. O `.env.example` traz os valores de desenvolvimento (`localhost:1025`, sem TLS): troque todos. |
+
+As senhas do PostgreSQL e do Redis entram nas URLs de conexão: use apenas caracteres seguros em URL, como hexadecimal (`openssl rand -hex 32`).
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
@@ -62,4 +64,4 @@ Restaure banco e bucket do **mesmo ponto no tempo**: versões referenciam objeto
 
 ## Alternativas de armazenamento
 
-O backend usa somente a API S3. Para S3 gerenciado, remova os serviços `minio*` e defina `S3_ENDPOINT_URL` (vazio para AWS), `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`.
+O backend usa somente a API S3. Para usar um S3 gerenciado, edite o `docker-compose.prod.yml`: remova os serviços `minio*` e as dependências deles e defina `S3_ENDPOINT_URL`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` e `S3_BUCKET` no bloco `x-backend`. Essa variação ainda não foi testada.
