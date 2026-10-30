@@ -35,7 +35,8 @@ jobs:
       TEST_DATABASE_URL: postgresql+psycopg://dataflow:dataflow@localhost:5432/dataflow_test
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      # setup-uv não publica tag flutuante de major: exige a versão completa.
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: "0.13.6"
           enable-cache: true
