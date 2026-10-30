@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (lint, tipos, migrations, testes)
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: dataflow
+          POSTGRES_PASSWORD: dataflow
+          POSTGRES_DB: dataflow_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U dataflow -d dataflow_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgresql+psycopg://dataflow:dataflow@localhost:5432/dataflow_test
+      TEST_DATABASE_URL: postgresql+psycopg://dataflow:dataflow@localhost:5432/dataflow_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          version: "0.13.6"
+          enable-cache: true
+      - run: uv sync --frozen
+      - name: Formatação
+        run: uv run ruff format --check .
+      - name: Lint
+        run: uv run ruff check .
+      - name: Tipos (mypy estrito)
+        run: uv run mypy app
+      - name: Migrations em banco descartável (upgrade → check → downgrade → upgrade)
+        run: |
+          uv run alembic upgrade head
+          uv run alembic check
+          uv run alembic downgrade base
+          uv run alembic upgrade head
+      - name: Testes (PostgreSQL real)
+        run: uv run pytest -q --cov=app --cov-report=term-missing:skip-covered
+
+  frontend:
+    name: Frontend (formatação, lint, tipos, testes, build)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.34.7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  docker:
+    name: Docker Compose + E2E (Playwright)
+    runs-on: ubuntu-24.04
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validar arquivos Compose
+        run: |
+          docker compose config --quiet
+          POSTGRES_USER=x POSTGRES_PASSWORD=x REDIS_PASSWORD=x MINIO_ROOT_USER=x MINIO_ROOT_PASSWORD=x \
+          SECRET_KEY=x SITE_ADDRESS=example.com docker compose -f docker-compose.prod.yml config --quiet
+      - name: Build e subida do ambiente completo
+        run: docker compose up --build --detach --wait --wait-timeout 300
+      - name: Health check pela borda (Caddy → API → Postgres/Redis/MinIO)
+        run: curl --fail --silent http://localhost:8080/health/ready
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.34.7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: e2e/pnpm-lock.yaml
+      - name: E2E
+        working-directory: e2e
+        env:
+          E2E_BASE_URL: http://localhost:8080
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+          pnpm test
+      - name: Logs dos contêineres em caso de falha
+        if: failure()
+        run: docker compose logs --no-color --tail 300
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          retention-days: 7
+      - name: Encerrar ambiente
+        if: always()
+        run: docker compose down --volumes

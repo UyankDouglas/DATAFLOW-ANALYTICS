@@ -1,0 +1,1001 @@
+data_venda;vendedor;equipe;produto;categoria;quantidade;valor;status;canal
+21/08/2025;Sofia Rocha;Centro;Antivírus corporativo;Software;4;823,44;pago;Parceiros
+17/06/2025;Gabriela Ferraz;Leste;Monitor 27;Informática;1;2.082,09;pago;E-commerce
+24/01/2025;João Holanda;Oeste;Teclado;Informática;2;333,64;estornado;Loja física
+22/03/2025;Eduarda Holanda;Leste;Licença anual BI;Software;1;5.576,12;pendente;Televendas
+31/01/2025;Sofia Rocha;Centro;Treinamento;Serviços;1;745,25;cancelado;E-commerce
+13/08/2025;Gabriela Lima;Leste;Suporte mensal;Serviços;2;725,04;pago;E-commerce
+22/04/2025;Gabriela Nogueira;Oeste;Cadeira ergonômica;Escritório;5;9667,95;pago;Loja física
+21/10/2025;Ana Moraes;Norte;Suporte mensal;Serviços
+18/11/2025;Lucas Almeida;Centro;Teclado;Informática;10;3.743,80;pago;E-commerce
+19/04/2025;Thiago Esteves;Oeste;Mesa ajustável;Escritório;3;7.015,71;pendente;E-commerce
+17/04/2025;Felipe Vieira;Oeste;Treinamento;Serviços;5;3.544,15;estornado;Televendas
+08/09/2025;Sofia Oliveira;Sul;Mesa ajustável;Escritório
+02/06/2025;Diego Oliveira;Oeste;Mouse;Informática;4;512,24;pago;E-commerce
+23/11/2025;Gabriela Lima;Leste;Licença anual BI;Software;1;7.702,83;pendente;E-commerce
+12/04/2025;Rafael Teixeira;Leste;Antivírus corporativo;Software;2;446,84;pago;Loja física
+19/01/2025;Felipe Ferraz;Centro;Luminária;Escritório;1;294,34;pago;Televendas
+11/11/2025;Gabriela Nogueira;Oeste;Antivírus corporativo;Software;1;174,70;pago;Televendas
+03/10/2025;Sofia Oliveira;Sul;Cadeira ergonômica;Escritório;1;1.058,48;pago;E-commerce
+24/05/2025;  Gabriela Lima   ;Leste;Luminária;Escritório;5;754,00;pago;Televendas
+21/04/2025;Diego Oliveira;Oeste;Cadeira ergonômica;Escritório;2;2.422,20;pago;Loja física
+25/07/2025;Felipe Nogueira;Norte;Licença anual BI;Software;3;22.294,86;estornado;Loja física
+17/04/2025;Eduarda Holanda;Leste;Suporte mensal;Serviços;3;4.859,19;pago;Parceiros
+07/09/2025;Felipe Nogueira;Norte;Mouse;Informática;1;112,34;pago;E-commerce
+23/08/2025;Thiago Dias;Centro;Luminária;Escritório;1
+03/07/2025;Gabriela Ferraz;Leste;Notebook;Informática;3;14.163,69;estornado;E-commerce
+09/07/2025;Sofia Almeida;Centro;Antivírus corporativo;Software;3;892,32;pendente;Televendas
+13/03/2025;Paulo Holanda;Leste;LUMINÁRIA;Escritório;1;148,24;pago;Televendas
+29/04/2025;Wesley Esteves;Norte;Cadeira ergonômica;Escritório;1;2.018,12;pago;Loja física
+22/09/2025;Karina Rocha;Centro;Notebook;Informática;1;6.041,34;cancelado;Loja física
+11/07/2025;Karina Holanda;Sul;MOUSE;Informática;3;457,50;pago;E-commerce
+31/03/2025;Diego Oliveira;Oeste;Licença anual BI;Software;2;5.963,08;pago;Parceiros
+31/10/2025;Karina Nogueira;Oeste;Suporte mensal;Serviços;3;4.343,88;pago;Loja física
+25/05/2025;Eduarda Dias;Centro;Licença anual BI;Software;5;35.245,15;pago;E-commerce
+16/03/2025;Felipe Pereira;Centro;Instalação;Serviços;3;1.029,15;pago;Loja física
+00/00/0000;Karina Rocha;Centro;Teclado;Informática;1;415,66;pago;Loja física
+07/10/2025;Sofia Rocha;Centro;Monitor 27;Informática;1;1.079,54;estornado;Televendas
+22/11/2025;Felipe Ferraz;Centro;NOTEBOOK;Informática;3;10.367,28;pago;E-commerce
+05/03/2025;Bruno Lima;;Licença anual BI;Software;1;2.963,14;pago;Parceiros
+24/09/2025;Gabriela Ferraz;Leste;Instalação;;2;1.287,22;cancelado;Loja física
+04/09/2025;Eduarda Dias;Centro;Instalação;Serviços;4;3.430,60;pago;Loja física
+19/03/2025;Rafael Teixeira;Leste;Antivírus corporativo;Software;1;235,95;pago;E-commerce
+14/10/2025;Bruno Lima;Norte;Instalação;Serviços;2;649,78;pago;Loja física
+20/08/2025;Sofia Rocha;Centro;Antivírus corporativo;Software;3;1.270,74;pago;Loja física
+27/06/2025;Gabriela Nogueira;Oeste;Licença anual BI;Software;1;8.320,67;pago;Parceiros
+14/04/2025;Thiago Esteves;Oeste;Mesa ajustável;Escritório;1;2.601,27;cancelado;E-commerce
+19/01/2025;Sofia Rocha;Centro;Notebook;Informática;1;5.726,45;pago;Loja física
+28/02/2025;Thiago Esteves;Oeste;Antivírus corporativo;Software;3;602,97;pago;E-commerce
+17/12/2025;Eduarda Dias;Centro;Luminária;Escritório;10;1.005,60;pago;Loja física
+04/08/2025;Karina Holanda;Sul;Treinamento
+22/03/2025;Felipe Ito;Centro;Teclado;Informática;10;1.545,50;pago;Loja física
+08/09/2025;Sofia Oliveira;Sul;Licença anual BI;Software;4;26.386,48;pago;Loja física
+24/11/2025;Felipe Ferraz;Centro
+23/09/2025;Gabriela Ferraz;Leste;Luminária;Escritório;10;2.582,60;pago;Parceiros
+28/09/2025;Bruno Ferraz;Sul;Instalação;Serviços;1;489,83;pago;Televendas
+06/10/2025;Ana Barbosa;Norte;Mesa ajustável;Escritório;3;5.618,70;estornado;
+00/00/0000;Eduarda Holanda;Leste;Cadeira ergonômica;Escritório;1;2.186,14;pago;Televendas
+30/03/2025;Sofia Rocha;Centro;Suporte mensal;Serviços;3;1.703,43;pago;Televendas
+27/09/2025;Paulo Dias;Centro;Antivírus corporativo;Software;3;524,52;pago;E-commerce
+11/01/2025;Heitor Moraes;Centro;Luminária;Escritório;2;612,16;pago;E-commerce
+02/02/2025;Felipe Nogueira;Norte;Notebook;Informática;1;3.334,21;pago;E-commerce
+00/00/0000;Karina Dias;Centro;Licença anual BI;Software;3;22.531,53;pago;E-commerce
+11/08/2025;Rafael Oliveira;Norte;Mouse;Informática;1;200,45;pago;Loja física
+06/04/2025;Karina Dias;Centro;Treinamento;Serviços;3;4.592,85;estornado;Loja física
+;;;;;;;;
+28/04/2025;Paulo Holanda;Leste;Antivírus corporativo;Software;3;1.336,59;pago;Loja física
+07/08/2025;  Heitor Moraes   ;Centro;Monitor 27;Informática;4;4.910,08;cancelado;Televendas
+17/07/2025;Lucas Ferraz;Norte;Antivírus corporativo;Software;10;R$ 5.530,20;pendente;Loja física
+17/03/2025;Paulo Holanda;Leste;Teclado;Informática;2;492,64;pago;Loja física
+17/01/2025;Bruno Queiroz;Norte;Mouse;Informática;4;213,52;pago;E-commerce
+13/08/2025;Karina Holanda;Sul;Treinamento;Serviços;3;4.902,54;cancelado;Loja física
+08/09/2025;Sofia Oliveira;Sul;Licença anual BI;Software;4;26.386,48;pago;Loja física
+29/07/2025;Felipe Ito;Centro;Licença anual BI;Software;2;17.807,78;pago;E-commerce
+19/03/2025;Karina Rocha;Centro;Cadeira ergonômica;Escritório;4;7.902,60;pago;Loja física
+15/08/2025;Felipe Ferraz;Centro;Antivírus corporativo;Software;1;325,33;pago;E-commerce
+27/03/2025;Karina Holanda;Sul;Luminária;Escritório;1;104,52;pago;Loja física
+23/09/2025;Karina Dias;Centro;Suporte mensal;Serviços;1;917,24;pago;Televendas
+26/04/2025;Felipe Vieira;Oeste;Cadeira ergonômica;Escritório;4;6.230,80;pago;Loja física
+16/07/2025;Karina Rocha;Centro;Mesa ajustável;Escritório;4;6.905,08;pago;Loja física
+14/12/2025;Thiago Ferraz;Norte;Licença anual BI;Software;1;5.486,21;cancelado;Loja física
+30/05/2025;João Holanda;Oeste;Antivírus corporativo;Software;1;540,57;pago;Loja física
+16/07/2025;Karina Rocha;Centro;Treinamento;Serviços;3;2.991,84;pago;Loja física
+02/03/2025;Ana Moraes;Norte;Antivírus corporativo;Software;1;241,49;cancelado;E-commerce
+27/01/2025;Lucas Almeida;Centro;Suporte mensal;Serviços;1;359,02;pago;E-commerce
+17/04/2025;Bruno Queiroz;Norte;Antivírus corporativo;Software;-;534,04;estornado;E-commerce
+17/06/2025;Bruno Ferraz;;Notebook;Informática;1;5.246,72;cancelado;E-commerce
+20/04/2025;Rafael Oliveira;Norte;Treinamento;Serviços;5;13.895,85;pago;E-commerce
+26/02/2025;Karina Dias;Centro;Treinamento;Serviços;1;3.079,00;pago;E-commerce
+02/01/2025;João Holanda;Oeste;Treinamento;Serviços;4;8.872,52;pago;E-commerce
+13/11/2025;Gabriela Ferraz;Leste;Suporte mensal;Serviços;2;1.465,36;pago;E-commerce
+23/11/2025;Felipe Nogueira;Norte;Notebook;Informática;1;6.409,39;cancelado;Loja física
+08/09/2025;Sofia Oliveira;Sul;Licença anual BI;Software;4;26.386,48;pago;Loja física
+25/11/2025;Bruno Lima;Norte;Cadeira ergonômica;Escritório;1;973,29;pago;Loja física
+26/10/2025;Felipe Nogueira;Norte;Treinamento;Serviços;1;1.901,17;pago;Televendas
+06/02/2025;Lucas Ferraz;Norte;Cadeira ergonômica;Escritório;1;1.739,95;pago;E-commerce
+11/07/2025;Paulo Dias;Centro;Cadeira ergonômica;Escritório;1;1.070,61;pendente;Loja física
+05/01/2025;Lucas Ito;Leste;Suporte mensal;Serviços;1;1.677,74;pago;E-commerce
+;;;;;;;;
+21/08/2025;Sofia Rocha;Centro;Antivírus corporativo;Software;4;823,44;pago;Parceiros
+15/06/2025;Thiago Esteves;Oeste;Cadeira ergonômica;Escritório;1;985,51;pago;Loja física
+28/04/2025;Felipe Ferraz;Centro;Licença anual BI;Software;1;4.676,55;pago;E-commerce
+04/08/2025;Bruno Queiroz;Norte;Mesa ajustável;Escritório;2;6.705,44;pago;Loja física
+19/03/2025;Gabriela Ferraz;Leste;Instalação;Serviços;2;1.726,78;pago;Loja física
+;;;;;;;;
+11/12/2025;Thiago Esteves;Oeste;Antivírus corporativo;Software;1;453,23;pago;Loja física
+23/08/2025;Lucas Almeida;Centro;Antivírus corporativo;Software;3;1.274,22;pendente;Loja física
+17/07/2025;Felipe Barbosa;Sul;Mesa ajustável;Escritório;2;6.641,10;pago;Loja física
+21/05/2025;Gabriela Lima;Leste;Monitor 27;Informática;1;922,26;estornado;E-commerce
+01/06/2025;Lucas Almeida;Centro;Mouse;Informática;3;267,18;pago;Loja física
+13/06/2025;Lucas Ito;Leste;Treinamento;Serviços;1;2.787,39;pendente;Loja física
+07/08/2025;Wesley Esteves;Norte;Licença anual BI;Software;1;4.644,59;pago;E-commerce
+10/06/2025;Úrsula Jardim;Leste;Cadeira ergonômica;Escritório;1;710,40;pago;Loja física
+08/09/2025;Sofia Oliveira;Sul;Licença anual BI;Software;4;26.386,48;pago;Loja física
+29/08/2025;Thiago Dias;Centro;Mesa ajustável;Escritório;3;5.973,60;pago;E-commerce
+03/09/2025;Wesley Esteves;Norte;Mesa ajustável;;10;14.185,70;estornado;Televendas
+25/06/2025;Ana Moraes;Norte;Monitor 27;Informática;3;4.599,99;pago;Loja física
+04/02/2025;Paulo Holanda;Leste;Licença anual BI;Software;5;30.883,10;pago;Parceiros
+12/09/2025;Gabriela Ferraz;Leste;Licença anual BI;Software;1;6.705,37;pago;E-commerce
+22/02/2025;Heitor Moraes;Centro;Antivírus corporativo;Software;1;212,91;pago;E-commerce
+17/07/2025;Lucas Ferraz;Norte;Mouse;Informática;1;268,89;pago;E-commerce
+17/04/2025;Yasmin Esteves;Oeste;Treinamento;Serviços;1;2.575,44;pago;Televendas
+16/01/2025;Sofia Oliveira;Sul;Luminária;Escritório;1;124,42;pendente;Televendas
+23/10/2025;Eduarda Holanda;Leste;LUMINÁRIA;Escritório;1;97,94;pendente;E-commerce
+03/07/2025;Úrsula Jardim;Leste;Instalação;Serviços;1;646,90;estornado;Loja física
+;;;;;;;;
+17/01/2025;Karina Holanda;Sul;Notebook;Informática;1;3.813,14;pago;E-commerce
+06/03/2025;Felipe Ito;Centro;Notebook;;3;12.150,00;pago;Loja física
+08/12/2025;Bruno Lima;Norte;Notebook;Informática;1;6.189,46;pendente;Parceiros
+21/04/2025;Wesley Esteves;Norte;Licença anual BI;Software;3;25.334,82;estornado;Loja física
+09/11/2025;Eduarda Holanda;Leste;Treinamento;Serviços;1;1.312,91;pago;Loja física
+08/06/2025;Sofia Rocha;Centro;Instalação;Serviços;dois;515,36;pago;E-commerce
+06/12/2025;Felipe Pereira;Centro;Mouse;Informática;1;253,22;pago;Loja física
+27/04/2025;Heitor Moraes;Centro;Monitor 27;Informática;1;1.226,42;pago;Loja física
+26/08/2025;Heitor Moraes;Centro;Teclado;Informática;1;437,08;pago;Televendas
+15/11/2025;Sofia Oliveira;Sul;Cadeira ergonômica;Escritório;2;2.030,08;pago;Televendas
+;;;;;;;;
+25/06/2025;Ana Barbosa;Norte;Antivírus corporativo;Software;1;505,53;estornado;Loja física
+22/02/2025;Lucas Ito;;Licença anual BI;Software;1;3.340,17;pago;Loja física
+19/11/2025;Lucas Ferraz;Norte;Teclado;Informática;1;241,91;pago;E-commerce
+15/08/2025;Gabriela Lima;Leste;Antivírus corporativo;Software;1;511,35;pago;Parceiros
+30/08/2025;Thiago Dias;Centro;Suporte mensal;Serviços;1;716,72;pago;E-commerce
+03/09/2025;Heitor Moraes;Centro;Notebook;Informática;2;11.336,00;pago;E-commerce
+13/02/2025;Gabriela Ferraz;Leste;Cadeira ergonômica
+27/03/2025;  Ana Moraes   ;Norte;Notebook;Informática;1;4.438,71;pago;E-commerce
+14/07/2025;Lucas Almeida;Centro;Luminária;Escritório;3;618,48;pendente;Parceiros
+13/10/2025;Sofia Oliveira;Sul;Instalação;Serviços;1;851,92;pendente;Loja física
+18/05/2025;Lucas Almeida;Centro;Licença anual BI;Software;5;42.237,95;pago;Parceiros
+27/02/2025;Ana Barbosa;Norte;Mouse;Informática;2;223,28;estornado;E-commerce
+17/05/2025;Rafael Oliveira;Norte;Antivírus corporativo;Software;4;843,72;cancelado;Loja física
+16/02/2025;Ana Moraes;Norte;Licença anual BI;Software;1;4.824,29;pago;E-commerce
+31/03/2025;João Holanda;Oeste;Cadeira ergonômica;Escritório;2;2.894,86;pago;Loja física
+07/03/2025;Bruno Lima;Norte;Cadeira ergonômica;Escritório;1;1.980,76;pago;Loja física
+23/06/2025;Felipe Barbosa;Sul;Instalação;Serviços;1;679,07;pago;Loja física
+27/07/2025;Heitor Moraes;Centro;Treinamento;Serviços;2;6.066,46;pago;Loja física
+04/06/2025;Sofia Rocha;Centro;Luminária;Escritório;2;557,24;pago;Televendas
+22/01/2025;Bruno Ferraz;Sul;Mesa ajustável;Escritório;1;3.234,98;pago;Loja física
+21/09/2025;Thiago Esteves;Oeste;Licença anual BI;Software;1;6.243,69;pago;E-commerce
+14/09/2025;Eduarda Dias;Centro;Monitor 27;Informática;1;1969,92;pago;Loja física
+06/09/2025;Yasmin Esteves;Oeste;Instalação;Serviços;1;742,43;pago;E-commerce
+31/01/2025;Eduarda Dias;Centro;Licença anual BI;Software;1;7.934,00;pago;Parceiros
+29/09/2025;Bruno Lima;Norte;Monitor 27;Informática;1;1.423,33;pago;Loja física
+04/08/2025;Bruno Queiroz;Norte;Mesa ajustável;Escritório;2;6.705,44;pago;Loja física
+21/07/2025;Lucas Ito;Leste;Teclado;Informática;2;636,48;pago;Televendas
+06/11/2025;Sofia Almeida;Centro;Teclado;Informática;2;537,42;pago;E-commerce
+02/12/2025;Sofia Rocha;Centro;Mesa ajustável;Escritório;1;3.122,28;pago;Parceiros
+13/04/2025;Úrsula Jardim;Leste;Mesa ajustável;Escritório;5;14.188,45;pago;
+28/03/2025;Ana Barbosa;Norte;Monitor 27;Informática;4;4.800,52;pendente;Televendas
+12/11/2025;Felipe Vieira;Oeste;Notebook;Informática;2;10.614,20;pago;Loja física
+26/02/2025;Rafael Oliveira;Norte;Antivírus corporativo;Software;3;1.347,63;pendente;Televendas
+17/01/2025;Karina Dias;Centro;Cadeira ergonômica;Escritório;4;5.992,48;pago;Loja física
+16/04/2025;Eduarda Holanda;Leste;Luminária;Escritório;4;696,52;pago;E-commerce
+21/08/2025;Sofia Rocha;Centro;Antivírus corporativo;Software;4;823,44;pago;Parceiros
+13/07/2025;Ana Ito;Norte;Treinamento;Serviços;1;2.693,62;pago;Televendas
+02/01/2025;Eduarda Dias;Centro;Mesa ajustável;Escritório;1;3.296,51;pendente;E-commerce
+07/12/2025;Úrsula Jardim;Leste;Mouse;Informática;2;130,62;estornado;E-commerce
+07/06/2025;Felipe Pereira;Centro;Instalação;Serviços;1;277,20;pago;Televendas
+27/02/2025;Rafael Teixeira;Leste;Antivírus corporativo;Software;2;718,28;pendente;Loja física
+03/06/2025;Bruno Ferraz;Sul;Antivírus corporativo;Software;2;398,18;pago;E-commerce
+05/09/2025;Rafael Teixeira;Leste;Mesa ajustável;Escritório;1;2.523,86;estornado;Televendas
+14/12/2025;Úrsula Jardim;Leste;Mouse;Informática;4;169,96;pago;E-commerce
+30/07/2025;Sofia Oliveira;Sul;Suporte mensal;Serviços;1;903,56;pago;Televendas
+08/09/2025;Gabriela Lima;Leste;Treinamento;Serviços;1;3.738,36;pago;Loja física
+06/05/2025;Sofia Almeida;Centro;Teclado;Informática;2;544,10;pendente;E-commerce
+27/08/2025;Thiago Esteves;Oeste;Licença anual BI;Software;1;8.471,78;pendente;E-commerce
+17/07/2025;Rafael Teixeira;Leste;Mouse;Informática;10;2.039,90;cancelado;E-commerce
+05/01/2025;Thiago Ferraz;Norte;Luminária;Escritório;2;209,06;pago;E-commerce
+24/12/2025;Thiago Dias;Centro;Notebook;Informática;2;7.659,64;pago;Televendas
+2025-13-01;Ana Ito;Norte;Licença anual BI;Software;5;20.539,75;pendente;Televendas
+25/08/2025;Felipe Ito;Centro;Luminária;Escritório;1; 258,32 ;estornado;E-commerce
+22/04/2025;Ana Ito;Norte;Licença anual BI;Software;1;7.781,39;pago;Loja física
+14/12/2025;Lucas Almeida;Centro;Luminária;Escritório;1;249,27;pago;E-commerce
+08/12/2025;Yasmin Esteves;Oeste;Teclado;Informática;1;354,48;pago;E-commerce
+09/04/2025;Sofia Almeida;Centro;Cadeira ergonômica;Escritório;1;1.417,50;cancelado;Loja física
+26/08/2025;Gabriela Ferraz;Leste;Monitor 27;Informática;4;3.933,92;pago;Televendas
+04/10/2025;Rafael Teixeira;Leste;Cadeira ergonômica;Escritório;1;1.363,75;estornado;E-commerce
+06/09/2025;Sofia Rocha;Centro;Licença anual BI;Software;5;7.693,60;pendente;Parceiros
+18/11/2025;Felipe Pereira;Centro;Mesa ajustável;Escritório;1;R$ 2.980,34;cancelado;E-commerce
+21/08/2025;Sofia Rocha;Centro;Antivírus corporativo;Software;4;823,44;pago;Parceiros
+02/12/2025;Gabriela Nogueira;Oeste;Licença anual BI;Software;2;13.676,78;pago;Loja física
+04/01/2025;Felipe Ito;Centro;Cadeira ergonômica;Escritório;1;1.055,97;pago;Loja física
+04/06/2025;Karina Dias;Centro;Licença anual BI;Software;1;2.620,88;pago;Televendas
+15/05/2025;João Holanda;Oeste;Antivírus corporativo;Software;2;266,58;pendente;Parceiros
+02/04/2025;Úrsula Jardim;Leste;Licença anual BI;Software;5;33.875,85;pago;E-commerce
+16/10/2025;Thiago Ferraz;Norte;Antivírus corporativo;Software;1;329,22;pago;Televendas
+08/12/2025;Eduarda Dias;Centro;Luminária;Escritório;10;1.039,30;pendente;E-commerce
+18/07/2025;Bruno Queiroz;;Monitor 27;Informática;1;2.073,39;pago;Loja física
+23/04/2025;Lucas Almeida;Centro;Luminária;Escritório;3;471,27;pago;Loja física
+19/09/2025;  Thiago Ferraz   ;Norte;Mesa ajustável;Escritório;4;9.738,44;pago;Loja física
+20/01/2025;Ana Moraes;Norte;Licença anual BI;Software;1;4.818,00;pago;Parceiros
+26/06/2025;Ana Moraes;Norte;Teclado;Informática;1;393,84;pago;E-commerce
+14/04/2025;Rafael Teixeira;Leste;Instalação;Serviços;5;1.363,60;cancelado;Televendas
+24/03/2025;Felipe Ferraz;Centro;Antivírus corporativo;Software;1;305,51;pendente;Loja física
+29/09/2025;Karina Rocha;Centro;Cadeira ergonômica;Escritório;3;3.003,84;pago;Loja física
+20/09/2025;Lucas Almeida;;Licença anual BI;Software;1;4.183,99;pago;Televendas
+01/12/2025;Lucas Ferraz;Norte;Mouse;Informática;1;141,67;pago;Loja física
+06/01/2025;Karina Rocha;Centro;Licença anual BI;Software;1,5;12.183,21;estornado;Loja física
+11/03/2025;Sofia Almeida;Centro;Licença anual BI;Software;1,5;6.049,31;pago;E-commerce
+07/08/2025;Sofia Rocha;Centro;Antivírus corporativo;Software;2;531,48;pago;Loja física
+23/04/2025;Karina Rocha;Centro;Licença anual BI;Software;1;8.557,21;pago;E-commerce
+29/07/2025;Paulo Holanda;Leste;Suporte mensal;Serviços;1;1.617,37;pago;Loja física
+15/07/2025;Bruno Queiroz;Norte
+16/03/2025;Bruno Lima;Norte;Antivírus corporativo;Software;1;229,66;pago;Loja física
+28/02/2025;Paulo Dias;Centro;ANTIVÍRUS CORPORATIVO;Software;4;2.224,76;pago;Loja física
+01/07/2025;Felipe Ito;Centro;Instalação;Serviços;2;374,14;pendente;Parceiros
+31/02/2025;Felipe Ito;Centro;Mouse;Informática;1;275,85;estornado;E-commerce
+10/06/2025;João Holanda;Oeste;Notebook;Informática;3;13110,18;pago;Televendas
+26/07/2025;Sofia Oliveira;Sul;Luminária;Escritório;1;287,36;pago;E-commerce
+23/06/2025;Wesley Esteves;Norte;Notebook;Informática;3;13.728,06;pendente;
+22/11/2025;Felipe Nogueira;Norte;Suporte mensal;Serviços;10;6.381,90;pago;Televendas
+27/10/2025;Gabriela Lima;Leste;Instalação;Serviços;10;5.715,70;pago;Loja física
+19/09/2025;Gabriela Ferraz;Leste;Treinamento;Serviços;2;5.659,96;pago;E-commerce
+23/09/2025;Felipe Ferraz;Centro;Cadeira ergonômica;Escritório;1;1.281,63;pago;Loja física
+03/10/2025;Ana Ito;;Licença anual BI;Software;1;8.544,94;pago;Loja física
+28/03/2025;Rafael Oliveira;Norte;Licença anual BI;Software;1;6.126,55;pago;E-commerce
+09/12/2025;Thiago Ferraz;Norte;Licença anual BI;Software;5;29.525,45;pago;E-commerce
+25/09/2025;Felipe Ito;Centro;Notebook;Informática;1;3.655,28;pago;Loja física
+21/08/2025;Sofia Rocha;Centro;Antivírus corporativo;Software;4;823,44;pago;Parceiros
+25/06/2025;Ana Ito;Norte;Treinamento;Serviços;2;3.931,82;pago;Loja física
+24/11/2025;Wesley Esteves;Norte;Suporte mensal;Serviços;3;1.807,32;pago;E-commerce
+01/09/2025;Felipe Ferraz;Centro;Luminária;Escritório;2;431,88;pago;E-commerce
+08/01/2025;Felipe Ito;Centro;Treinamento;Serviços;2;7.840,40;pago;E-commerce
+25/06/2025;Karina Nogueira;Oeste;Notebook;Informática;1;4.000,91;pago;Televendas
+05/05/2025;Sofia Oliveira;Sul;Licença anual BI;Software;2;11.359,98;pago;E-commerce
+01/02/2025;  Karina Nogueira   ;Oeste;Mouse;Informática;1;63,58;pago;Televendas
+26/02/2025;Paulo Holanda;Leste;Cadeira ergonômica;Escritório;4;7.706,04;pago;E-commerce
+09/10/2025;Heitor Moraes;Centro;Mesa ajustável;Escritório;3;6.505,95;pago;Loja física
+07/03/2025;Diego Oliveira;Oeste;Antivírus corporativo;Software;1;169,25;pago;Loja física
+11/07/2025;Bruno Ferraz;Sul;Licença anual BI;Software;4;11.358,36;pago;Loja física
+06/10/2025;Eduarda Dias;Centro;Cadeira ergonômica;Escritório;2;4.086,60;cancelado;E-commerce
+21/07/2025;  Eduarda Holanda   ;Leste;Cadeira ergonômica;Escritório;1;1.783,47;pago;Televendas
+29/06/2025;Sofia Almeida;Centro;Monitor 27;Informática;3;2.726,04;cancelado;E-commerce
+23/09/2025;Felipe Ito;Centro;Notebook;Informática;2;8.630,80;pendente;E-commerce
+13/08/2025;Úrsula Jardim;Leste;Luminária;Escritório;3;384,87;pago;Loja física
+28/08/2025;Thiago Esteves;Oeste;Suporte mensal;Serviços;2;3.380,38;pago;Loja física
+2025-13-01;Gabriela Ferraz;Leste;Luminária;Escritório;1;139,03;pago;Parceiros
+28/09/2025;Bruno Ferraz;Sul;Licença anual BI;Software;2;15.942,18;pago;E-commerce
+13/03/2025;Felipe Pereira;Centro;Mouse;Informática;4;221,60;pago;E-commerce
+24/06/2025;Rafael Teixeira;Leste;Treinamento;Serviços;2;3.342,46;estornado;Parceiros
+23/09/2025;Bruno Lima;Norte;Suporte mensal;Serviços;1;1.135,48;pago;E-commerce
+03/07/2025;Karina Rocha;Centro;Licença anual BI;Software;1;5.810,75;pago;E-commerce
+08/09/2025;Sofia Oliveira;Sul;Licença anual BI;Software;4;26.386,48;pago;Loja física
+14/09/2025;Gabriela Ferraz;Leste;Antivírus corporativo;Software;1;323,46;pago;Parceiros
+08/12/2025;Sofia Oliveira;Sul;Teclado;Informática;1;389,63;pago;Televendas
+10/09/2025;Rafael Teixeira;Leste;Cadeira ergonômica;Escritório;1;1.772,34;pago;E-commerce
+01/07/2025;Karina Holanda;Sul;Cadeira ergonômica;Escritório;1;1.830,14;estornado;Loja física
+29/06/2025;Ana Ito;Norte;Monitor 27;Informática;1;1.753,13;estornado;E-commerce
+21/06/2025;Felipe Ferraz;Centro;Mouse;Informática;1;152,51;pago;E-commerce
+30/09/2025;Felipe Nogueira;Norte;Mouse;Informática;4;337,32;pago;Loja física
+29/12/2025;Sofia Rocha;Centro;Treinamento;Serviços;1; 1.832,02 ;pago;Parceiros
+22/05/2025;Rafael Teixeira;Leste;Antivírus corporativo;Software;2;1.003,78;pago;Loja física
+11/03/2025;Heitor Moraes;Centro;Licença anual BI;Software;2;10.809,94;pendente;Loja física
+28/02/2025;Sofia Oliveira;Sul;Luminária;Escritório;5;523,55;pago;Televendas
+02/09/2025;Eduarda Holanda;Leste;Mesa ajustável;Escritório;1;2.407,14;pago;E-commerce
+09/12/2025;Gabriela Ferraz;Leste;Luminária;Escritório;2;438,38;pendente;Televendas
+14/06/2025;Yasmin Esteves;Oeste;Teclado;Informática;1;406,80;pago;E-commerce
+15/03/2025;Lucas Ito;Leste;Antivírus corporativo;Software;2;240,34;pago;Loja física
+24/06/2025;Gabriela Nogueira;Oeste;Suporte mensal;Serviços;1;536,05;pendente;E-commerce
+03/09/2025;Gabriela Ferraz;Leste;Luminária;Escritório;3;950,85;pago;Televendas
+20/09/2025;Bruno Ferraz;Sul;Luminária;Escritório;1;285,86;estornado;Televendas
+28/07/2025;Karina Rocha;Centro;Licença anual BI;Software;1;1.985,09;estornado;Televendas
+09/04/2025;Bruno Lima;Norte;Cadeira ergonômica;Escritório;3;3.428,91;pago;Loja física
+05/01/2025;Sofia Oliveira;Sul;Treinamento;Serviços;10;17.864,10;pago;Loja física
+14/10/2025;Thiago Esteves;Oeste;Licença anual BI;Software;5;9.833,30;pago;E-commerce
+06/09/2025;Thiago Esteves;Oeste;Monitor 27;Informática;3;5.422,29;pago;E-commerce
+12/08/2025;Karina Nogueira;;Treinamento;Serviços;2;5.087,54;pago;E-commerce
+11/04/2025;Bruno Ferraz;Sul;Cadeira ergonômica;Escritório;dois;1.269,47;pago;Loja física
+25/09/2025;Thiago Dias;Centro;Cadeira ergonômica;Escritório;1;1.031.88;pago;Loja física
+18/09/2025;Ana Barbosa;Norte;Notebook;Informática;3;17.261,79;pendente;Televendas
+17/10/2025;Sofia Almeida;Centro;Antivírus corporativo;Software;10;5.351,40;pago;E-commerce
+29/09/2025;Wesley Esteves;Norte;Mouse;Informática;1;173,31;pago;E-commerce
+04/09/2025;Thiago Dias;Centro;Mesa ajustável;Escritório;1;2.648,91;pago;E-commerce
+08/09/2025;Sofia Oliveira;Sul;Licença anual BI;Software;4;26.386,48;pago;Loja física
+01/08/2025;  Eduarda Dias   ;Centro;Notebook;Informática;10;55.932,00;pendente;Televendas
+14/04/2025;Karina Holanda;Sul;Suporte mensal;Serviços;1;1.091,94;pendente;Loja física
+18/08/2025;Thiago Esteves;Oeste;Cadeira ergonômica;Escritório;2;1.645,44;pago;E-commerce
+03/09/2025;Felipe Nogueira;Norte;Monitor 27;Informática;1;1.777,98;pago;Televendas
+27/10/2025;Felipe Pereira;Centro;Suporte mensal;Serviços;1;R$ 928,28;pendente;E-commerce
+27/11/2025;Sofia Almeida;Centro;Licença anual BI;Software;5;16.144,30;pago;Loja física
+03/07/2025;Paulo Dias;Centro;Antivírus corporativo;Software;1;395,81;pago;Parceiros
+02/02/2025;Bruno Queiroz;Norte;Licença anual BI;Software;3;13.216,11;pendente;E-commerce
+15/10/2025;Gabriela Lima;Leste;Luminária;Escritório;3;549,21;pago;Loja física
+14/07/2025;Sofia Oliveira;Sul;Instalação;Serviços;1;387,02;pago;E-commerce
+06/03/2025;Thiago Dias;Centro;Cadeira ergonômica;Escritório;1;833,83;pago;E-commerce
+02/08/2025;Rafael Oliveira;Norte;Teclado;Informática;1;433,94;pendente;Televendas
+29/06/2025;Felipe Pereira;Centro;Luminária;Escritório;1;203,19;estornado;E-commerce
+17/11/2025;Karina Holanda;Sul;Antivírus corporativo;Software;4;905,68;cancelado;Televendas
+20/08/2025;Ana Ito;Norte;Notebook;Informática;1;4.939,84;pago;Loja física
+28/08/2025;Thiago Dias;Centro;Mesa ajustável;Escritório;1;1.924,79;pago;Televendas
+17/12/2025;Paulo Holanda;Leste;Instalação;Serviços;2;1.528,24;pago;E-commerce
+20/02/2025;Sofia Rocha;Centro;Licença anual BI;Software;1;6.813,99;pago;Loja física
+26/06/2025;Sofia Rocha;Centro;Treinamento;Serviços;5;15.472,00;pago;E-commerce
+16/10/2025;Sofia Almeida;Centro;Treinamento;Serviços;1;1.068,84;pago;E-commerce
+19/02/2025;Thiago Esteves;Oeste;Notebook;Informática;1;6.272,44;pendente;Loja física
+27/08/2025;Sofia Almeida;Centro;Luminária;Escritório;1;184,16;pago;Televendas
+26/03/2025;Lucas Ferraz;Norte;Notebook;Informática;2;7.602,36;pago;Televendas
+19/03/2025;Ana Moraes;Norte;Teclado;Informática;1;199,37;estornado;Televendas
+21/12/2025;Ana Ito;Norte;Suporte mensal;Serviços;5;8203,10;pago;E-commerce
+14/02/2025;João Holanda;Oeste;Cadeira ergonômica;Escritório;1;1.433,13;pago;Televendas
+14/12/2025;Thiago Esteves;Oeste;Treinamento;Serviços;2;5.557,08;pago;E-commerce
+07/02/2025;Ana Ito;Norte;Instalação;Serviços;4;1.760,84;cancelado;E-commerce
+22/06/2025;Úrsula Jardim;Leste;Teclado;Informática;10;1.407,40;pendente;E-commerce
+16/05/2025;Eduarda Dias;Centro;Instalação;Serviços;1;768,77;pago;E-commerce
+11/12/2025;Felipe Nogueira;Norte;Antivírus corporativo;Software;1;211,47;pago;Loja física
+07/06/2025;Heitor Moraes;Centro;Instalação;Serviços;2;1.159,76;estornado;E-commerce
+16/08/2025;Felipe Ito;Centro;Cadeira ergonômica;Escritório;1;879,44;pago;Televendas
+19/04/2025;Eduarda Holanda;Leste;Licença anual BI;Software;1;1.564,47;pago;E-commerce
+01/10/2025;Karina Dias;Centro;Licença anual BI;Software;1;7.840,16;pago;Loja física
+08/10/2025;Rafael Oliveira;Norte;Cadeira ergonômica;Escritório;3;R$ 5.526,36;pago;Loja física
+21/01/2025;Bruno Lima;Norte;Suporte mensal;Serviços;1;1.295,14;pago;E-commerce
+12/07/2025;Felipe Barbosa;Sul;Cadeira ergonômica;Escritório;1;1.958,19;pago;Loja física
+23/05/2025;Felipe Ferraz;Centro;Treinamento;Serviços;2;7.828,70;pago;Televendas
+14/09/2025;Bruno Lima;Norte;Luminária;Escritório;1;201,78;pago;E-commerce
+06/10/2025;Felipe Nogueira;Norte;Suporte mensal;Serviços;1;1.331,54;pago;Loja física
+16/06/2025;Úrsula Jardim;Leste;Suporte mensal;Serviços;1;1.784,32;pago;Loja física
+03/06/2025;  Ana Barbosa   ;Norte;Licença anual BI;Software;2;9.090,26;pago;Televendas
+01/03/2025;Diego Oliveira;Oeste;Luminária;Escritório;5;508,20;pago;Loja física
+23/09/2025;Felipe Ito;Centro;Notebook;Informática;2;8.630,80;pendente;E-commerce
+09/02/2025;Heitor Moraes;Centro;Licença anual BI;Software;1;4.565,16;estornado;Televendas
+21/10/2025;Ana Barbosa;Norte;Cadeira ergonômica;Escritório;1;1.378,44;pago;Loja física
+17/07/2025;Thiago Esteves;Oeste;Suporte mensal;Serviços;2;2.960,54;pago;
+22/04/2025;Ana Barbosa;Norte;Licença anual BI;Software;2;17.568,04;pago;Televendas
+06/12/2025;Bruno Queiroz;Norte;Cadeira ergonômica;Escritório;3;6.444,42;pago;E-commerce
+11/10/2025;Bruno Ferraz;Sul;Cadeira ergonômica;Escritório;3;2.842,44;pago;E-commerce
+15/11/2025;Gabriela Ferraz;Leste;Instalação;Serviços;1;475,96;pendente;E-commerce
+28/12/2025;Yasmin Esteves;Oeste;Treinamento;Serviços;5;11.393,90;pago;E-commerce
+15/04/2025;Felipe Ito;Centro;Notebook;Informática;2;7.061,30;pago;E-commerce
+04/04/2025;Ana Ito;Norte;Cadeira ergonômica;Escritório;1;1.627,01;pago;Loja física
+04/08/2025;Bruno Queiroz;Norte;Mesa ajustável;Escritório;2;6.705,44;pago;Loja física
+19/04/2025;Karina Holanda;Sul;Licença anual BI;Software;3;5.198,76;cancelado;Televendas
+26/09/2025;Sofia Rocha;Centro;Suporte mensal;Serviços;3;4.537,92;estornado;Televendas
+23/06/2025;Rafael Teixeira;Leste;Cadeira ergonômica;Escritório;1;1.329,53;pago;Parceiros
+31/01/2025;Wesley Esteves;Norte;Suporte mensal;Serviços;1;1.205,25;pago;
+13/10/2025;Úrsula Jardim;Leste;Suporte mensal;Serviços;4;3.193,72;pago;Loja física
+18/01/2025;Heitor Moraes;Centro;Teclado;Informática;2;419,46;pago;Parceiros
+18/03/2025;Paulo Holanda;Leste;Luminária;Escritório;4;810,64;pago;E-commerce
+18/01/2025;Eduarda Dias;Centro;Licença anual BI;Software;3;24.840,93;estornado;E-commerce
+08/01/2025;Karina Rocha;Centro;Mesa ajustável;Escritório;1;2.590,56;pago;Loja física
+09/05/2025;Felipe Ferraz;Centro;Licença anual BI;Software;1;6.158,41;cancelado;E-commerce
+19/03/2025;Felipe Barbosa;Sul;Mouse;Informática;1;65,74;pago;Loja física
+16/03/2025;Diego Oliveira;Oeste;Instalação;Serviços;1;792,66;cancelado;Televendas
+01/06/2025;Heitor Moraes;Centro;Teclado;Informática;1;408,86;pago;Loja física
+27/11/2025;Lucas Almeida;Centro;Antivírus corporativo;Software;1;517,02;cancelado;Loja física
+04/06/2025;Úrsula Jardim;Leste;NOTEBOOK;Informática;4;14.740,36;pago;Televendas
+04/11/2025;Karina Holanda;Sul;Antivírus corporativo;Software;1;529,36;pago;E-commerce
+09/12/2025;Bruno Lima;Norte;Antivírus corporativo;Software;1;587,59;estornado;E-commerce
+17/03/2025;Thiago Esteves;Oeste;Mesa ajustável;Escritório;1;1.537,69;pago;Televendas
+04/07/2025;Gabriela Ferraz;Leste;Monitor 27;Informática;5;9.061,55;pago;Televendas
+18/08/2025;Gabriela Ferraz;Leste;Teclado;Informática;4;1.768,24;pago;E-commerce
+20/01/2025;Ana Moraes;Norte;Mouse;Informática;1;264,82;pendente;Loja física
+16/01/2025;Gabriela Ferraz;Leste;Antivírus corporativo;Software;5;1.720,40;pago;E-commerce
+07/03/2025;Bruno Lima;Norte;Cadeira ergonômica;Escritório;1;1.980,76;pago;Loja física
+22/06/2025;Diego Oliveira;Oeste;Suporte mensal;Serviços;5;8.640,35;estornado;E-commerce
+25/10/2025;Thiago Esteves;Oeste;Licença anual BI;Software;1;4.798,10;pago;Televendas
+16/10/2025;Felipe Ferraz;Centro;Licença anual BI;Software;3;15.217,47;pago;Loja física
+23/08/2025;Sofia Almeida;Centro;Antivírus corporativo;Software;1;455,12;pago;E-commerce
+24/09/2025;Thiago Dias;Centro;Treinamento;Serviços;2;1.257,64;pago;E-commerce
+18/06/2025;Eduarda Holanda;Leste;Antivírus corporativo;Software;1;359,50;pago;Televendas
+21/08/2025;Sofia Rocha;Centro;Antivírus corporativo;Software;4;823,44;pago;Parceiros
+14/07/2025;Gabriela Ferraz;Leste;Instalação;Serviços;3;1.511,22;pago;Televendas
+06/11/2025;Karina Dias;Centro;Instalação;Serviços;1;608,09;cancelado;Parceiros
+23/05/2025;Sofia Rocha;Centro;Suporte mensal;Serviços;1;1.466,31;estornado;Televendas
+11/04/2025;Bruno Ferraz;Sul;Instalação;Serviços;2;1.490,44;pendente;E-commerce
+29/01/2025;Ana Ito;Norte;LICENÇA ANUAL BI;Software;1;6.083,86;pago;Parceiros
+04/09/2025;Ana Ito;Norte;Suporte mensal;Serviços;1;603,51;pago;E-commerce
+15/05/2025;Lucas Ito;Leste;Mesa ajustável;Escritório;10;22.504,30;pago;E-commerce
+17/01/2025;Karina Rocha;Centro;Mouse;Informática;1;273,78;pago;Televendas
+23/07/2025;Karina Dias;Centro;Mesa ajustável;Escritório;1;1.928,14;pago;E-commerce
+04/08/2025;Paulo Dias;;Antivírus corporativo;Software;1;512,51;pago;E-commerce
+17/04/2025;Felipe Nogueira;Norte;Treinamento;Serviços;1;747,31;pago;Televendas
+26/11/2025;Thiago Esteves;Oeste;Antivírus corporativo;Software;1;368,29;pago;Parceiros
+30/10/2025;João Holanda;Oeste;Suporte mensal;Serviços;1;1.552,05;pago;E-commerce
+19/11/2025;Gabriela Lima;Leste;Cadeira ergonômica;Escritório;2;3.331,88;pago;Televendas
+11/11/2025;Gabriela Ferraz;Leste;Notebook;Informática;3;10.829,31;pendente;Loja física
+22/04/2025;Gabriela Ferraz;Leste;Notebook;Informática;1;4.061,29;pago;Loja física
+18/10/2025;Felipe Barbosa;Sul;Monitor 27;Informática;1
+05/10/2025;Rafael Teixeira;Leste;Suporte mensal;Serviços;1;1.778,70;pendente;Televendas
+31/01/2025;Lucas Almeida;Centro;Mouse;Informática;1;205,37;pago;E-commerce
+03/07/2025;Sofia Rocha;Centro;Luminária;Escritório;1;243,80;pago;Televendas
+28/04/2025;Úrsula Jardim;Leste;Teclado;Informática;10;4.453,40;pago;Loja física
+08/04/2025;Felipe Nogueira;Norte;Licença anual BI;Software;1;6.184,33;cancelado;Loja física
+28/09/2025;Lucas Ito;Leste;Suporte mensal;Serviços;2;3.580,64;cancelado;Televendas
+17/01/2025;Bruno Lima;Norte;Instalação;Serviços;4;1.913,68;pago;E-commerce
+27/01/2025;Thiago Esteves;Oeste;Antivírus corporativo;Software;1;474,30;estornado;E-commerce
+21/02/2025;Yasmin Esteves;Oeste;Suporte mensal;Serviços;2;3.078,10;pago;Loja física
+14/07/2025;Sofia Oliveira;Sul;Instalação;Serviços;1;387,02;pago;E-commerce
+17/04/2025;Ana Barbosa;Norte;Instalação;Serviços;1;388,08;pago;E-commerce
+05/05/2025;Felipe Nogueira;Norte;Antivírus corporativo;Software;10;2.098,70;cancelado;Loja física
+15/09/2025;Lucas Ito;Leste;Suporte mensal;Serviços;2;2.509,54;pago;
+30/05/2025;Karina Holanda;Sul;Licença anual BI;Software;3;9.167,19;pendente;Loja física
+24/06/2025;Felipe Pereira;Centro;Mouse;Informática;3;588.93;pago;E-commerce
+18/05/2025;Ana Moraes;Norte;Licença anual BI;Software;1;8.234,57;pago;E-commerce
+30/12/2025;Rafael Oliveira;Norte;Monitor 27;Informática;1;1.667,75;pago;Televendas
+04/05/2025;Lucas Ferraz;Norte;Mouse;Informática;4;388,72;pago;Parceiros
+ontem;Eduarda Dias;Centro;Licença anual BI;Software;2;11.244,96;pendente;Parceiros
+25/03/2025;Eduarda Dias;Centro;Licença anual BI;Software;1,5;6.918,27;pago;Loja física
+09/01/2025;Eduarda Dias;Centro;Instalação
+05/03/2025;  Ana Moraes   ;Norte;Luminária;Escritório;1;113,87;pendente;E-commerce
+29/09/2025;Sofia Almeida;Centro;Cadeira ergonômica;Escritório;10;8.269,10;pago;Loja física
+02/04/2025;Paulo Holanda;Leste;Instalação;Serviços;1;261,58;pago;E-commerce
+10/07/2025;Felipe Pereira;Centro;Mouse;Informática;4;538,20;pago;Televendas
+15/08/2025;Paulo Dias;Centro;Licença anual BI;Software;2;8.167,98;pago;Parceiros
+21/12/2025;Wesley Esteves;Norte;Licença anual BI;Software;2;13.597,72;pago;Televendas
+28/10/2025;Gabriela Nogueira;Oeste;Notebook;Informática;3;10.492,71;pago;E-commerce
+28/05/2025;Eduarda Dias;Centro;Teclado;Informática;1;372,36;pago;Loja física
+09/12/2025;Paulo Dias;Centro;Instalação;Serviços;5;2.642,00;pago;Parceiros
+12/03/2025;Felipe Pereira;Centro;Teclado;Informática;1;98,03;pago;Loja física
+31/02/2025;Lucas Ferraz;Norte;Luminária;Escritório;1;137,63;pago;Parceiros
+10/05/2025;Gabriela Nogueira;Oeste;Suporte mensal;Serviços;4;5.489,80;pendente;E-commerce
+03/05/2025;Karina Holanda;Sul;Licença anual BI;Software;1;6.068,41;pago;Televendas
+08/11/2025;Thiago Dias;Centro;Cadeira ergonômica;Escritório;1;1.056,89;pago;E-commerce
+03/09/2025;Thiago Dias;Centro;Teclado;Informática;2;871,24;pago;E-commerce
+07/03/2025;Felipe Ito;Centro;Cadeira ergonômica;Escritório;4;8.618,16;pendente;E-commerce
+03/05/2025;Úrsula Jardim;Leste;Antivírus corporativo;Software;3;1.516,17;pago;Parceiros
+14/07/2025;Thiago Esteves;Oeste;Treinamento;Serviços;1;2.897,04;cancelado;Televendas
+05/01/2025;Felipe Barbosa;Sul;Licença anual BI;Software;5;33.365,25;pago;E-commerce
+07/07/2025;Gabriela Lima;Leste;Teclado;Informática;1;315,42;pendente;Parceiros
+11/04/2025;Thiago Esteves;Oeste;Cadeira ergonômica;Escritório;1;1.296,14;pago;E-commerce
+20/07/2025;Ana Ito;Norte;Notebook;Informática;1;5.669,21;pago;E-commerce
+19/05/2025;Bruno Queiroz;Norte;Mesa ajustável;Escritório;2;2892,78;pago;Loja física
+25/03/2025;Karina Dias;Centro;Treinamento;Serviços;1;860,77;pendente;Loja física
+;;;;;;;;
+28/09/2025;Felipe Ito;Centro;Teclado;Informática;3;561,57;pago;Loja física
+31/10/2025;Yasmin Esteves;Oeste;Licença anual BI;Software;1;3.225,92;pago;E-commerce
+08/03/2025;Felipe Ferraz;Centro;Suporte mensal;Serviços;1;1.480,26;pago;Televendas
+27/03/2025;Felipe Ito;Centro;Luminária;Escritório;3;864,36;pago;Loja física
+19/09/2025;Eduarda Dias;Centro;Instalação;Serviços;4;2.900,52;pago;E-commerce
+20/12/2025;Rafael Teixeira;Leste;Monitor 27;Informática;2;3.014,08;cancelado;E-commerce
+08/08/2025;Eduarda Dias;Centro;Licença anual BI;Software;2;15.183,34;pago;Televendas
+07/03/2025;Bruno Lima;Norte;Cadeira ergonômica;Escritório;1;1.980,76;pago;Loja física
+21/07/2025;Bruno Lima;Norte;Luminária;Escritório;1;255,14;pago;E-commerce
+07/09/2025;Eduarda Holanda;Leste;Antivírus corporativo;Software;3;1.549,92;pendente;Televendas
+04/08/2025;Paulo Holanda;Leste;Notebook;Informática;1;5.605,81;pago;E-commerce
+08/09/2025;Sofia Oliveira;Sul;Licença anual BI;Software;4;26.386,48;pago;Loja física
+05/08/2025;Diego Oliveira;Oeste;Treinamento;Serviços;1;1.772,29;pago;E-commerce
+27/02/2025;Felipe Ferraz;Centro;Licença anual BI;Software;4;24.588,04;pago;Parceiros
+18/09/2025;Thiago Ferraz;Norte;Licença anual BI;Software;1; 7.063,93 ;pago;E-commerce
+15/05/2025;Lucas Ito;Leste;Suporte mensal;Serviços;10;4.437,10;pago;Loja física
+03/02/2025;Lucas Almeida;Centro;Cadeira ergonômica;Escritório;3;3.109,53;pendente;Loja física
+24/04/2025;Bruno Lima;Norte;Mouse;Informática;3;717,45;pago;Loja física
+05/01/2025;Lucas Almeida;Centro;Mesa ajustável;Escritório;3;10.086,75;pago;Loja física
+22/07/2025;Úrsula Jardim;Leste;Instalação;Serviços;1;777,50;pendente;Televendas
+22/10/2025;Karina Nogueira;Oeste;Notebook;Informática;1;3.557,60;pago;Loja física
+12/02/2025;Thiago Esteves;Oeste;Monitor 27;Informática;3;3.553,44;estornado;E-commerce
+;;;;;;;;
+30/07/2025;Heitor Moraes;Centro;Instalação;Serviços;3;453,99;pago;E-commerce
+04/04/2025;Yasmin Esteves;Oeste;LICENÇA ANUAL BI;Software;2;15.360,58;pago;E-commerce
+00/00/0000;Lucas Ferraz;Norte;Instalação;Serviços;1;343,71;pago;E-commerce
+25/06/2025;Gabriela Lima;Leste;Notebook;Informática;1;5.396,35;pago;Loja física
+11/12/2025;Karina Holanda;Sul;Antivírus corporativo;Software;1;403,40;pago;Loja física
+17/08/2025;Karina Holanda;Sul;Treinamento;Serviços;3;10.444,26;pago;E-commerce
+04/01/2025;Bruno Queiroz;Norte;Instalação;Serviços;5;3.118,15;pago;Loja física
+12/07/2025;Sofia Rocha;Centro;Antivírus corporativo;Software;1;539,88;pago;E-commerce
+03/10/2025;Eduarda Holanda;Leste;Licença anual BI;Software;4;29.912,44;estornado;Parceiros
+25/05/2025;Felipe Nogueira;Norte;Licença anual BI;Software;1;2.798,69;pago;Loja física
+20/03/2025;Lucas Ito;Leste;Instalação;Serviços;10;4.378,60;pago;Loja física
+07/12/2025;Heitor Moraes;Centro;Instalação;Serviços;2;1.438,86;pago;E-commerce
+14/02/2025;Thiago Esteves;Oeste;Mesa ajustável;Escritório;5;15.355,60;pago;E-commerce
+24/06/2025;Karina Dias;Centro;Instalação;Serviços;1;686,76;pago;E-commerce
+08/10/2025;Thiago Esteves;Oeste;Suporte mensal;Serviços;2;1.093,34;pago;E-commerce
+23/05/2025;Thiago Ferraz;Norte;Cadeira ergonômica;Escritório;-;2.945,34;pendente;Parceiros
+06/12/2025;Thiago Ferraz;Norte;Mesa ajustável;Escritório;1;2.292,89;cancelado;Parceiros
+26/04/2025;Thiago Ferraz;Norte;Antivírus corporativo;Software;2;251,30;pago;Televendas
+14/11/2025;Diego Oliveira;Oeste;Notebook;Informática;2;11.902,94;pago;E-commerce
+05/03/2025;Eduarda Holanda;Leste;Mouse;Informática;4;523,48;pago;E-commerce
+20/04/2025;Wesley Esteves;Norte;Teclado;Informática;3;393,51;pago;Parceiros
+25/12/2025;Karina Holanda;Sul;Cadeira ergonômica;Escritório;1;1.752,91;pago;Televendas
+29/05/2025;João Holanda;Oeste;Instalação;Serviços;1;853,05;pago;Loja física
+03/11/2025;Thiago Ferraz;Norte;Cadeira ergonômica;Escritório;1;961,91;pendente;E-commerce
+03/03/2025;Felipe Ferraz;Centro;Luminária;Escritório;1;232,63;pendente;E-commerce
+29/06/2025;Diego Oliveira;Oeste;Licença anual BI;Software;dois;19.589,16;pago;Loja física
+15/01/2025;Eduarda Dias;Centro;Licença anual BI;Software;2;6.185,52;pendente;E-commerce
+10/04/2025;Ana Ito;Norte;Mesa ajustável;Escritório;1;3.099,00;pago;E-commerce
+02/05/2025;Gabriela Nogueira;Oeste;Treinamento;Serviços;2;2.113,44;estornado;E-commerce
+19/01/2025;Karina Holanda;Sul;Cadeira ergonômica;Escritório;1;772,63;pago;Loja física
+15/07/2025;Eduarda Dias;Centro;Luminária;Escritório;1;193,65;pago;E-commerce
+02/09/2025;Karina Rocha;Centro;Antivírus corporativo;Software;1;512,75;pendente;E-commerce
+11/07/2025;Sofia Oliveira;Sul;Antivírus corporativo;Software;1;281,29;pago;E-commerce
+05/01/2025;Felipe Vieira;Oeste;Suporte mensal;Serviços;1;444,44;pendente;Loja física
+07/03/2025;Bruno Lima;Norte;Cadeira ergonômica;Escritório;1;1.980,76;pago;Loja física
+09/02/2025;Heitor Moraes;Centro;Antivírus corporativo;Software;3;1.777,83;cancelado;Televendas
+26/02/2025;Paulo Dias;Centro;Antivírus corporativo;Software;10;3.144,50;pendente;Loja física
+12/10/2025;Karina Rocha;Centro;Antivírus corporativo;Software;3;1.405,35;pago;Loja física
+20/01/2025;Diego Oliveira;Oeste;Notebook;Informática;1;5.879,51;cancelado;Parceiros
+08/02/2025;Gabriela Lima;Leste;Treinamento;Serviços;4;14.736,64;pago;Parceiros
+25/12/2025;Rafael Oliveira;Norte;Instalação;Serviços;1;507,41;pago;E-commerce
+31/05/2025;Gabriela Nogueira;Oeste;Notebook;Informática;2;10.553,96;pago;E-commerce
+04/08/2025;Lucas Almeida;Centro
+22/09/2025;Úrsula Jardim;Leste;Mesa ajustável;;2;2.870,60;pago;E-commerce
+12/10/2025;Felipe Ferraz;Centro;Instalação;Serviços;1;449,98;pendente;Loja física
+07/11/2025;Gabriela Nogueira;Oeste;Suporte mensal;Serviços;1;825,49;cancelado;Loja física
+09/01/2025;  Lucas Ito   ;Leste;Cadeira ergonômica;Escritório;2;3.876,10;cancelado;Loja física
+20/05/2025;Karina Holanda;Sul;Instalação;Serviços;1;399,52;pago;Televendas
+29/08/2025;João Holanda;Oeste;Antivírus corporativo;Software;4;2.050,92;pago;E-commerce
+04/10/2025;Felipe Vieira;Oeste;Mesa ajustável;Escritório;4;7.172,96;pago;Loja física
+02/08/2025;Felipe Pereira;Centro;Antivírus corporativo;Software;1;570,22;pago;Parceiros
+19/02/2025;João Holanda;Oeste;Teclado;Informática;1;300,20;pendente;Parceiros
+13/05/2025;Karina Rocha;Centro;Suporte mensal;Serviços;2;1.706,60;pago;E-commerce
+24/05/2025;Felipe Ferraz;Centro;Instalação;Serviços;1;571,09;estornado;E-commerce
+27/05/2025;Karina Dias;Centro;Cadeira ergonômica;Escritório;4;4.634,28;pago;
+17/01/2025;Bruno Lima;Norte;Instalação;Serviços;4;1.913,68;pago;E-commerce
+02/12/2025;Felipe Pereira;Centro;Antivírus corporativo;Software;2;510,38;pago;Loja física
+06/04/2025;Lucas Ferraz;Norte;Licença anual BI;Software;1;6.374,78;pago;Loja física
+13/09/2025;Diego Oliveira;Oeste;Suporte mensal;Serviços;1;1.002,21;pago;Loja física
+25/12/2025;Karina Holanda;Sul;Cadeira ergonômica;Escritório;1;708,06;pendente;Televendas
+15/05/2025;João Holanda;Oeste;Antivírus corporativo;Software;2;266,58;pendente;Parceiros
+19/02/2025;Karina Dias;Centro;Antivírus corporativo;Software;10;5.848,00;pago;Loja física
+26/07/2025;Diego Oliveira;Oeste;Monitor 27;Informática;1;2.056,43;pago;Loja física
+25/06/2025;Bruno Queiroz;Norte;Monitor 27;Informática;2;1.874,40;pago;Loja física
+09/07/2025;Felipe Pereira;Centro;Cadeira ergonômica;Escritório;1;1.033,85;pago;E-commerce
+12/12/2025;Yasmin Esteves;Oeste;Licença anual BI;Software;1;3.438,45;pago;E-commerce
+04/09/2025;Gabriela Nogueira;Oeste;Mesa ajustável;Escritório;5;6.150,30;pago;Loja física
+01/11/2025;Diego Oliveira;Oeste;Mouse;Informática;3;449,67;pago;E-commerce
+26/09/2025;  Karina Holanda   ;Sul;Monitor 27;Informática;10;10.344,00;pago;Televendas
+22/04/2025;Bruno Queiroz;Norte;Antivírus corporativo;Software;1;454,03;estornado;Televendas
+01/04/2025;Karina Rocha;Centro;Cadeira ergonômica;Escritório;3;4.245,12;cancelado;Televendas
+13/06/2025;Lucas Ferraz;Norte;Instalação;Serviços;1;720,06;pago;Loja física
+07/07/2025;Sofia Rocha;;Mouse;Informática;1;258,56;pago;E-commerce
+12/01/2025;Ana Ito;Norte;Luminária;Escritório;2;600,22;pago;E-commerce
+29/10/2025;Gabriela Lima;Leste;Monitor 27;Informática;2;1.919,22;pago;E-commerce
+04/05/2025;Ana Barbosa;Norte;Mouse;Informática;1;47,38;pendente;E-commerce
+15/05/2025;João Holanda;Oeste;Antivírus corporativo;Software;2;266,58;pendente;Parceiros
+09/04/2025;Paulo Holanda;Leste;Suporte mensal;Serviços;1;402,53;pago;E-commerce
+01/01/2025;Felipe Ferraz;Centro;Antivírus corporativo;Software;1;313,40;pago;E-commerce
+12/08/2025;Ana Moraes;Norte;Notebook;Informática;1;4.087,10;pago;Loja física
+24/08/2025;Sofia Almeida;Centro;Antivírus corporativo;Software;1;181,85;cancelado;E-commerce
+01/01/2025;Diego Oliveira;Oeste;Licença anual BI;Software;1;5.732,25;pendente;E-commerce
+13/09/2025;Felipe Ferraz;Centro;Luminária;Escritório;1;306,19;pago;Loja física
+15/05/2025;Sofia Oliveira;Sul;Teclado;Informática;3;1.133,76;pago;Loja física
+19/01/2025;Rafael Teixeira;Leste;Antivírus corporativo;Software;2;882,06;estornado;E-commerce
+26/11/2025;Thiago Dias;Centro;Mouse;Informática;1;101,82;estornado;Parceiros
+11/07/2025;  Bruno Ferraz   ;Sul;Antivírus corporativo;Software;1;286,17;pendente;E-commerce
+12/03/2025;Sofia Almeida;Centro;Suporte mensal;Serviços;1;1.104,05;pago;E-commerce
+05/01/2025;Ana Moraes;Norte;Treinamento;Serviços;1;2.701,94;pago;E-commerce
+16/04/2025;Felipe Ferraz;Centro;Antivírus corporativo;Software;10; 1.291,80 ;pago;E-commerce
+03/05/2025;Yasmin Esteves;Oeste;Mesa ajustável;Escritório;1;2.902,47;estornado;Loja física
+27/06/2025;Heitor Moraes;Centro;Antivírus corporativo;Software;1;R$ 356,67;pago;Parceiros
+29/12/2025;Sofia Almeida;Centro
+04/12/2025;Felipe Nogueira;Norte;Luminária;Escritório;1;242,32;pago;Loja física
+30/09/2025;Lucas Ferraz;Norte;Monitor 27;Informática;2;3.100,56;pago;Loja física
+23/07/2025;Bruno Ferraz;Sul;Treinamento;Serviços;1;1.262,62;pago;Loja física
+14/03/2025;Ana Barbosa;Norte;Cadeira ergonômica;Escritório;2;3.012,32;pago;Parceiros
+08/11/2025;Diego Oliveira;Oeste;Suporte mensal;Serviços;1;1.361,79;pendente;E-commerce
+22/06/2025;Felipe Nogueira;Norte;Licença anual BI;Software;1;3.715,82;pago;Loja física
+08/11/2025;Thiago Dias;Centro;Antivírus corporativo;Software;2;264,42;pago;Loja física
+11/12/2025;Ana Barbosa;Norte;Suporte mensal;Serviços;3;2.386,26;pendente;Televendas
+22/06/2025;João Holanda;Oeste;Mesa ajustável;Escritório;1;1.758,42;pago;E-commerce
+11/06/2025;Gabriela Nogueira;Oeste;Suporte mensal;Serviços;1;401,71;pendente;Parceiros
+17/05/2025;Eduarda Dias;;Monitor 27;Informática;1;1.999,24;pago;Parceiros
+11/09/2025;Eduarda Dias;Centro;Teclado;Informática;3;250,38;pago;E-commerce
+15/08/2025;Heitor Moraes;Centro;Teclado;Informática;2;503,88;pago;Parceiros
+23/08/2025;Gabriela Lima;Leste;Notebook;Informática;3;17.714,40;pago;Parceiros
+06/09/2025;Úrsula Jardim;Leste;Instalação;Serviços;2;1.464,86;pago;E-commerce
+13/04/2025;Rafael Oliveira;Norte;Teclado;Informática;3;474,03;cancelado;Televendas
+07/03/2025;Bruno Lima;Norte;Cadeira ergonômica;Escritório;1;1.980,76;pago;Loja física
+29/11/2025;Felipe Barbosa;Sul;Notebook;Informática;4;19.989,44;pago;Loja física
+20/02/2025;Bruno Lima;Norte;Mesa ajustável;Escritório;1;1.756,85;pago;Loja física
+25/04/2025;Paulo Holanda;Leste;Mesa ajustável;Escritório;3;7.362,36;pago;Televendas
+02/09/2025;Sofia Oliveira;Sul;Suporte mensal;Serviços;1;468,79;pendente;E-commerce
+08/12/2025;Felipe Ferraz;Centro;Mesa ajustável;Escritório;2;4.834,82;pago;E-commerce
+23/06/2025;Bruno Lima;Norte;Instalação;Serviços;1;304,50;pendente;Televendas
+16/05/2025;Sofia Rocha;Centro;Licença anual BI;Software;1;5.840,26;pago;Televendas
+30/07/2025;Eduarda Dias;Centro;Cadeira ergonômica;;1;1.753,07;pago;E-commerce
+16/09/2025;Felipe Vieira;Oeste;Suporte mensal;Serviços;2;3.390,44;pago;Loja física
+07/03/2025;Bruno Lima;Norte;Cadeira ergonômica;Escritório;1;1.980,76;pago;Loja física
+11/02/2025;Thiago Esteves;Oeste;Luminária;Escritório;2;295,92;pago;Loja física
+05/11/2025;Paulo Dias;Centro;Monitor 27;Informática;1;1.191,46;pendente;Loja física
+19/03/2025;Thiago Ferraz;Norte;Monitor 27;Informática;1;1.211,89;pendente;Televendas
+27/09/2025;Lucas Ferraz;Norte;Luminária;Escritório;5;725,30;pendente;E-commerce
+30/09/2025;Bruno Queiroz;Norte;Notebook;Informática;2;11.601,52;pago;Televendas
+28/12/2025;Ana Ito;Norte;Cadeira ergonômica;Escritório;2;3.156,00;pago;Loja física
+01/06/2025;Ana Moraes;Norte;Mouse;Informática;2;299,74;pago;Televendas
+08/08/2025;Sofia Almeida;Centro;Cadeira ergonômica;Escritório;2;2.820,42;pago;Loja física
+31/07/2025;Sofia Oliveira;Sul;Monitor 27;Informática;1;1.775,03;pago;E-commerce
+04/08/2025;Paulo Holanda;Leste;Notebook;Informática;1;5.605,81;pago;E-commerce
+08/07/2025;Bruno Ferraz;Sul;Luminária;Escritório;1;174,48;pago;Parceiros
+28/04/2025;Thiago Ferraz;Norte;Antivírus corporativo;Software;3;989,64;pago;Televendas
+04/08/2025;Bruno Queiroz;Norte;Mesa ajustável;Escritório;2;6.705,44;pago;Loja física
+18/06/2025;Ana Moraes;Norte;Antivírus corporativo;Software;1;153,46;pago;E-commerce
+08/12/2025;Paulo Dias;;Notebook;Informática;4;21.928,04;pago;Parceiros
+24/02/2025;Yasmin Esteves;Oeste;Monitor 27;Informática;1;1.231,59;pago;E-commerce
+20/06/2025;Ana Moraes;Norte;Suporte mensal;Serviços;10;4.365,90;pendente;E-commerce
+29/05/2025;Felipe Nogueira;Norte;Instalação;Serviços;1;732,61;pago;E-commerce
+27/04/2025;Ana Moraes;Norte;Licença anual BI;Software;1;2.494,81;pago;E-commerce
+15/12/2025;Ana Moraes;Norte;Monitor 27;Informática;3;5.504,43;pago;Televendas
+2025-13-01;Ana Barbosa;Norte;Notebook;Informática;4;19.051,64;pendente;E-commerce
+14/06/2025;Karina Dias;Centro;Suporte mensal;Serviços;4;5.484,96;pago;E-commerce
+01/06/2025;Karina Nogueira;Oeste;Licença anual BI;Software;3;22.813,53;pago;E-commerce
+31/08/2025;Thiago Esteves;Oeste;Luminária;Escritório;1;172,56;pago;Loja física
+31/02/2025;Ana Ito;Norte;Cadeira ergonômica;Escritório;1;1.597,72;pago;Televendas
+17/01/2025;  Sofia Oliveira   ;Sul;Cadeira ergonômica;Escritório;2;1.802,00;pendente;Parceiros
+15/10/2025;Gabriela Ferraz;Leste;Treinamento;Serviços;4;5.667,48;pago;Loja física
+05/08/2025;Felipe Vieira;;Licença anual BI;Software;3;8.290,23;pago;Televendas
+11/02/2025;João Holanda;Oeste;Monitor 27;Informática;1;1.165,44;pago;E-commerce
+;;;;;;;;
+22/06/2025;Gabriela Lima;Leste;Treinamento;Serviços;2;2.991,72;pendente;Parceiros
+23/02/2025;Paulo Holanda;Leste;Licença anual BI;Software;1;8.758,95;pago;E-commerce
+22/03/2025;Gabriela Lima;Leste;Licença anual BI;Software;4;11.027,68;pago;Loja física
+11/09/2025;João Holanda;Oeste;Teclado;Informática;1;193,15;pago;Loja física
+17/02/2025;Bruno Queiroz;Norte;Instalação;Serviços;2;1.003,96;pago;Loja física
+15/03/2025;Ana Barbosa;Norte;Licença anual BI;Software;2;15.743,52;pago;E-commerce
+08/10/2025;Ana Ito;Norte;Instalação;Serviços;1;341,04;pago;Loja física
+17/05/2025;Bruno Ferraz;Sul;Suporte mensal;Serviços
+21/08/2025;Felipe Nogueira;Norte;Luminária;Escritório;2;471,72;pago;Parceiros
+12/01/2025;Thiago Dias;Centro;Suporte mensal;Serviços;1;1.240,36;pendente;Loja física
+14/06/2025;Ana Ito;Norte;Mesa ajustável;Escritório;1;2.600,56;pendente;Loja física
+25/08/2025;Thiago Ferraz;Norte;Suporte mensal;Serviços;1;1.513,58;pago;Loja física
+28/11/2025;Bruno Queiroz;Norte;Licença anual BI;Software;1;8.512,59;pago;E-commerce
+27/04/2025;Ana Ito;Norte;Antivírus corporativo;Software;1;325,68;pago;Televendas
+03/06/2025;Ana Barbosa;Norte;Mesa ajustável;Escritório;1;3.146,41;pago;E-commerce
+07/01/2025;Felipe Pereira;Centro;Instalação;Serviços;2;546,30;pago;Televendas
+02/03/2025;Ana Moraes;Norte;Suporte mensal;Serviços;3;4.579,23;pago;E-commerce
+14/07/2025;Sofia Oliveira;Sul;Instalação;Serviços;1;387,02;pago;E-commerce
+2025-13-01;Úrsula Jardim;Leste;Suporte mensal;Serviços;1;1.442,69;pago;Loja física
+19/09/2025;Eduarda Holanda;Leste;Mesa ajustável;Escritório;1;2.721,20;pago;Parceiros
+28/09/2025;Sofia Oliveira;Sul;Antivírus corporativo;Software;2;1.020,88;pago;Parceiros
+20/03/2025;Diego Oliveira;Oeste;Antivírus corporativo;Software;4;1.399,92;pago;
+21/11/2025;Gabriela Ferraz;Leste;Mouse;Informática;4;356,96;pago;Loja física
+29/12/2025;Sofia Almeida;Centro;Licença anual BI;Software;3;25.065,63;pago;Loja física
+12/12/2025;Ana Ito;Norte;Licença anual BI;Software;1;4.122,35;pago;Parceiros
+29/03/2025;Rafael Teixeira;Leste;Suporte mensal;Serviços;1,5;3.207,98;pago;Parceiros
+14/08/2025;Thiago Dias;Centro;Licença anual BI;Software;5;37717,50;pago;E-commerce
+02/10/2025;Thiago Esteves;Oeste;Licença anual BI;Software;2;7.326,00;pago;Televendas
+02/05/2025;  Paulo Holanda   ;Leste;Notebook;Informática;1;4.796,19;pago;E-commerce
+28/02/2025;Karina Rocha;Centro;Licença anual BI;Software;1;6.337,09;pago;Televendas
+14/01/2025;Karina Dias;Centro;Suporte mensal;Serviços;2;678,64;pago;Televendas
+25/03/2025;Felipe Ito;Centro;Cadeira ergonômica;Escritório;1;1.728,22;pago;Loja física
+05/01/2025;Ana Moraes;Norte;Treinamento;Serviços;1;3.176,84;estornado;E-commerce
+11/08/2025;Eduarda Holanda;Leste;Treinamento;Serviços;2;4.656,90;pendente;Televendas
+16/03/2025;Felipe Ito;Centro;Antivírus corporativo;Software;1;420,04;pago;E-commerce
+04/01/2025;Gabriela Ferraz;Leste;Instalação;Serviços;1;354,94;pago;E-commerce
+12/03/2025;Sofia Almeida;Centro;Suporte mensal;Serviços;1;1.104,05;pago;E-commerce
+22/05/2025;Eduarda Dias;Centro;Suporte mensal;Serviços;5;4.693,70;pago;Loja física
+13/01/2025;Felipe Barbosa;Sul;Suporte mensal;Serviços;2;2.009,86;pago;Loja física
+02/12/2025;João Holanda;Oeste;Monitor 27;Informática;1;947,56;pago;E-commerce
+11/02/2025;Bruno Queiroz;Norte;Mesa ajustável;Escritório;1;2.898,09;pago;Loja física
+13/09/2025;Felipe Nogueira;Norte;Luminária;Escritório;1;228,55;pago;E-commerce
+01/11/2025;Rafael Oliveira;Norte;Mesa ajustável;Escritório;3;4.312,74;pago;Televendas
+08/09/2025;Sofia Almeida;Centro;Antivírus corporativo;Software;5;2.216,15;pago;E-commerce
+23/05/2025;Eduarda Dias;Centro;Mouse;Informática;4;430,36;pago;E-commerce
+20/06/2025;Paulo Holanda;Leste;Licença anual BI;Software;1,5;4.245,92;pago;E-commerce
+08/09/2025;Sofia Oliveira;Sul;Licença anual BI;Software;4;26.386,48;pago;Loja física
+ontem;Gabriela Lima;Leste;Licença anual BI;Software;1;1.628,71;pago;Parceiros
+19/10/2025;João Holanda;Oeste;Suporte mensal;Serviços;3;3.472,95;pago;E-commerce
+12/12/2025;Karina Nogueira;Oeste;Treinamento;Serviços;2;1.209,06;pago;E-commerce
+05/12/2025;Sofia Oliveira;Sul;Monitor 27;Informática;1;1.217,46;pago;Loja física
+11/07/2025;Lucas Almeida;Centro;Instalação;Serviços;dois;543,32;pago;Loja física
+25/05/2025;Wesley Esteves;Norte;Mesa ajustável;Escritório;3;6.268,23;pago;E-commerce
+16/08/2025;Bruno Ferraz;Sul;Monitor 27;Informática;1;1.996,16;pago;Loja física
+16/11/2025;Eduarda Dias;Centro;Luminária;Escritório;1;125,70;pago;Parceiros
+23/10/2025;Felipe Ito;Centro;Monitor 27;Informática;10;13.696,20;pendente;Parceiros
+13/05/2025;Ana Ito;Norte;Antivírus corporativo;Software;1;291,93;pago;Televendas
+25/06/2025;Ana Barbosa;Norte;Licença anual BI;Software;1;2.404,74;pago;Loja física
+22/06/2025;Ana Moraes;Norte;Cadeira ergonômica;Escritório;3;5.755,44;cancelado;Televendas
+04/09/2025;Lucas Almeida;Centro;Mouse;Informática;2;377,76;pendente;Televendas
+19/11/2025;Rafael Oliveira;Norte;Treinamento;Serviços;4;15.830,60;pago;E-commerce
+18/04/2025;Wesley Esteves;Norte;Instalação;Serviços;3;2.068,38;pago;E-commerce
+04/04/2025;Thiago Ferraz;Norte;Treinamento;Serviços;2;5.532,84;pago;Loja física
+27/02/2025;Karina Nogueira;Oeste;Cadeira ergonômica;Escritório;2;1.645,68;pago;Televendas
+29/05/2025;Felipe Nogueira;Norte;Instalação;Serviços;1;732,61;pago;E-commerce
+13/01/2025;  Rafael Teixeira   ;Leste;Notebook;Informática;1;4.534,12;pago;E-commerce
+15/09/2025;Úrsula Jardim;Leste;Suporte mensal;Serviços;1;1.350,76;pago;Loja física
+28/01/2025;Sofia Rocha;Centro;Mesa ajustável;Escritório;5;16.099,20;pendente;Televendas
+07/08/2025;Eduarda Dias;Centro;Notebook;Informática;5;29.313,80;pago;E-commerce
+21/10/2025;Felipe Ferraz;Centro;Antivírus corporativo;Software;1;450,28;estornado;E-commerce
+17/03/2025;Úrsula Jardim;Leste;Suporte mensal;Serviços;3;2.528,79;estornado;Loja física
+04/07/2025;Paulo Dias;Centro;Teclado;Informática;1;269,26;pago;E-commerce
+24/02/2025;Felipe Ito;Centro;Suporte mensal;Serviços;1;803,17;pendente;E-commerce
+27/08/2025;Ana Barbosa;Norte;Notebook;Informática;2;10.725,60;pendente;Loja física
+06/06/2025;Paulo Holanda;Leste;Mesa ajustável;Escritório;1;1.405,81;pago;E-commerce
+28/10/2025;Bruno Ferraz;Sul;Instalação;Serviços;1;873,51;pago;Loja física
+09/12/2025;Thiago Dias;Centro;Instalação;Serviços;1;857,05;pago;Televendas
+13/05/2025;Karina Nogueira;Oeste;Cadeira ergonômica;Escritório;5;9.206,50;pago;E-commerce
+22/02/2025;Diego Oliveira;Oeste;Notebook;Informática;10;58.368,20;cancelado;Loja física
+2025-13-01;Felipe Vieira;Oeste;Monitor 27;Informática;1;1.982,39;pendente;Loja física
+16/06/2025;Úrsula Jardim;Leste;Treinamento;Serviços;1;679,02;pendente;Loja física
+16/07/2025;Felipe Pereira;Centro;Cadeira ergonômica;Escritório;2;3.372,86;pago;Loja física
+01/01/2025;Lucas Ito;Leste;Mesa ajustável;Escritório;1;2.545,45;pendente;E-commerce
+01/06/2025;Bruno Ferraz;Sul;Mesa ajustável;Escritório;1;3.068,40;pago;Televendas
+01/12/2025;Gabriela Nogueira;Oeste;Luminária;;3;919,62;pago;Televendas
+26/03/2025;João Holanda;Oeste;Suporte mensal;Serviços;2;3.378,94;pago;E-commerce
+03/09/2025;Felipe Ferraz;Centro;Instalação;Serviços;2;1.522,22;cancelado;Parceiros
+22/11/2025;Karina Nogueira;Oeste;Mesa ajustável;Escritório;1;3.003,14;pago;Loja física
+14/04/2025;Karina Nogueira;Oeste;Luminária;Escritório;3;372,93;pendente;Televendas
+04/03/2025;Rafael Oliveira;Norte;Treinamento;Serviços;5;10.601,60;pago;E-commerce
+25/08/2025;Heitor Moraes;Centro;Cadeira ergonômica;Escritório;5;10.640,45;pago;E-commerce
+23/07/2025;Ana Moraes;Norte;Mesa ajustável;Escritório;1;2.550,76;cancelado;E-commerce
+07/04/2025;Lucas Ito;Leste;Licença anual BI;Software;1;3.136,75;pago;Televendas
+28/06/2025;Lucas Ito;Leste;Monitor 27;Informática;1;997,95;cancelado;Parceiros
+24/04/2025;Karina Holanda;Sul;Instalação;Serviços;1;805,25;pago;Televendas
+14/09/2025;Felipe Ferraz;Centro;Suporte mensal;Serviços;1;1.296,02;pago;Parceiros
+2025-13-01;Felipe Nogueira;Norte;Licença anual BI;Software;2;11.929,92;pago;Parceiros
+14/07/2025;Gabriela Ferraz;Leste;Instalação;Serviços;2;1.349,28;pago;Televendas
+07/10/2025;Bruno Queiroz;Norte;Antivírus corporativo;;1;192,93;pago;E-commerce
+14/09/2025;Bruno Queiroz;Norte;Mouse;Informática;2;484,64;pago;E-commerce
+17/07/2025;Felipe Nogueira;Norte;Mesa ajustável;Escritório;3;9.887,31;pago;E-commerce
+17/09/2025;Diego Oliveira;Oeste;Cadeira ergonômica;Escritório;3;6.141,39;pago;Televendas
+04/08/2025;Bruno Queiroz;Norte;Mesa ajustável;Escritório;2;6.705,44;pago;Loja física
+24/02/2025;Sofia Rocha;Centro;Suporte mensal;Serviços;1;547,15;estornado;E-commerce
+23/04/2025;Gabriela Ferraz;Leste;Antivírus corporativo;Software;1;599,24;pago;Loja física
+17/06/2025;Ana Barbosa;Norte;Antivírus corporativo;Software;1;246,59;pago;E-commerce
+19/12/2025;Sofia Almeida;Centro;Luminária;Escritório;3;682,26;pago;E-commerce
+10/05/2025;Karina Rocha;Centro;Antivírus corporativo;Software;1;478,51;pago;E-commerce
+18/08/2025;Bruno Ferraz;Sul;Treinamento;Serviços;3;7.579,53;pago;Parceiros
+08/09/2025;Sofia Oliveira;Sul;Licença anual BI;Software;4;26.386,48;pago;Loja física
+17/05/2025;Gabriela Nogueira;Oeste;Antivírus corporativo;Software;2;1.154,74;pago;Televendas
+14/12/2025;Rafael Teixeira;Leste;Suporte mensal;Serviços;5;7.588,25;pago;E-commerce
+30/12/2025;Lucas Ito;Leste;Treinamento;Serviços;4;15.088,24;pago;E-commerce
+22/08/2025;Rafael Oliveira;Norte;Luminária;Escritório;1;217,35;pendente;Loja física
+23/09/2025;Felipe Ito;Centro;Notebook;Informática;2;8.630,80;pendente;E-commerce
+30/07/2025;Eduarda Holanda;Leste;Cadeira ergonômica;Escritório;2;2.679,38;cancelado;Televendas
+05/02/2025;João Holanda;Oeste;Licença anual BI;Software;5;41.136,65;pago;Loja física
+04/08/2025;Paulo Holanda;Leste;Notebook;Informática;1;5.605,81;pago;E-commerce
+28/11/2025;Paulo Dias;Centro;Luminária;Escritório;1;105,24;pago;Loja física
+24/03/2025;Eduarda Dias;Centro;Luminária;Escritório;1;279,25;pago;Loja física
+04/02/2025;Lucas Ferraz;Norte;Notebook;Informática;1;4.341,83;pago;Loja física
+19/06/2025;Gabriela Ferraz;Leste;Luminária;Escritório;2;405,42;pago;E-commerce
+08/02/2025;Úrsula Jardim;Leste;Antivírus corporativo;Software;2;598,68;pendente;E-commerce
+29/08/2025;Ana Moraes;Norte;Mouse;Informática;3;444,21;estornado;Loja física
+;;;;;;;;
+09/03/2025;Lucas Ito;Leste;Antivírus corporativo;Software;5;957,60;pendente;E-commerce
+11/01/2025;Felipe Ferraz;Centro;Antivírus corporativo;Software;1;126,22;pendente;Loja física
+08/05/2025;Ana Moraes;Norte;Suporte mensal;Serviços;3;2.652,24;pago;E-commerce
+01/04/2025;Heitor Moraes;Centro;Antivírus corporativo;Software;1;592,83;pago;E-commerce
+14/11/2025;Eduarda Dias;Centro;Mesa ajustável;Escritório;1;1.357,49;pago;E-commerce
+26/11/2025;Thiago Esteves;Oeste;Notebook;Informática;5;29.855,55;pendente;Televendas
+29/05/2025;Felipe Nogueira;Norte;Instalação;Serviços;1;732,61;pago;E-commerce
+08/02/2025;Heitor Moraes;Centro;Suporte mensal;Serviços;1;1.194,38;pago;Loja física
+08/08/2025;Ana Barbosa;Norte;Instalação;Serviços;5;4172,35;pago;Loja física
+20/09/2025;Gabriela Lima;Leste;Cadeira ergonômica;Escritório;1;1.196,80;pago;Televendas
+26/10/2025;Felipe Ito;Centro;Antivírus corporativo;Software;1;279,87;pago;E-commerce
+;;;;;;;;
+01/01/2025;Sofia Almeida;Centro;Licença anual BI;Software;1;3.451,52;pago;E-commerce
+15/09/2025;Thiago Esteves;Oeste;Suporte mensal;Serviços;1;1.742,98;pago;Parceiros
+07/10/2025;Thiago Esteves;Oeste;Monitor 27;Informática;1; 1.178,45 ;pago;Parceiros
+12/11/2025;  Bruno Queiroz   ;Norte;Instalação;Serviços;4;2.058,04;pago;E-commerce
+03/04/2025;Eduarda Dias;Centro;Luminária;Escritório;1;302,62;pago;Parceiros
+11/10/2025;Gabriela Ferraz;;Antivírus corporativo;Software;4;1.080,52;pago;E-commerce
+17/05/2025;Ana Moraes;Norte;Luminária;Escritório;1;98,21;pago;Loja física
+11/07/2025;Karina Dias;Centro;Luminária;Escritório;1;144,04;cancelado;E-commerce
+25/05/2025;Thiago Dias;Centro;Notebook;Informática;1;6.267,20;pendente;Televendas
+16/03/2025;Eduarda Dias;Centro;Suporte mensal;Serviços;1;477,45;pago;Loja física
+14/07/2025;Lucas Ferraz;Norte;Monitor 27;Informática;5;9.977,25;cancelado;Televendas
+01/03/2025;Gabriela Ferraz;Leste;Instalação;Serviços;1;539,54;pago;Parceiros
+07/12/2025;Yasmin Esteves;Oeste;Notebook;Informática;1;5.490,67;cancelado;Parceiros
+04/11/2025;Felipe Barbosa;Sul;Luminária;Escritório;1;130,54;pago;Parceiros
+08/12/2025;Sofia Oliveira;Sul;Licença anual BI;Software;1;7.079,17;pago;Televendas
+24/03/2025;Felipe Vieira;Oeste;Mesa ajustável;Escritório;5;7.244,55;pago;Parceiros
+02/07/2025;Sofia Almeida;Centro;Mesa ajustável;Escritório;3;9.327,00;pendente;Loja física
+28/01/2025;Paulo Holanda;Leste;Cadeira ergonômica;Escritório;1;1.866,20;pago;E-commerce
+15/08/2025;Sofia Rocha;Centro;Antivírus corporativo;Software;5;2.128,80;pago;Loja física
+31/05/2025;João Holanda;Oeste;Teclado;Informática;1;82,34;pago;E-commerce
+07/01/2025;Thiago Ferraz;Norte;Monitor 27;Informática;2;2.529,74;estornado;E-commerce
+12/06/2025;Paulo Dias;Centro;Luminária;Escritório;2;444,78;pago;Televendas
+29/11/2025;Thiago Ferraz;Norte;Teclado;Informática;2;447,92;pendente;E-commerce
+25/04/2025;Diego Oliveira;Oeste;Mesa ajustável;Escritório;2;6.531,54;estornado;E-commerce
+20/10/2025;Gabriela Lima;Leste;Instalação;Serviços;1;308,84;pago;Loja física
+21/08/2025;Sofia Rocha;Centro;Antivírus corporativo;Software;4;823,44;pago;Parceiros
+03/07/2025;Wesley Esteves;Norte;Mouse;Informática;3;175,17;cancelado;Loja física
+06/07/2025;Eduarda Holanda;Leste;Cadeira ergonômica;Escritório;1;1.509,38;pago;E-commerce
+13/08/2025;Rafael Teixeira;Leste;Instalação;Serviços;2;1.410,62;cancelado;E-commerce
+28/01/2025;Lucas Ito;Leste;Cadeira ergonômica;Escritório;4;7.386,00;pendente;Loja física
+09/11/2025;Karina Dias;Centro;Mesa ajustável;Escritório;1;1.732,12;cancelado;Loja física
+22/05/2025;Thiago Esteves;Oeste;Treinamento;Serviços;1;2.967,34;estornado;E-commerce
+05/12/2025;João Holanda;Oeste;Monitor 27;Informática;1;1.536,29;pago;Loja física
+07/01/2025;Rafael Oliveira;Norte;Treinamento;Serviços;1;3.397,69;cancelado;E-commerce
+08/09/2025;Sofia Oliveira;Sul;Licença anual BI;Software;4;26.386,48;pago;Loja física
+07/06/2025;Ana Moraes;Norte;Treinamento;Serviços;1;3.120,25;pendente;Parceiros
+07/10/2025;Heitor Moraes;Centro;Mesa ajustável;Escritório;3;4.653,18;pago;E-commerce
+20/01/2025;Gabriela Ferraz;Leste
+20/09/2025;Paulo Holanda;Leste;Treinamento;Serviços;3;11.276,19;cancelado;Televendas
+10/09/2025;Eduarda Dias;Centro;Antivírus corporativo;Software;1;426,58;pago;Parceiros
+24/09/2025;Ana Barbosa;Norte;Notebook;Informática;1;3.768,50;pago;Loja física
+06/12/2025;Felipe Barbosa;Sul;Teclado;Informática;10;4.150,60;pago;E-commerce
+22/11/2025;Eduarda Holanda;Leste;Suporte mensal;;2;2.170,44;pendente;Loja física
+06/12/2025;Paulo Dias;Centro;Teclado;Informática;1;315,26;cancelado;Loja física
+07/07/2025;Gabriela Ferraz;Leste;Antivírus corporativo;Software;1;308,94;pago;Televendas
+02/08/2025;Lucas Almeida;Centro;Antivírus corporativo;Software;10;2.643,60;pago;E-commerce
+24/06/2025;Felipe Pereira;Centro;Monitor 27;Informática;1;962,46;pago;E-commerce
+01/07/2025;Diego Oliveira;Oeste;Antivírus corporativo;Software;3;840,00;pago;E-commerce
+15/09/2025;Thiago Ferraz;Norte;Luminária;Escritório;1;223,04;cancelado;E-commerce
+13/01/2025;Lucas Ferraz;Norte;Notebook;Informática;2;12.803,68;pago;Televendas
+01/01/2025;Sofia Almeida;Centro;Licença anual BI;Software;1;3.451,52;pago;E-commerce
+22/03/2025;Ana Barbosa;Norte;Cadeira ergonômica;Escritório;4;4.413,28;pago;E-commerce
+19/02/2025;Ana Barbosa;Norte;Luminária;Escritório;1;234,24;pago;E-commerce
+08/02/2025;Heitor Moraes;Centro;Luminária;Escritório;4;1.064,56;pendente;E-commerce
+03/03/2025;Bruno Queiroz;Norte;Cadeira ergonômica;Escritório;3;4.056,39;estornado;Parceiros
+24/02/2025;Sofia Almeida;Centro;LUMINÁRIA;Escritório;3;743,40;pendente;E-commerce
+30/09/2025;Paulo Holanda;Leste;LICENÇA ANUAL BI;Software;1;8.377,04;pago;Loja física
+07/08/2025;Eduarda Holanda;Leste;Instalação;Serviços;1;578,09;pago;Televendas
+18/12/2025;Paulo Holanda;Leste;Instalação;Serviços;4;2.916,00;pago;E-commerce
+24/05/2025;Ana Barbosa;Norte;Treinamento;Serviços;1;618,76;pago;E-commerce
+03/02/2025;Karina Dias;Centro;Suporte mensal;Serviços;2;1.821,68;pago;Loja física
+01/01/2025;Sofia Almeida;Centro;Licença anual BI;Software;1;3.451,52;pago;E-commerce
+05/06/2025;Felipe Barbosa;;Suporte mensal;Serviços;5;3.389,40;cancelado;Loja física
+11/05/2025;Rafael Oliveira;Norte;Antivírus corporativo;Software;2;427,52;pendente;Televendas
+01/09/2025;Thiago Dias;Centro;Monitor 27;Informática;1;1.945,61;pago;Televendas
+;;;;;;;;
+07/11/2025;Thiago Dias;Centro;Luminária;Escritório;5;1.349,15;cancelado;E-commerce
+04/07/2025;Ana Barbosa;Norte;Instalação;Serviços;2;1.799,14;pendente;Loja física
+07/09/2025;Rafael Oliveira;Norte;Monitor 27;Informática;1;1.356,72;estornado;Parceiros
+22/12/2025;Sofia Almeida;Centro;Mesa ajustável;Escritório;1;2.572,40;pago;Televendas
+23/07/2025;Lucas Almeida;;Treinamento;Serviços;3;2.662,14;pago;Parceiros
+18/05/2025;Lucas Ferraz;Norte;Treinamento;Serviços;2;1.538,46;cancelado;E-commerce
+10/02/2025;Felipe Ito;Centro;Antivírus corporativo;Software;2;633,56;pago;E-commerce
+15/07/2025;Eduarda Dias;Centro;Antivírus corporativo;Software;1;259,60;pago;E-commerce
+07/12/2025;Felipe Ferraz;Centro;Luminária;Escritório;1;101,05;pago;E-commerce
+25/03/2025;Karina Rocha;Centro;Treinamento;Serviços;5;11.219,50;pago;Loja física
+27/11/2025;Felipe Barbosa;Sul;Antivírus corporativo;Software;1;125,44;pago;Loja física
+05/01/2025;Gabriela Lima;Leste;Mesa ajustável;Escritório;2;6.530,64;pago;E-commerce
+09/06/2025;Paulo Dias;Centro;INSTALAÇÃO;Serviços;1;269,90;cancelado;Loja física
+30/05/2025;Felipe Pereira;Centro;Treinamento;Serviços;1;2.044,91;pago;Loja física
+14/06/2025;Gabriela Ferraz;Leste;Antivírus corporativo;Software;1;490,83;pago;E-commerce
+21/05/2025;Gabriela Ferraz;Leste;Luminária;Escritório;1;262,99;pendente;
+10/03/2025;Felipe Ito;Centro;Monitor 27;Informática;1;1.582,11;pago;Loja física
+15/07/2025;Eduarda Dias;Centro;Luminária;Escritório;1;172,74;pago;Parceiros
+30/07/2025;Eduarda Holanda;Leste;Licença anual BI;Software;4;32.583,24;pago;Televendas
+12/01/2025;Rafael Oliveira;Norte;Antivírus corporativo;Software;1;190,78;pago;E-commerce
+23/01/2025;Felipe Ferraz;Centro;Antivírus corporativo;Software;1;591,92;estornado;Loja física
+11/04/2025;Thiago Esteves;Oeste;Antivírus corporativo;Software;2;1.159,82;estornado;Loja física
+20/09/2025;Yasmin Esteves;Oeste;Mesa ajustável;Escritório;2;3.537,34;pago;E-commerce
+23/01/2025;Lucas Almeida;Centro;Mesa ajustável;Escritório;1;1.586,39;pago;Parceiros
+13/03/2025;Sofia Rocha;Centro;Cadeira ergonômica;Escritório;1;1.498,74;pago;E-commerce
+02/07/2025;João Holanda;Oeste;Licença anual BI;Software;1;2.950,06;pago;Parceiros
+24/02/2025;Sofia Almeida;Centro;Suporte mensal;Serviços;1;1.263,65;cancelado;Loja física
+03/09/2025;Felipe Barbosa;;Licença anual BI;Software;1;5.080,60;pago;Loja física
+12/05/2025;Felipe Pereira;Centro;Antivírus corporativo;Software;1;561,33;pago;Televendas
+31/05/2025;Thiago Esteves;Oeste;Treinamento;Serviços;1;1.234,11;pago;Loja física
+09/04/2025;Karina Holanda;Sul;Monitor 27;Informática;1;1.701,58;pago;E-commerce
+18/08/2025;Eduarda Dias;Centro;Suporte mensal;Serviços;1;1.212,89;pago;Parceiros
+22/02/2025;Heitor Moraes;Centro;Antivírus corporativo;Software;2;819,24;estornado;Loja física
+16/01/2025;Heitor Moraes;Centro;Luminária;Escritório;1;314,06;pago;E-commerce
+27/12/2025;Wesley Esteves;Norte;Suporte mensal;Serviços;1;1.130,29;pago;Loja física
+03/01/2025;Paulo Holanda;Leste;Mesa ajustável;Escritório;1;1.453,55;pago;E-commerce
+18/11/2025;Heitor Moraes;Centro;Antivírus corporativo;Software;10;2.208,80;estornado;E-commerce
+24/02/2025;Ana Ito;Norte;Mouse;Informática;1;85,65;pago;Loja física
+27/12/2025;Wesley Esteves;Norte;Suporte mensal;Serviços;1;1.130,29;pago;Loja física
+13/11/2025;Rafael Oliveira;Norte;Suporte mensal;Serviços;1;1.280,25;pago;Loja física
+22/08/2025;Karina Nogueira;Oeste;Licença anual BI;Software;1;5.519,30;pago;Televendas
+12/03/2025;Sofia Almeida;Centro;Suporte mensal;Serviços;1;1.104,05;pago;E-commerce
+21/07/2025;Thiago Ferraz;Norte;Suporte mensal;Serviços;1;1.768,84;pago;Loja física
+29/06/2025;Ana Moraes;Norte;Treinamento;Serviços;1;1091,18;pago;Televendas
+06/07/2025;Paulo Holanda;Leste;Luminária;Escritório;1;245,83;pago;E-commerce
+27/08/2025;Karina Dias;Centro;Instalação;Serviços;1;766,74;pago;Loja física
+09/05/2025;Lucas Ferraz;Norte;Instalação;Serviços;1;560,15;cancelado;Loja física
+14/11/2025;Eduarda Dias;Centro;Mesa ajustável;Escritório;2;5.284,16;pago;E-commerce
+21/04/2025;Bruno Queiroz;Norte;Mouse;Informática;4;298,28;pago;Loja física
+27/01/2025;Gabriela Lima;Leste;Treinamento;Serviços;4;14.943,20;pago;Televendas
+27/08/2025;Felipe Nogueira;;Notebook;Informática;2;6.823,04;pago;Loja física
+25/04/2025;Sofia Rocha;Centro;Treinamento;Serviços;1;3.700,54;pago;Loja física
+16/09/2025;Karina Dias;Centro;Treinamento;Serviços;3;10.307,04;estornado;E-commerce
+02/02/2025;  Ana Barbosa   ;Norte;Mouse;Informática;5;722,40;pago;E-commerce
+22/10/2025;Karina Dias;Centro;Antivírus corporativo;Software;1;311,15;pago;Loja física
+15/04/2025;Gabriela Nogueira;Oeste;Instalação;Serviços;1;208,61;pago;E-commerce
+;;;;;;;;
+31/05/2025;Karina Nogueira;Oeste;Treinamento;Serviços;3;7.748,22;pago;Loja física
+17/01/2025;Rafael Oliveira;Norte;Teclado;Informática;1;227,08;pago;Loja física
+02/03/2025;Karina Holanda;Sul;Monitor 27;Informática;1;1.983,31;pago;E-commerce
+28/01/2025;Gabriela Ferraz;Leste;Mesa ajustável;Escritório;1;2.309,43;pago;E-commerce
+03/03/2025;Bruno Ferraz;Sul;Luminária;Escritório;1;304,29;pago;Loja física
+29/05/2025;Thiago Dias;Centro;Treinamento;Serviços;2;3.071,30;pendente;E-commerce
+10/09/2025;Lucas Ferraz;Norte;Luminária;Escritório;3;470,01;pago;Parceiros
+;;;;;;;;
+17/01/2025;Bruno Lima;Norte;Instalação;Serviços;4;1.913,68;pago;E-commerce
+22/04/2025;Eduarda Dias;Centro;Notebook;Informática;1;5.394,89;pago;E-commerce
+18/10/2025;Úrsula Jardim;Leste;Mesa ajustável;Escritório;1;1.907,78;estornado;Parceiros
+09/10/2025;Úrsula Jardim;Leste;Instalação;Serviços;2;1.320,30;pago;E-commerce
+11/02/2025;Felipe Ferraz;Centro;Cadeira ergonômica;Escritório;2;1.873,42;pago;Televendas
+09/10/2025;Sofia Almeida;Centro;Licença anual BI;Software;1;2.104,55;pago;Loja física
+06/10/2025;Bruno Ferraz;Sul;Luminária;Escritório;2;454,70;pago;Loja física
+07/02/2025;Thiago Ferraz;Norte;Mesa ajustável;Escritório;1;2.545,01;pago;E-commerce
+03/07/2025;Lucas Almeida;Centro;Cadeira ergonômica;Escritório;2;1.605,52;pago;E-commerce
+05/04/2025;Sofia Rocha;Centro;Monitor 27;Informática;5;7.664,85;pendente;Televendas
+10/03/2025;  Rafael Teixeira   ;Leste;Licença anual BI;Software;3;5.136,33;pago;Televendas
+21/02/2025;Gabriela Nogueira;Oeste;Teclado;Informática;4;530,56;pago;Loja física
+14/03/2025;Ana Ito;Norte;Licença anual BI;Software;1;4.786,80;pendente;Parceiros
+17/11/2025;Bruno Lima;Norte;Licença anual BI;Software;1;7.029,87;pago;E-commerce
+02/03/2025;Ana Moraes;Norte;Instalação;Serviços;1;385,19;pago;E-commerce
+04/09/2025;Lucas Ito;Leste;Licença anual BI;Software;2;14.826,34;pago;E-commerce
+03/10/2025;Gabriela Lima;Leste;Mesa ajustável;Escritório;1;3.320,43;pago;E-commerce
+24/11/2025;Eduarda Dias;Centro;Monitor 27;Informática;1;1.294,97;cancelado;Televendas
+19/07/2025;Felipe Ito;Centro;Monitor 27;Informática;4;6.356,04;pendente;Loja física
+27/09/2025;Úrsula Jardim;Leste;Licença anual BI;Software;1;7.096,11;pago;Loja física
+21/05/2025;Paulo Dias;Centro;Notebook;Informática;1;4.712,76;pago;Televendas
+25/01/2025;João Holanda;Oeste;Suporte mensal;Serviços;2;964,96;pago;Loja física
+29/07/2025;Diego Oliveira;Oeste;Mesa ajustável;Escritório;1;1.666,16;pago;E-commerce
+14/06/2025;Thiago Esteves;Oeste;Luminária;Escritório;1;111,68;pendente;E-commerce
+15/10/2025;Felipe Barbosa;Sul;Mouse;Informática;1;257,73;pendente;Loja física
+04/01/2025;Felipe Vieira;Oeste;Antivírus corporativo;Software;1;177,45;pago;E-commerce
+09/01/2025;Lucas Ito;Leste;Suporte mensal;Serviços;1;868,09;pendente;Loja física
+09/09/2025;Felipe Pereira;Centro;Instalação;Serviços;1;865,43;estornado;E-commerce
+03/05/2025;Ana Moraes;Norte;Mesa ajustável;Escritório;2;6.053,80;pago;Loja física
+28/03/2025;Thiago Dias;Centro;Notebook;Informática;1;6.369,50;pago;E-commerce
+27/09/2025;Lucas Almeida;Centro;Luminária;Escritório;3;846,48;pago;Loja física
+30/08/2025;Paulo Dias;Centro;Luminária;Escritório;5;1.482,30;estornado;Loja física
+06/02/2025;Sofia Almeida;Centro;Licença anual BI;Software;1;3.255,56;pendente;E-commerce
+04/08/2025;Bruno Queiroz;Norte;Mesa ajustável;Escritório;2;6.705,44;pago;Loja física
+06/11/2025;Felipe Ito;Centro;Teclado;Informática;1;R$ 372,51;cancelado;E-commerce
+01/03/2025;Felipe Vieira;Oeste;Antivírus corporativo;Software;1;341,01;pendente;E-commerce
+27/09/2025;Gabriela Nogueira;Oeste;Licença anual BI;Software;3;6.539,25;pago;Televendas
+09/01/2025;Felipe Nogueira;Norte;Treinamento;Serviços;1;1.955,99;cancelado;Televendas
+07/02/2025;Yasmin Esteves;Oeste;Notebook;Informática;1;5.741,65;pago;Loja física
+22/10/2025;Paulo Holanda;Leste;Antivírus corporativo;Software;1;482,19;cancelado;Televendas
+16/01/2025;Heitor Moraes;Centro;Suporte mensal;Serviços;5;5.932,95;pendente;Loja física
+17/04/2025;Rafael Teixeira;;Mesa ajustável;Escritório;1;2.174,45;pago;Parceiros
+28/11/2025;Felipe Nogueira;Norte;Teclado;Informática;4;795,88;pago;E-commerce
+ontem;Karina Dias;Centro;Monitor 27;Informática;1;1.680,86;pago;E-commerce
+14/05/2025;Paulo Dias;Centro;Notebook;Informática;1;4.835,66;cancelado;E-commerce
+25/08/2025;Eduarda Dias;Centro;Instalação;Serviços;10;2.751,50;estornado;Televendas
+15/08/2025;Felipe Ferraz;Centro;Licença anual BI;Software;3;6.588,27;pago;Televendas
+13/04/2025;Felipe Ito;Centro;Antivírus corporativo;Software;2;966,24;cancelado;E-commerce
+24/03/2025;Karina Holanda;Sul;Treinamento;Serviços;2;1.795,56;pago;Loja física
+22/05/2025;Diego Oliveira;Oeste;Teclado;Informática;1;282,30;pago;E-commerce
+03/10/2025;Felipe Nogueira;Norte;Notebook;Informática;2;7.131,00;pago;E-commerce
+15/07/2025;Yasmin Esteves;Oeste;Treinamento;Serviços;1;2.545,09;pago;E-commerce
+29/05/2025;Felipe Nogueira;Norte;Instalação;Serviços;1;732,61;pago;E-commerce
+23/12/2025;Felipe Vieira;Oeste;Mesa ajustável;Escritório;1;1.854,71;pago;Televendas
+07/08/2025;Karina Nogueira;Oeste;Mesa ajustável;Escritório;1;1.232,08;cancelado;Loja física
+10/05/2025;Karina Holanda;Sul;Monitor 27;Informática;1;2.062,53;pendente;E-commerce
+;;;;;;;;
+26/11/2025;Lucas Ito;Leste;Cadeira ergonômica;Escritório;1;1.825,27;pendente;Televendas
+01/10/2025;Bruno Queiroz;Norte;Cadeira ergonômica;Escritório;1; 1.821,51 ;pendente;Televendas
+24/11/2025;Heitor Moraes;Centro;Cadeira ergonômica;Escritório;2;4.225,28;pago;E-commerce
+30/03/2025;Diego Oliveira;Oeste;Mesa ajustável;Escritório;-;14.661,70;pago;Loja física
+01/01/2025;Rafael Oliveira;Norte;Licença anual BI;Software;3;11.044,83;pago;Loja física
+10/05/2025;Rafael Oliveira;Norte;Cadeira ergonômica;Escritório;2;2.286,24;cancelado;E-commerce
+13/12/2025;Heitor Moraes;Centro;Antivírus corporativo;Software;2;888,62;pago;E-commerce
+18/11/2025;Gabriela Ferraz;Leste;Suporte mensal;Serviços;2;2.153,02;pago;Parceiros
+15/03/2025;Karina Dias;Centro;Antivírus corporativo;Software;1;184,01;pago;Loja física
+26/05/2025;Gabriela Nogueira;Oeste;Notebook;Informática;2;10.328,98;pago;E-commerce
+28/06/2025;Felipe Pereira;Centro;Suporte mensal;Serviços;2;2.051,78;pago;Televendas
+06/09/2025;Lucas Almeida;Centro;Teclado;Informática;1;273,58;pago;E-commerce
+27/07/2025;Bruno Queiroz;Norte;Monitor 27;Informática;2;1.962,44;pendente;Loja física
+02/12/2025;Lucas Ito;Leste;Suporte mensal;Serviços;5;1.842,70;pendente;Loja física
+17/06/2025;Felipe Pereira;Centro;Antivírus corporativo;Software;2;1.070,26;pago;Televendas
+17/11/2025;Lucas Almeida;Centro;Antivírus corporativo;Software;1;179,75;pago;Loja física
+21/10/2025;Eduarda Holanda;Leste;Antivírus corporativo;Software;1;321,56;estornado;Televendas
+13/11/2025;Rafael Oliveira;Norte;Instalação;Serviços;10;4.337,30;pendente;E-commerce
+15/08/2025;Gabriela Nogueira;Oeste;Instalação;Serviços;1;304,24;pago;Parceiros
+26/02/2025;Felipe Nogueira;Norte;Antivírus corporativo;Software;1;446,93;pago;Televendas
+06/09/2025;Felipe Pereira;Centro;Mouse;Informática;3;569,46;pago;E-commerce
+12/07/2025;Eduarda Dias;Centro;Monitor 27;Informática;2;3.891,98;pago;Loja física
+23/07/2025;Lucas Ferraz;Norte;Mesa ajustável;Escritório;1;1.256,06;pendente;Loja física
+07/02/2025;Felipe Ito;Centro;Treinamento;Serviços;2;7.568,14;pago;E-commerce
+31/07/2025;Karina Rocha;Centro;Licença anual BI;Software;1;4.211,97;pago;Parceiros
+17/09/2025;Lucas Ferraz;Norte;Luminária;Escritório;3;318,96;pago;E-commerce
+16/06/2025;Lucas Ferraz;Norte;Treinamento;Serviços;1;2.628,52;pago;Televendas
+16/05/2025;Karina Nogueira;Oeste;Teclado;Informática;1;281,70;pago;E-commerce
+20/11/2025;Felipe Pereira;Centro;Instalação;Serviços;1;524,80;pago;Parceiros
+20/08/2025;Karina Nogueira;Oeste;Luminária;Escritório;1;300,16;pendente;E-commerce
+22/09/2025;Rafael Oliveira;Norte;Notebook;Informática;1;3.519,72;pago;E-commerce
+05/04/2025;Gabriela Ferraz;Leste;Instalação;Serviços;4;3.045,96;estornado;Loja física
+08/02/2025;Gabriela Ferraz;Leste;Cadeira ergonômica;Escritório;3;6.393,27;pago;Parceiros
+04/07/2025;Ana Ito;Norte;Mesa ajustável;Escritório;4;7.423,92;pago;Televendas
+08/08/2025;Yasmin Esteves;;Antivírus corporativo;Software;2;573,92;pago;Televendas
+25/09/2025;Gabriela Nogueira;Oeste;Teclado;Informática;3;680,85;pago;E-commerce
+27/12/2025;Wesley Esteves;Norte;Suporte mensal;Serviços;1;1.130,29;pago;Loja física
+12/03/2025;Sofia Almeida;Centro;Suporte mensal;Serviços;1;1.104,05;pago;E-commerce
+16/07/2025;Rafael Teixeira;Leste;Licença anual BI;Software;1;8.394,58;pago;Televendas
+08/10/2025;Sofia Almeida;Centro;Instalação;Serviços;1;209,30;pendente;Televendas
+27/03/2025;Felipe Barbosa;Sul;Treinamento;Serviços;3;3.993,30;estornado;Parceiros
+17/04/2025;Rafael Teixeira;Leste;Cadeira ergonômica;Escritório;10;14.555,10;pago;Televendas
+12/10/2025;Karina Dias;Centro;Mesa ajustável;Escritório;1;1.102,00;pago;Loja física
+24/02/2025;Eduarda Holanda;Leste;Mesa ajustável;Escritório;10;19.014,60;pendente;E-commerce
+14/10/2025;Felipe Ferraz;Centro;Mesa ajustável;Escritório;3;4.863,12;pendente;E-commerce
+15/05/2025;Eduarda Dias;Centro;Teclado;Informática;1;324,50;pago;Televendas
+22/05/2025;Eduarda Dias;Centro;Suporte mensal;Serviços;5;4.693,70;pago;Loja física
+21/03/2025;Ana Barbosa;Norte;Luminária;Escritório;2;200,32;cancelado;E-commerce
+25/06/2025;Felipe Nogueira;Norte;Notebook;Informática;1;6.043,62;pago;E-commerce
+13/06/2025;Yasmin Esteves;Oeste;Instalação;Serviços;1;528,88;pago;Loja física
+24/04/2025;Gabriela Lima;Leste;Monitor 27;Informática;2;R$ 3.694,46;pago;Loja física
+14/10/2025;Lucas Ito;Leste;Cadeira ergonômica;Escritório;3;4.843,02;cancelado;E-commerce
+28/03/2025;Wesley Esteves;Norte;Instalação;Serviços;5;4.218,00;pago;Loja física
+01/12/2025;Úrsula Jardim;Leste;Instalação;Serviços;1;225,45;pago;E-commerce
+31/03/2025;Ana Ito;Norte;Licença anual BI;Software;1;4.488,58;pago;Televendas
+24/04/2025;Bruno Ferraz;Sul;Mouse;Informática;1;227,37;estornado;E-commerce
+16/04/2025;Paulo Holanda;Leste;Luminária;Escritório;10;1.842,70;pago;E-commerce
+20/10/2025;Gabriela Nogueira;Oeste;Treinamento;Serviços;2;7.101,80;cancelado;E-commerce
+01/11/2025;Thiago Esteves;Oeste;Treinamento;Serviços;1;883,81;pendente;Parceiros
+08/08/2025;Lucas Almeida;Centro;Treinamento;Serviços;1;2.734,33;cancelado;E-commerce
+07/08/2025;Lucas Ferraz;Norte;Notebook;Informática;1;4.591,64;pago;Parceiros
+14/05/2025;Rafael Teixeira;Leste;Teclado;Informática;1;292,42;pago;E-commerce

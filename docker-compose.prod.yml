@@ -1,0 +1,176 @@
+# Implantação de produção em um único host (Docker Compose).
+#   cp .env.example .env   # preencha os segredos
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Apenas o Caddy (80/443) é publicado; banco, Redis e MinIO ficam na rede interna.
+
+name: dataflow-prod
+
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: docker/api/Dockerfile
+    target: runtime
+  image: ${BACKEND_IMAGE:-dataflow-backend:prod}
+  restart: unless-stopped
+  environment:
+    ENVIRONMENT: production
+    DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?defina POSTGRES_USER}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-dataflow}
+    REDIS_URL: redis://:${REDIS_PASSWORD:?defina REDIS_PASSWORD}@redis:6379/0
+    S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+    S3_ACCESS_KEY: ${MINIO_ROOT_USER:?defina MINIO_ROOT_USER}
+    S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?defina MINIO_ROOT_PASSWORD}
+    S3_BUCKET: ${S3_BUCKET:-dataflow}
+    SECRET_KEY: ${SECRET_KEY:?defina SECRET_KEY (>= 32 caracteres)}
+    APP_BASE_URL: https://${SITE_ADDRESS:?defina SITE_ADDRESS}
+    ALLOWED_ORIGINS: https://${SITE_ADDRESS}
+    COOKIE_SECURE: "true"
+    SMTP_HOST: ${SMTP_HOST:-}
+    SMTP_PORT: ${SMTP_PORT:-587}
+    SMTP_USER: ${SMTP_USER:-}
+    SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
+    SMTP_FROM: ${SMTP_FROM:-DataFlow Analytics <no-reply@localhost>}
+    MAX_CSV_MB: ${MAX_CSV_MB:-100}
+    MAX_XLSX_MB: ${MAX_XLSX_MB:-25}
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  networks: [internal]
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-dataflow}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  redis:
+    image: redis:8.8-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" --no-auth-warning ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    networks: [internal]
+
+  minio-perms:
+    image: busybox:1.37
+    command: ["sh", "-c", "chown -R 65532:65532 /data"]
+    volumes: [miniodata:/data]
+    restart: "no"
+
+  minio:
+    # Fixe um digest em produção: MINIO_IMAGE=cgr.dev/chainguard/minio@sha256:...
+    image: ${MINIO_IMAGE:-cgr.dev/chainguard/minio:latest}
+    restart: unless-stopped
+    command: ["server", "/data"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER: "off"
+    volumes: [miniodata:/data]
+    depends_on:
+      minio-perms:
+        condition: service_completed_successfully
+    networks: [internal]
+
+  storage-setup:
+    <<: *backend
+    command: ["python", "-m", "app.scripts.init_storage"]
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_started
+
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      storage-setup: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 15s
+    deploy:
+      resources:
+        limits: {cpus: "${API_CPUS:-1}", memory: "${API_MEMORY:-1g}"}
+
+  worker:
+    <<: *backend
+    command:
+      ["celery", "-A", "app.tasks.celery_app", "worker", "-Q", "default,imports",
+       "--concurrency", "${WORKER_CONCURRENCY:-2}", "--loglevel", "INFO", "-n", "worker@%h"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      storage-setup: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.tasks.celery_app inspect ping -d worker@$$HOSTNAME --timeout 5 | grep -q pong"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 20s
+    deploy:
+      replicas: ${WORKER_REPLICAS:-1}
+      resources:
+        limits: {cpus: "${WORKER_CPUS:-2}", memory: "${WORKER_MEMORY:-3g}"}
+
+  beat:
+    <<: *backend
+    command: ["celery", "-A", "app.tasks.celery_app", "beat", "--loglevel", "INFO",
+              "--schedule", "/var/lib/dataflow/celerybeat-schedule"]
+    depends_on:
+      redis: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    image: ${WEB_IMAGE:-dataflow-web:prod}
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+      MAX_UPLOAD_BODY: ${MAX_UPLOAD_BODY:-110MB}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddydata:/data
+      - caddyconfig:/config
+    depends_on:
+      api: {condition: service_healthy}
+    networks: [internal]
+
+networks:
+  internal:
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+  caddydata:
+  caddyconfig:

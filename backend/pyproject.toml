@@ -1,0 +1,83 @@
+[project]
+name = "dataflow-backend"
+version = "0.1.0"
+description = "DataFlow Analytics — API, worker e pipeline de dados"
+readme = "../README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "fastapi>=0.162,<0.163",
+  "uvicorn[standard]>=0.54,<0.55",
+  "pydantic>=2.14,<3",
+  "pydantic-settings>=2.16,<3",
+  "email-validator>=2.3,<3",
+  "sqlalchemy>=2.1.6,<2.2",
+  "alembic>=1.20,<2",
+  "psycopg[binary]>=3.3,<3.4",
+  "argon2-cffi>=25.1,<26",
+  "celery>=5.6,<5.7",
+  "redis>=8.1,<9",
+  "boto3>=1.43,<2",
+  "polars>=2.1,<2.2",
+  "pyarrow>=26,<27",
+  "duckdb>=1.5.6,<1.6",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=9.2,<10",
+  "pytest-cov>=7.1,<8",
+  "httpx>=0.28,<0.29",
+  "moto[s3]>=5.2,<6",
+  "fakeredis>=2.40,<3",
+  "ruff>=0.17,<0.18",
+  "mypy>=2.4,<3",
+  "boto3-stubs[s3]>=1.43,<2",
+  "celery-types>=0.23",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF", "N", "C4", "PT"]
+ignore = [
+  "S101",   # assert é usado em testes
+  "B008",   # Depends() em argumentos padrão é o idioma do FastAPI
+  "E501",   # o formatter controla o comprimento; mensagens em pt-BR podem exceder
+  "N818",   # exceções de domínio nomeadas pelo status HTTP (NotFound, Conflict...)
+  "RUF001", "RUF002", "RUF003", # textos em pt-BR contêm caracteres ambíguos legítimos
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S311"]
+"scripts/**" = ["S311"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.13"
+# O código roda em contêineres Linux (ex.: módulo resource no worker).
+platform = "linux"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["migrations/", "tests/"]
+
+[[tool.mypy.overrides]]
+module = ["pyarrow", "pyarrow.*", "duckdb", "kombu.*", "moto", "fakeredis"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+  "postgres: requer PostgreSQL real (DATABASE_URL apontando para Postgres)",
+]
+filterwarnings = [
+  "ignore::DeprecationWarning:botocore.*",
+]

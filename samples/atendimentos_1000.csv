@@ -1,0 +1,1001 @@
+data_atendimento,operador,equipe,campanha,tipo_atendimento,duracao_segundos,status,resultado
+23/06/2025 12:28:24,Queila Almeida,Centro,Pesquisa NPS,Receptivo,74,finalizado,Dúvida resolvida
+15/08/2025 13:44:38,Vinícius Almeida,Sul,Renovação 2025,Receptivo,379,transferido,Encaminhado ao financeiro
+14/07/2025 10:17:55,Carla Teixeira,Norte,Pesquisa NPS,Ativo,326,finalizado,Venda realizada
+23/03/2025 16:43:52,Carla Teixeira,Norte,Pesquisa NPS,Ativo,275,finalizado,Venda realizada
+24/02/2025 19:48:59,Rafael Gomes,Leste,Clientes inativos,Receptivo,74,abandonado,Cliente desligou
+19/11/2025 11:32:16,Sofia Esteves,Leste,Renovação 2025,Receptivo,38,abandonado,Cliente desligou
+03/09/2025 10:47:47,Rafael Moraes,Leste,Clientes inativos,Receptivo,1036,finalizado,Venda realizada
+14/08/2025 17:47:17,Sofia Cardoso,Centro,Pesquisa NPS,Chat,123,transferido,Encaminhado ao suporte técnico
+06/03/2025 09:04:07,Úrsula Pereira,Norte,Pesquisa NPS,Receptivo,16,abandonado,Cliente desligou
+16/06/2025 10:08:55,Mariana Souza,Norte,Clientes inativos,Ativo,77,finalizado,Venda realizada
+06/04/2025 18:03:13,Rafael Souza,Sul,Renovação 2025,Receptivo,160,finalizado,Dúvida resolvida
+26/02/2025 19:33:02,Heitor Queiroz,Oeste,Renovação 2025,Ativo,63,transferido,Encaminhado ao suporte técnico
+20/11/2025 15:28:28,Olívia Dias,Oeste,Clientes inativos,Receptivo,252,finalizado,Reclamação registrada
+09/03/2025 15:21:25,Rafael Souza,Sul,Black Friday,Receptivo,163,finalizado,Dúvida resolvida
+16/09/2025 08:03:35,Bruno Pereira,Sul,Clientes inativos,Chat,123,transferido,Encaminhado ao suporte técnico
+23/05/2025 12:22:05,Carla Nogueira,Norte,Clientes inativos,Receptivo,229,finalizado,Dúvida resolvida
+19/12/2025 10:18:59,Ana Oliveira,Norte,Renovação 2025,Ativo,336,finalizado,Dúvida resolvida
+27/10/2025 12:53:25,Carla Teixeira,Norte,Pesquisa NPS,Ativo,478,finalizado,Venda realizada
+08/05/2025 19:42:09,Karina Dias,Oeste,Upgrade de plano,Ativo,60,finalizado,Dúvida resolvida
+01/09/2025 19:39:50,Bruno Oliveira,Centro,Renovação 2025,Ativo,193,finalizado,Dúvida resolvida
+11/09/2025 12:52:14,João Oliveira,Centro,Clientes inativos,Receptivo,574,finalizado,Venda realizada
+06/12/2025 13:37:06,Lucas Holanda,Oeste,Upgrade de plano,Ativo,128,finalizado,Venda realizada
+26/06/2025 18:10:03,Sofia Moraes,Norte,Pesquisa NPS,Receptivo,132,finalizado,Dúvida resolvida
+10/03/2025 12:51:51,Thiago Dias,Sul,Clientes inativos,Chat,12,abandonado,Cliente desligou
+10/11/2025 12:12:20,Eduarda Barbosa,Oeste,Upgrade de plano,Receptivo,19,abandonado,Cliente desligou
+23/04/2025 13:16:26,Sofia Cardoso,Centro,Pesquisa NPS,Receptivo,140,finalizado,Reclamação registrada
+04/04/2025 18:14:32,Sofia Moraes,Norte,Pesquisa NPS,Receptivo,474,transferido,Encaminhado ao suporte técnico
+22/11/2025 09:52:44,Lucas Dias,Centro,Clientes inativos,Receptivo,271,finalizado,Dúvida resolvida
+06/06/2025 10:46:09,Eduarda Teixeira,Centro,Renovação 2025,Ativo,145,finalizado,Dúvida resolvida
+09/08/2025 13:51:57,Vinícius Oliveira,Oeste,Black Friday,Receptivo,89,finalizado,Venda realizada
+01/04/2025 12:40:26,Eduarda Teixeira,Centro,Upgrade de plano,Receptivo,115,finalizado,Reclamação registrada
+21/07/2025 12:42:45,Sofia Cardoso,Centro,Pesquisa NPS,Receptivo,172,transferido,Encaminhado ao suporte técnico
+08/01/2025 15:27:08,Mariana Barbosa,Centro,Renovação 2025,Ativo,33,finalizado,Dúvida resolvida
+28/09/2025 18:38:02,Ana Esteves,Norte,Upgrade de plano,Ativo,262,finalizado,Dúvida resolvida
+16/10/2025 11:01:17,Queila Moraes,Sul,Clientes inativos,Ativo,207,transferido,Encaminhado ao suporte técnico
+16/09/2025 09:46:14,Nicolas Oliveira,Sul,Renovação 2025,Receptivo,70,finalizado,Dúvida resolvida
+25/07/2025 18:29:36,Queila Moraes,Sul,Upgrade de plano,Receptivo,165,transferido,Encaminhado ao suporte técnico
+18/04/2025 09:52:25,Olívia Dias,Oeste,Renovação 2025,Receptivo,39,transferido,Encaminhado ao suporte técnico
+15/05/2025 18:33:32,Olívia Dias,Oeste,Clientes inativos,Ativo,261,finalizado,Sem interesse
+22/04/2025 09:59:29,Vinícius Oliveira,Oeste,Upgrade de plano,Receptivo,118,finalizado,Dúvida resolvida
+04/05/2025 09:55:14,Vinícius Esteves,Leste,Upgrade de plano,Receptivo,164,finalizado,Dúvida resolvida
+25/09/2025 10:29:18,João Queiroz,Oeste,Renovação 2025,Ativo,180,finalizado,Dúvida resolvida
+20/11/2025 18:03:51,Ana Oliveira,Norte,Clientes inativos,Chat,338,finalizado,Dúvida resolvida
+30/05/2025 10:36:41,Karina Dias,Oeste,Black Friday,Ativo,134,finalizado,Venda realizada
+07/11/2025 17:55:55,Wesley Souza,Sul,Pesquisa NPS,Receptivo,373,finalizado,Venda realizada
+18/10/2025 17:15:56,Carla Teixeira,Norte,Renovação 2025,Ativo,169,finalizado,Reclamação registrada
+04/09/2025 18:14:08,Úrsula Pereira,Norte,Black Friday,Receptivo,130,finalizado,Sem interesse
+18/05/2025 16:37:00,Eduarda Barbosa,Oeste,Clientes inativos,Ativo,403,finalizado,Reclamação registrada
+01/10/2025 16:28:31,Sofia Esteves,Leste,Clientes inativos,Receptivo,250,finalizado,Sem interesse
+05/07/2025 16:50:45,Nicolas Ito,Oeste,Black Friday,Ativo,76,finalizado,Dúvida resolvida
+16/03/2025 08:43:15,João Queiroz,Oeste,Renovação 2025,Chat,187,finalizado,Dúvida resolvida
+18/05/2025 16:41:02,Lucas Holanda,Oeste,Upgrade de plano,Receptivo,105,finalizado,Dúvida resolvida
+21/04/2025 12:23:23,João Queiroz,Oeste,Renovação 2025,Ativo,182,finalizado,Venda realizada
+02/08/2025 18:20:49,Ana Oliveira,Norte,Clientes inativos,Ativo,102,finalizado,Dúvida resolvida
+23/08/2025 14:38:20,Vinícius Esteves,Leste,Pesquisa NPS,Ativo,370,finalizado,Sem interesse
+11/06/2025 09:56:07,Karina Gomes,Leste,Clientes inativos,Receptivo,758,finalizado,Sem interesse
+14/01/2025 19:18:03,Lucas Dias,Centro,Pesquisa NPS,Receptivo,314,finalizado,Venda realizada
+26/06/2025 13:46:04,Carla Queiroz,Leste,Clientes inativos,Receptivo,73,abandonado,Cliente desligou
+24/05/2025 08:55:36,Carla Nogueira,Norte,Upgrade de plano,Receptivo,266,finalizado,Venda realizada
+01/05/2025 09:28:52,João Oliveira,Centro,Renovação 2025,Receptivo,27,abandonado,Cliente desligou
+22/11/2025 14:04:17,Rafael Moraes,Leste,Renovação 2025,Ativo,119,finalizado,Dúvida resolvida
+05/06/2025 12:16:31,Gabriela Holanda,Sul,Clientes inativos,Ativo,1078,finalizado,Dúvida resolvida
+14/09/2025 13:10:17,Bruno Moraes,Centro,Upgrade de plano,Ativo,116,finalizado,Reclamação registrada
+13/10/2025 18:48:08,Ana Oliveira,Norte,Black Friday,Ativo,116,transferido,Encaminhado ao financeiro
+21/01/2025 09:54:51,Gabriela Ito,Centro,Pesquisa NPS,Receptivo,201,finalizado,Reclamação registrada
+18/06/2025 18:33:03,Nicolas Nogueira,Sul,Pesquisa NPS,Receptivo,235,finalizado,Sem interesse
+09/12/2025 19:21:04,Nicolas Oliveira,Sul,Upgrade de plano,Receptivo,31,abandonado,Cliente desligou
+20/02/2025 17:50:01,Carla Gomes,Norte,Upgrade de plano,Ativo,108,finalizado,Venda realizada
+11/11/2025 15:56:13,Mariana Barbosa,Centro,Renovação 2025,Receptivo,92,finalizado,Reclamação registrada
+17/12/2025 09:59:16,Nicolas Nogueira,Sul,Pesquisa NPS,Receptivo,81,abandonado,Cliente desligou
+15/06/2025 16:46:45,Queila Moraes,Sul,Clientes inativos,Ativo,148,transferido,Encaminhado ao suporte técnico
+19/01/2025 13:34:45,Eduarda Barbosa,Oeste,Upgrade de plano,Receptivo,174,finalizado,Sem interesse
+18/01/2025 15:07:18,Sofia Cardoso,Centro,Black Friday,Receptivo,134,finalizado,Venda realizada
+28/05/2025 19:59:53,Yasmin Rocha,Sul,Clientes inativos,Chat,353,finalizado,Reclamação registrada
+10/06/2025 12:46:16,Mariana Esteves,Leste,Black Friday,Ativo,69,finalizado,Reclamação registrada
+26/02/2025 18:19:46,Yasmin Esteves,Norte,Renovação 2025,Chat,504,finalizado,Dúvida resolvida
+26/07/2025 11:08:34,Yasmin Rocha,Sul,Upgrade de plano,Receptivo,138,transferido,Encaminhado ao suporte técnico
+29/04/2025 18:23:36,Thiago Queiroz,Leste,Pesquisa NPS,Chat,152,finalizado,Sem interesse
+18/02/2025 08:39:14,Queila Almeida,Centro,Clientes inativos,Receptivo,440,finalizado,Venda realizada
+28/03/2025 14:04:18,Wesley Souza,Sul,Pesquisa NPS,Receptivo,214,finalizado,Venda realizada
+21/08/2025 11:08:12,Gabriela Holanda,Sul,Clientes inativos,Receptivo,205,transferido,Encaminhado ao suporte técnico
+19/11/2025 18:13:29,Wesley Souza,Sul,Renovação 2025,Ativo,120,finalizado,Reclamação registrada
+02/07/2025 11:18:51,Olívia Esteves,Oeste,Black Friday,Receptivo,188,finalizado,Dúvida resolvida
+29/09/2025 10:20:28,Sofia Moraes,Norte,Clientes inativos,Receptivo,362,finalizado,Venda realizada
+06/12/2025 09:42:22,Mariana Esteves,Leste,Renovação 2025,Receptivo,157,finalizado,Sem interesse
+28/09/2025 16:05:22,Diego Almeida,Centro,Pesquisa NPS,Receptivo,50,finalizado,Sem interesse
+03/04/2025 18:13:19,Wesley Souza,Sul,Clientes inativos,Ativo,127,finalizado,Dúvida resolvida
+18/01/2025 17:56:31,Eduarda Teixeira,Centro,Black Friday,Receptivo,188,finalizado,Venda realizada
+27/06/2025 17:53:54,Olívia Esteves,Oeste,Renovação 2025,Chat,169,finalizado,Venda realizada
+25/09/2025 19:13:36,Nicolas Oliveira,Sul,Black Friday,Chat,243,finalizado,Sem interesse
+19/12/2025 14:57:24,Gabriela Ito,Centro,Pesquisa NPS,Receptivo,313,finalizado,Dúvida resolvida
+19/09/2025 13:53:01,Mariana Dias,Norte,Pesquisa NPS,Ativo,129,finalizado,Reclamação registrada
+17/11/2025 19:44:18,Rafael Gomes,Leste,Upgrade de plano,Receptivo,642,finalizado,Dúvida resolvida
+05/03/2025 16:50:01,Gabriela Rocha,Leste,Black Friday,Ativo,238,finalizado,Venda realizada
+02/06/2025 19:06:26,Mariana Esteves,Leste,Renovação 2025,Receptivo,23,abandonado,Cliente desligou
+07/05/2025 12:30:28,Nicolas Esteves,Oeste,Black Friday,Chat,62,transferido,Encaminhado ao financeiro
+04/11/2025 09:44:17,Karina Dias,Oeste,Upgrade de plano,Receptivo,182,finalizado,Dúvida resolvida
+21/04/2025 12:45:44,Bruno Oliveira,Centro,Upgrade de plano,Receptivo,110,finalizado,Sem interesse
+08/07/2025 08:21:23,Gabriela Ito,Centro,Pesquisa NPS,Receptivo,573,finalizado,Sem interesse
+18/11/2025 15:01:22,Bruno Oliveira,Centro,Renovação 2025,Receptivo,537,finalizado,Dúvida resolvida
+20/10/2025 11:52:35,Nicolas Oliveira,Sul,Black Friday,Receptivo,6,abandonado,Cliente desligou
+11/12/2025 19:38:18,Nicolas Ito,Oeste,Renovação 2025,Receptivo,110,finalizado,Dúvida resolvida
+11/10/2025 17:42:28,Yasmin Rocha,Sul,Pesquisa NPS,Receptivo,325,finalizado,Reclamação registrada
+31/12/2025 08:31:19,Nicolas Esteves,Oeste,Renovação 2025,Receptivo,131,finalizado,Venda realizada
+11/04/2025 12:36:07,Wesley Souza,Sul,Pesquisa NPS,Ativo,154,finalizado,Sem interesse
+22/05/2025 19:52:52,Nicolas Nogueira,Sul,Pesquisa NPS,Ativo,209,finalizado,Dúvida resolvida
+16/11/2025 09:37:57,Karina Gomes,Leste,Clientes inativos,Receptivo,464,finalizado,Reclamação registrada
+28/07/2025 08:33:07,Karina Ito,Norte,Renovação 2025,Receptivo,84,finalizado,Dúvida resolvida
+25/05/2025 17:21:50,Bruno Ferraz,Centro,Renovação 2025,Receptivo,177,finalizado,Sem interesse
+12/02/2025 14:54:43,Ana Oliveira,Norte,Renovação 2025,Receptivo,271,finalizado,Sem interesse
+15/09/2025 14:38:03,Heitor Queiroz,Oeste,Renovação 2025,Receptivo,457,finalizado,Dúvida resolvida
+02/08/2025 10:52:29,Nicolas Oliveira,Sul,Pesquisa NPS,Ativo,247,finalizado,Dúvida resolvida
+06/09/2025 09:17:17,João Oliveira,Centro,Pesquisa NPS,Receptivo,265,finalizado,Sem interesse
+07/12/2025 08:19:47,Nicolas Nogueira,Sul,Black Friday,Chat,283,transferido,Encaminhado ao suporte técnico
+18/08/2025 17:50:50,Gabriela Ito,Centro,Clientes inativos,Receptivo,127,finalizado,Venda realizada
+29/03/2025 13:26:56,Carla Teixeira,Norte,Renovação 2025,Receptivo,150,finalizado,Dúvida resolvida
+04/05/2025 19:50:54,Heitor Ito,Leste,Black Friday,Chat,212,finalizado,Sem interesse
+04/12/2025 16:16:58,Nicolas Nogueira,Sul,Renovação 2025,Receptivo,167,finalizado,Dúvida resolvida
+17/01/2025 11:38:54,João Oliveira,Centro,Black Friday,Chat,73,finalizado,Dúvida resolvida
+26/09/2025 09:30:05,Ana Esteves,Norte,Black Friday,Ativo,183,finalizado,Venda realizada
+16/11/2025 18:03:40,João Oliveira,Centro,Clientes inativos,Receptivo,248,finalizado,Reclamação registrada
+31/12/2025 19:17:13,Sofia Moraes,Norte,Renovação 2025,Receptivo,324,finalizado,Sem interesse
+27/07/2025 19:46:40,Wesley Souza,Sul,Renovação 2025,Receptivo,216,finalizado,Sem interesse
+30/12/2025 18:25:54,Carla Gomes,Norte,Renovação 2025,Receptivo,105,finalizado,Sem interesse
+26/12/2025 12:08:23,Vinícius Almeida,Sul,Clientes inativos,Ativo,204,finalizado,Dúvida resolvida
+13/12/2025 11:08:41,Gabriela Ito,Centro,Clientes inativos,Receptivo,101,finalizado,Dúvida resolvida
+14/06/2025 14:11:01,Wesley Souza,Sul,Black Friday,Ativo,351,finalizado,Dúvida resolvida
+04/02/2025 11:06:40,Nicolas Oliveira,Sul,Pesquisa NPS,Ativo,138,finalizado,Reclamação registrada
+14/02/2025 19:23:04,Lucas Dias,Centro,Upgrade de plano,Ativo,330,finalizado,Sem interesse
+25/08/2025 15:30:00,Nicolas Oliveira,Sul,Clientes inativos,Receptivo,294,finalizado,Sem interesse
+11/06/2025 10:28:57,João Queiroz,Oeste,Pesquisa NPS,Receptivo,428,finalizado,Sem interesse
+16/08/2025 12:29:36,Yasmin Rocha,Sul,Upgrade de plano,Ativo,191,finalizado,Sem interesse
+04/04/2025 14:29:20,Mariana Souza,Norte,Renovação 2025,Receptivo,165,finalizado,Reclamação registrada
+30/12/2025 19:36:13,Olívia Dias,Oeste,Upgrade de plano,Ativo,135,transferido,Encaminhado ao suporte técnico
+11/11/2025 16:38:58,Mariana Barbosa,Centro,Black Friday,Ativo,144,finalizado,Dúvida resolvida
+07/08/2025 10:01:39,Yasmin Rocha,Sul,Upgrade de plano,Receptivo,150,finalizado,Dúvida resolvida
+05/02/2025 08:38:03,Bruno Moraes,Centro,Upgrade de plano,Ativo,115,finalizado,Dúvida resolvida
+31/08/2025 12:39:14,Carla Gomes,Norte,Upgrade de plano,Chat,127,finalizado,Sem interesse
+14/06/2025 09:57:57,Eduarda Teixeira,Centro,Renovação 2025,Receptivo,316,finalizado,Dúvida resolvida
+21/01/2025 16:37:58,Gabriela Ito,Centro,Pesquisa NPS,Receptivo,121,transferido,Encaminhado ao suporte técnico
+10/01/2025 16:10:44,Carla Queiroz,Leste,Pesquisa NPS,Receptivo,241,finalizado,Venda realizada
+18/05/2025 10:43:43,João Queiroz,Oeste,Renovação 2025,Receptivo,621,finalizado,Venda realizada
+26/06/2025 15:52:58,Yasmin Rocha,Sul,Pesquisa NPS,Ativo,13,abandonado,Cliente desligou
+30/03/2025 16:12:48,Heitor Ferraz,Oeste,Upgrade de plano,Receptivo,218,finalizado,Dúvida resolvida
+28/11/2025 14:14:19,Ana Oliveira,Norte,Renovação 2025,Ativo,342,finalizado,Sem interesse
+27/04/2025 09:54:09,Nicolas Esteves,Oeste,Black Friday,Chat,133,finalizado,Dúvida resolvida
+20/09/2025 17:34:47,Ana Gomes,Sul,Renovação 2025,Ativo,548,finalizado,Dúvida resolvida
+06/02/2025 10:17:29,Diego Ito,Norte,Pesquisa NPS,Chat,53,finalizado,Dúvida resolvida
+09/01/2025 12:12:04,Vinícius Esteves,Leste,Renovação 2025,Receptivo,63,transferido,Encaminhado ao suporte técnico
+24/03/2025 14:27:06,Karina Ito,Norte,Black Friday,Ativo,97,finalizado,Dúvida resolvida
+22/01/2025 16:43:10,Ana Gomes,Sul,Renovação 2025,Receptivo,387,finalizado,Dúvida resolvida
+15/05/2025 16:29:49,Gabriela Holanda,Sul,Clientes inativos,Receptivo,151,finalizado,Reclamação registrada
+01/10/2025 19:06:56,Karina Ito,Norte,Pesquisa NPS,Receptivo,133,finalizado,Venda realizada
+20/03/2025 09:10:20,Rafael Souza,Sul,Renovação 2025,Receptivo,19,abandonado,Cliente desligou
+21/09/2025 09:14:29,Vinícius Oliveira,Oeste,Renovação 2025,Receptivo,180,finalizado,Dúvida resolvida
+08/01/2025 18:12:16,Bruno Moraes,Centro,Pesquisa NPS,Ativo,104,finalizado,Venda realizada
+27/12/2025 14:33:24,Heitor Lima,Centro,Renovação 2025,Receptivo,66,finalizado,Venda realizada
+30/01/2025 09:11:17,Karina Dias,Oeste,Clientes inativos,Ativo,238,finalizado,Venda realizada
+19/08/2025 13:26:51,Bruno Pereira,Sul,Renovação 2025,Receptivo,38,abandonado,Cliente desligou
+20/12/2025 19:09:41,Eduarda Teixeira,Centro,Pesquisa NPS,Ativo,430,finalizado,Dúvida resolvida
+18/03/2025 09:01:03,Mariana Souza,Norte,Clientes inativos,Ativo,341,finalizado,Dúvida resolvida
+11/12/2025 11:30:56,Queila Almeida,Centro,Renovação 2025,Receptivo,385,finalizado,Sem interesse
+23/09/2025 12:14:19,Ana Gomes,Sul,Pesquisa NPS,Ativo,230,finalizado,Dúvida resolvida
+07/11/2025 18:05:56,Wesley Souza,Sul,Clientes inativos,Receptivo,340,transferido,Encaminhado ao suporte técnico
+24/01/2025 16:52:38,Sofia Cardoso,Centro,Renovação 2025,Receptivo,168,finalizado,Venda realizada
+03/01/2025 13:04:13,Bruno Oliveira,Centro,Clientes inativos,Ativo,56,finalizado,Reclamação registrada
+20/05/2025 10:09:07,Ana Oliveira,Norte,Pesquisa NPS,Receptivo,88,finalizado,Venda realizada
+04/04/2025 17:43:35,Thiago Queiroz,Leste,Clientes inativos,Chat,147,finalizado,Dúvida resolvida
+16/01/2025 17:31:17,Gabriela Ito,Centro,Upgrade de plano,Chat,247,finalizado,Reclamação registrada
+22/01/2025 13:55:09,Queila Almeida,Centro,Upgrade de plano,Receptivo,80,abandonado,Cliente desligou
+09/08/2025 19:08:38,Heitor Lima,Centro,Black Friday,Chat,377,finalizado,Venda realizada
+03/05/2025 10:51:30,Olívia Dias,Oeste,Renovação 2025,Ativo,199,finalizado,Reclamação registrada
+02/07/2025 08:40:12,Wesley Souza,Sul,Renovação 2025,Ativo,350,finalizado,Venda realizada
+02/12/2025 16:11:44,Carla Nogueira,Norte,Clientes inativos,Ativo,67,finalizado,Dúvida resolvida
+04/02/2025 10:35:14,Vinícius Esteves,Leste,Pesquisa NPS,Receptivo,73,finalizado,Dúvida resolvida
+16/05/2025 19:40:36,Gabriela Ito,Centro,Pesquisa NPS,Ativo,305,finalizado,Reclamação registrada
+28/02/2025 15:12:23,Nicolas Ito,Oeste,Renovação 2025,Ativo,131,finalizado,Dúvida resolvida
+02/01/2025 12:22:26,Nicolas Nogueira,Sul,Renovação 2025,Chat,111,finalizado,Dúvida resolvida
+17/03/2025 09:01:12,Vinícius Almeida,Sul,Pesquisa NPS,Receptivo,165,finalizado,Dúvida resolvida
+05/01/2025 14:38:43,Carla Gomes,Norte,Black Friday,Receptivo,39,abandonado,Cliente desligou
+06/02/2025 14:00:00,Mariana Barbosa,Centro,Upgrade de plano,Receptivo,91,finalizado,Sem interesse
+01/12/2025 08:38:04,Mariana Barbosa,Centro,Clientes inativos,Receptivo,417,finalizado,Dúvida resolvida
+09/04/2025 14:37:58,Diego Almeida,Centro,Renovação 2025,Receptivo,221,transferido,Encaminhado ao financeiro
+12/08/2025 16:32:03,João Queiroz,Oeste,Upgrade de plano,Receptivo,87,finalizado,Venda realizada
+17/07/2025 12:58:53,Bruno Moraes,Centro,Upgrade de plano,Receptivo,310,finalizado,Sem interesse
+14/12/2025 16:09:09,Wesley Souza,Sul,Black Friday,Receptivo,222,finalizado,Sem interesse
+11/09/2025 09:07:35,Nicolas Ito,Oeste,Black Friday,Ativo,672,transferido,Encaminhado ao suporte técnico
+27/12/2025 10:15:11,Diego Ito,Norte,Upgrade de plano,Ativo,301,finalizado,Dúvida resolvida
+31/03/2025 19:27:33,Lucas Dias,Centro,Pesquisa NPS,Receptivo,457,finalizado,Dúvida resolvida
+28/01/2025 17:49:02,Wesley Souza,Sul,Upgrade de plano,Receptivo,83,abandonado,Cliente desligou
+11/12/2025 15:28:24,Vinícius Esteves,Leste,Upgrade de plano,Ativo,202,finalizado,Sem interesse
+01/12/2025 13:34:06,Gabriela Rocha,Leste,Clientes inativos,Ativo,198,finalizado,Reclamação registrada
+20/07/2025 18:44:51,Mariana Esteves,Leste,Clientes inativos,Receptivo,441,finalizado,Sem interesse
+15/05/2025 09:21:32,João Queiroz,Oeste,Renovação 2025,Ativo,374,finalizado,Venda realizada
+15/11/2025 17:56:10,Sofia Moraes,Norte,Upgrade de plano,Ativo,176,finalizado,Reclamação registrada
+01/02/2025 13:08:41,Queila Rocha,Norte,Black Friday,Receptivo,128,finalizado,Reclamação registrada
+09/02/2025 18:01:16,Diego Almeida,Centro,Black Friday,Chat,159,finalizado,Dúvida resolvida
+03/04/2025 12:40:51,Carla Gomes,Norte,Black Friday,Chat,144,finalizado,Dúvida resolvida
+14/10/2025 16:02:34,Ana Gomes,Sul,Upgrade de plano,Receptivo,194,finalizado,Venda realizada
+30/05/2025 18:55:29,Lucas Holanda,Oeste,Pesquisa NPS,Receptivo,649,finalizado,Reclamação registrada
+02/11/2025 14:20:18,Mariana Esteves,Leste,Renovação 2025,Receptivo,700,finalizado,Dúvida resolvida
+02/03/2025 08:34:12,Queila Moraes,Sul,Renovação 2025,Receptivo,375,finalizado,Dúvida resolvida
+21/05/2025 15:49:34,Carla Nogueira,Norte,Pesquisa NPS,Receptivo,245,finalizado,Reclamação registrada
+03/07/2025 15:20:29,João Oliveira,Centro,Black Friday,Receptivo,184,finalizado,Dúvida resolvida
+27/03/2025 10:31:56,Sofia Esteves,Leste,Upgrade de plano,Chat,491,finalizado,Sem interesse
+24/09/2025 15:43:07,Gabriela Ito,Centro,Pesquisa NPS,Receptivo,97,finalizado,Sem interesse
+12/11/2025 11:04:52,Vinícius Oliveira,Oeste,Black Friday,Receptivo,199,finalizado,Reclamação registrada
+23/08/2025 12:49:35,Queila Rocha,Norte,Upgrade de plano,Receptivo,165,finalizado,Venda realizada
+25/12/2025 17:26:11,Gabriela Ito,Centro,Clientes inativos,Receptivo,114,finalizado,Dúvida resolvida
+18/04/2025 17:30:58,Nicolas Esteves,Oeste,Black Friday,Receptivo,78,abandonado,Cliente desligou
+02/06/2025 14:38:45,Queila Rocha,Norte,Upgrade de plano,Receptivo,142,finalizado,Sem interesse
+09/09/2025 11:52:16,Bruno Oliveira,Centro,Clientes inativos,Receptivo,243,finalizado,Sem interesse
+21/03/2025 16:17:35,Gabriela Holanda,Sul,Pesquisa NPS,Receptivo,336,finalizado,Dúvida resolvida
+08/09/2025 10:29:58,Sofia Cardoso,Centro,Pesquisa NPS,Receptivo,72,finalizado,Dúvida resolvida
+02/11/2025 16:59:06,Heitor Lima,Centro,Renovação 2025,Receptivo,265,finalizado,Dúvida resolvida
+01/04/2025 18:21:12,Yasmin Lima,Oeste,Upgrade de plano,Receptivo,212,finalizado,Dúvida resolvida
+18/05/2025 10:28:42,Karina Gomes,Leste,Pesquisa NPS,Receptivo,101,transferido,Encaminhado ao financeiro
+04/01/2025 14:55:13,Karina Gomes,Leste,Upgrade de plano,Receptivo,237,finalizado,Dúvida resolvida
+21/06/2025 14:30:08,Úrsula Lima,Norte,Upgrade de plano,Receptivo,242,finalizado,Dúvida resolvida
+02/08/2025 11:47:03,Mariana Souza,Norte,Renovação 2025,Ativo,231,finalizado,Venda realizada
+19/09/2025 12:34:36,Carla Teixeira,Norte,Upgrade de plano,Receptivo,40,abandonado,Cliente desligou
+17/01/2025 10:51:32,Vinícius Esteves,Leste,Renovação 2025,Receptivo,299,finalizado,Venda realizada
+16/04/2025 08:34:09,Bruno Moraes,Centro,Upgrade de plano,Ativo,288,finalizado,Dúvida resolvida
+05/06/2025 08:01:54,Nicolas Oliveira,Sul,Upgrade de plano,Receptivo,146,finalizado,Dúvida resolvida
+13/12/2025 08:57:24,Nicolas Oliveira,Sul,Upgrade de plano,Receptivo,427,finalizado,Venda realizada
+18/07/2025 17:47:29,Sofia Moraes,Norte,Upgrade de plano,Ativo,122,finalizado,Reclamação registrada
+04/12/2025 11:11:16,Bruno Oliveira,Centro,Clientes inativos,Ativo,233,finalizado,Dúvida resolvida
+16/03/2025 12:12:16,Lucas Holanda,Oeste,Upgrade de plano,Receptivo,181,finalizado,Dúvida resolvida
+27/04/2025 09:19:17,Heitor Lima,Centro,Renovação 2025,Ativo,564,finalizado,Dúvida resolvida
+03/10/2025 08:28:57,Thiago Queiroz,Leste,Clientes inativos,Receptivo,140,finalizado,Dúvida resolvida
+04/04/2025 19:11:55,Vinícius Oliveira,Oeste,Clientes inativos,Receptivo,305,finalizado,Dúvida resolvida
+04/03/2025 08:27:14,Olívia Esteves,Oeste,Pesquisa NPS,Chat,449,finalizado,Venda realizada
+02/05/2025 09:21:40,Nicolas Esteves,Oeste,Black Friday,Ativo,191,finalizado,Sem interesse
+06/10/2025 08:08:52,Lucas Dias,Centro,Renovação 2025,Chat,119,transferido,Encaminhado ao suporte técnico
+10/10/2025 19:11:02,Karina Gomes,Leste,Clientes inativos,Receptivo,424,finalizado,Reclamação registrada
+08/03/2025 16:56:16,Sofia Esteves,Leste,Black Friday,Receptivo,439,finalizado,Reclamação registrada
+22/02/2025 14:05:40,Gabriela Rocha,Leste,Clientes inativos,Receptivo,229,finalizado,Dúvida resolvida
+08/09/2025 18:15:40,Heitor Queiroz,Oeste,Renovação 2025,Receptivo,253,transferido,Encaminhado ao suporte técnico
+05/11/2025 17:33:18,Bruno Ferraz,Centro,Black Friday,Receptivo,214,finalizado,Venda realizada
+16/08/2025 17:43:26,Rafael Gomes,Leste,Clientes inativos,Chat,477,finalizado,Venda realizada
+20/03/2025 16:39:41,Sofia Esteves,Leste,Clientes inativos,Receptivo,263,finalizado,Sem interesse
+28/08/2025 17:28:11,Diego Ito,Norte,Upgrade de plano,Receptivo,282,finalizado,Sem interesse
+13/11/2025 11:00:34,Eduarda Teixeira,Centro,Upgrade de plano,Receptivo,289,finalizado,Sem interesse
+02/10/2025 09:58:13,Yasmin Lima,Oeste,Pesquisa NPS,Ativo,189,finalizado,Reclamação registrada
+17/03/2025 11:02:37,Carla Teixeira,Norte,Upgrade de plano,Ativo,147,finalizado,Sem interesse
+12/02/2025 09:13:30,Heitor Queiroz,Oeste,Black Friday,Ativo,440,finalizado,Venda realizada
+28/09/2025 10:10:01,Carla Teixeira,Norte,Black Friday,Receptivo,133,finalizado,Sem interesse
+15/07/2025 08:43:24,Karina Ito,Norte,Pesquisa NPS,Ativo,206,transferido,Encaminhado ao financeiro
+12/08/2025 13:12:17,Yasmin Rocha,Sul,Clientes inativos,Ativo,161,finalizado,Venda realizada
+20/12/2025 13:49:06,Mariana Esteves,Leste,Clientes inativos,Ativo,228,finalizado,Dúvida resolvida
+07/09/2025 16:28:49,Mariana Dias,Norte,Pesquisa NPS,Ativo,198,finalizado,Dúvida resolvida
+25/12/2025 08:47:32,Vinícius Almeida,Sul,Renovação 2025,Receptivo,114,finalizado,Venda realizada
+30/05/2025 18:41:40,Carla Nogueira,Norte,Clientes inativos,Chat,312,finalizado,Sem interesse
+18/07/2025 11:25:27,Karina Dias,Oeste,Clientes inativos,Chat,49,transferido,Encaminhado ao suporte técnico
+15/09/2025 10:36:34,Vinícius Oliveira,Oeste,Black Friday,Ativo,262,finalizado,Dúvida resolvida
+22/11/2025 08:11:44,Eduarda Barbosa,Oeste,Pesquisa NPS,Chat,444,transferido,Encaminhado ao suporte técnico
+01/04/2025 14:07:23,Heitor Ferraz,Oeste,Upgrade de plano,Chat,125,finalizado,Venda realizada
+04/07/2025 16:14:17,Mariana Dias,Norte,Black Friday,Receptivo,256,finalizado,Venda realizada
+03/02/2025 18:59:21,Nicolas Oliveira,Sul,Black Friday,Ativo,516,finalizado,Venda realizada
+18/10/2025 10:06:50,Carla Queiroz,Leste,Renovação 2025,Receptivo,199,finalizado,Dúvida resolvida
+10/01/2025 19:10:06,Sofia Esteves,Leste,Clientes inativos,Receptivo,269,finalizado,Dúvida resolvida
+13/11/2025 18:06:20,Bruno Ferraz,Centro,Black Friday,Receptivo,142,finalizado,Dúvida resolvida
+18/01/2025 08:11:20,Sofia Moraes,Norte,Black Friday,Receptivo,122,finalizado,Dúvida resolvida
+15/10/2025 15:26:58,Karina Dias,Oeste,Clientes inativos,Receptivo,30,abandonado,Cliente desligou
+20/04/2025 19:40:08,Vinícius Almeida,Sul,Pesquisa NPS,Receptivo,366,finalizado,Dúvida resolvida
+14/11/2025 19:44:20,Diego Cardoso,Oeste,Upgrade de plano,Ativo,286,finalizado,Venda realizada
+26/05/2025 19:47:16,Ana Gomes,Sul,Renovação 2025,Chat,5,abandonado,Cliente desligou
+22/10/2025 14:16:10,Bruno Ferraz,Centro,Clientes inativos,Ativo,159,finalizado,Sem interesse
+18/09/2025 19:26:37,Queila Almeida,Centro,Upgrade de plano,Chat,61,finalizado,Dúvida resolvida
+09/08/2025 16:13:32,Karina Dias,Oeste,Clientes inativos,Ativo,414,finalizado,Dúvida resolvida
+26/11/2025 15:45:50,Diego Ito,Norte,Pesquisa NPS,Receptivo,258,finalizado,Dúvida resolvida
+05/10/2025 15:06:56,Nicolas Esteves,Oeste,Clientes inativos,Receptivo,291,finalizado,Sem interesse
+24/10/2025 11:38:23,Vinícius Esteves,Leste,Renovação 2025,Ativo,219,finalizado,Sem interesse
+07/12/2025 18:24:04,João Queiroz,Oeste,Upgrade de plano,Ativo,356,finalizado,Venda realizada
+12/02/2025 19:43:38,Gabriela Ito,Centro,Black Friday,Ativo,43,abandonado,Cliente desligou
+16/02/2025 09:54:18,Ana Gomes,Sul,Renovação 2025,Receptivo,53,finalizado,Dúvida resolvida
+21/07/2025 13:03:55,João Queiroz,Oeste,Upgrade de plano,Receptivo,38,finalizado,Venda realizada
+18/05/2025 19:36:43,Gabriela Ito,Centro,Black Friday,Receptivo,191,finalizado,Venda realizada
+30/07/2025 18:43:27,Diego Ito,Norte,Clientes inativos,Ativo,241,finalizado,Venda realizada
+02/02/2025 10:42:53,Eduarda Teixeira,Centro,Clientes inativos,Ativo,90,finalizado,Venda realizada
+13/03/2025 09:02:50,Ana Esteves,Norte,Black Friday,Ativo,414,transferido,Encaminhado ao suporte técnico
+20/12/2025 08:16:52,Heitor Queiroz,Oeste,Upgrade de plano,Receptivo,117,finalizado,Venda realizada
+11/03/2025 12:53:31,Yasmin Esteves,Norte,Black Friday,Receptivo,163,finalizado,Dúvida resolvida
+01/01/2025 10:49:20,Mariana Barbosa,Centro,Pesquisa NPS,Receptivo,96,transferido,Encaminhado ao suporte técnico
+17/04/2025 13:53:44,Vinícius Esteves,Leste,Upgrade de plano,Ativo,127,finalizado,Dúvida resolvida
+17/03/2025 16:54:13,Olívia Esteves,Oeste,Pesquisa NPS,Ativo,267,finalizado,Venda realizada
+06/02/2025 13:36:40,Ana Gomes,Sul,Clientes inativos,Receptivo,152,finalizado,Dúvida resolvida
+19/03/2025 14:47:48,Rafael Gomes,Leste,Clientes inativos,Chat,348,finalizado,Sem interesse
+30/12/2025 08:23:28,Sofia Moraes,Norte,Pesquisa NPS,Ativo,147,finalizado,Dúvida resolvida
+05/07/2025 12:47:27,Úrsula Pereira,Norte,Clientes inativos,Receptivo,272,finalizado,Venda realizada
+06/03/2025 19:36:24,Nicolas Ito,Oeste,Pesquisa NPS,Ativo,59,finalizado,Dúvida resolvida
+14/06/2025 16:12:15,João Queiroz,Oeste,Black Friday,Receptivo,274,finalizado,Reclamação registrada
+02/01/2025 14:09:07,Rafael Souza,Sul,Upgrade de plano,Receptivo,94,finalizado,Dúvida resolvida
+05/06/2025 18:57:35,Bruno Moraes,Centro,Upgrade de plano,Receptivo,63,abandonado,Cliente desligou
+20/04/2025 15:40:33,João Oliveira,Centro,Upgrade de plano,Ativo,296,finalizado,Dúvida resolvida
+06/03/2025 10:47:49,Bruno Pereira,Sul,Pesquisa NPS,Chat,205,finalizado,Sem interesse
+12/02/2025 09:14:29,Queila Moraes,Sul,Clientes inativos,Receptivo,215,finalizado,Venda realizada
+02/09/2025 15:19:36,Gabriela Ito,Centro,Pesquisa NPS,Receptivo,515,finalizado,Venda realizada
+30/07/2025 08:27:24,Yasmin Esteves,Norte,Black Friday,Receptivo,1032,finalizado,Reclamação registrada
+06/08/2025 09:48:15,Úrsula Lima,Norte,Clientes inativos,Ativo,144,finalizado,Reclamação registrada
+30/09/2025 19:12:26,Bruno Pereira,Sul,Clientes inativos,Receptivo,232,finalizado,Reclamação registrada
+02/02/2025 15:37:19,Yasmin Rocha,Sul,Renovação 2025,Chat,755,finalizado,Venda realizada
+30/04/2025 18:10:05,Mariana Barbosa,Centro,Black Friday,Receptivo,77,abandonado,Cliente desligou
+27/07/2025 18:05:17,Diego Almeida,Centro,Upgrade de plano,Receptivo,224,finalizado,Dúvida resolvida
+04/07/2025 16:00:51,Diego Ito,Norte,Renovação 2025,Ativo,211,finalizado,Dúvida resolvida
+10/01/2025 10:35:14,Úrsula Pereira,Norte,Renovação 2025,Receptivo,282,transferido,Encaminhado ao financeiro
+30/10/2025 09:56:39,Queila Almeida,Centro,Upgrade de plano,Ativo,31,abandonado,Cliente desligou
+14/04/2025 17:27:16,Sofia Esteves,Leste,Clientes inativos,Ativo,347,finalizado,Sem interesse
+03/07/2025 12:17:49,Vinícius Almeida,Sul,Renovação 2025,Receptivo,281,finalizado,Sem interesse
+05/10/2025 19:32:33,Karina Gomes,Leste,Clientes inativos,Ativo,171,finalizado,Dúvida resolvida
+24/07/2025 11:37:39,Vinícius Oliveira,Oeste,Pesquisa NPS,Ativo,97,finalizado,Sem interesse
+06/09/2025 11:27:58,Úrsula Pereira,Norte,Upgrade de plano,Receptivo,194,finalizado,Dúvida resolvida
+26/10/2025 19:33:00,Olívia Dias,Oeste,Upgrade de plano,Receptivo,186,finalizado,Venda realizada
+21/03/2025 11:10:49,Olívia Esteves,Oeste,Renovação 2025,Ativo,307,finalizado,Dúvida resolvida
+05/06/2025 15:10:34,Yasmin Rocha,Sul,Black Friday,Chat,161,transferido,Encaminhado ao suporte técnico
+02/02/2025 08:25:28,Thiago Queiroz,Leste,Upgrade de plano,Ativo,172,finalizado,Dúvida resolvida
+07/11/2025 10:17:12,Mariana Dias,Norte,Pesquisa NPS,Ativo,177,finalizado,Dúvida resolvida
+10/08/2025 16:16:16,Vinícius Esteves,Leste,Renovação 2025,Chat,122,finalizado,Dúvida resolvida
+18/08/2025 14:15:58,Yasmin Rocha,Sul,Clientes inativos,Ativo,171,finalizado,Reclamação registrada
+12/01/2025 19:42:06,Diego Cardoso,Oeste,Renovação 2025,Receptivo,127,finalizado,Reclamação registrada
+30/10/2025 08:28:03,Gabriela Holanda,Sul,Black Friday,Receptivo,246,finalizado,Sem interesse
+06/08/2025 19:46:45,Mariana Dias,Norte,Clientes inativos,Receptivo,256,finalizado,Dúvida resolvida
+02/11/2025 10:10:42,Carla Queiroz,Leste,Pesquisa NPS,Ativo,162,finalizado,Venda realizada
+13/09/2025 10:02:17,Sofia Cardoso,Centro,Black Friday,Ativo,66,finalizado,Dúvida resolvida
+27/06/2025 08:35:50,Olívia Dias,Oeste,Black Friday,Chat,112,finalizado,Dúvida resolvida
+05/10/2025 15:58:37,Sofia Cardoso,Centro,Renovação 2025,Receptivo,320,finalizado,Dúvida resolvida
+06/04/2025 09:56:53,Heitor Lima,Centro,Black Friday,Receptivo,190,finalizado,Dúvida resolvida
+08/01/2025 19:24:46,Vinícius Esteves,Leste,Renovação 2025,Receptivo,253,finalizado,Reclamação registrada
+25/01/2025 18:55:20,Mariana Esteves,Leste,Black Friday,Receptivo,250,finalizado,Venda realizada
+26/07/2025 09:57:54,Bruno Ferraz,Centro,Renovação 2025,Ativo,208,finalizado,Sem interesse
+12/04/2025 12:00:50,Yasmin Lima,Oeste,Upgrade de plano,Ativo,135,finalizado,Dúvida resolvida
+16/06/2025 09:14:02,Diego Almeida,Centro,Renovação 2025,Ativo,209,finalizado,Dúvida resolvida
+03/02/2025 16:52:17,Bruno Ferraz,Centro,Upgrade de plano,Chat,203,finalizado,Sem interesse
+30/07/2025 10:30:17,Heitor Ferraz,Oeste,Black Friday,Receptivo,38,finalizado,Venda realizada
+29/03/2025 08:27:37,Carla Teixeira,Norte,Black Friday,Receptivo,469,finalizado,Dúvida resolvida
+05/04/2025 18:04:38,Bruno Ferraz,Centro,Pesquisa NPS,Receptivo,138,transferido,Encaminhado ao suporte técnico
+28/01/2025 19:17:14,Heitor Ferraz,Oeste,Upgrade de plano,Chat,43,abandonado,Cliente desligou
+01/11/2025 10:39:05,Bruno Moraes,Centro,Pesquisa NPS,Receptivo,183,finalizado,Venda realizada
+05/05/2025 10:30:55,Karina Gomes,Leste,Black Friday,Receptivo,525,finalizado,Sem interesse
+05/02/2025 14:40:18,Gabriela Rocha,Leste,Pesquisa NPS,Ativo,81,finalizado,Dúvida resolvida
+03/05/2025 13:50:44,Queila Rocha,Norte,Renovação 2025,Ativo,155,finalizado,Sem interesse
+10/07/2025 18:35:52,Diego Almeida,Centro,Clientes inativos,Ativo,136,finalizado,Venda realizada
+13/11/2025 14:33:18,Gabriela Holanda,Sul,Upgrade de plano,Ativo,238,finalizado,Dúvida resolvida
+17/07/2025 09:43:04,Heitor Lima,Centro,Pesquisa NPS,Receptivo,87,transferido,Encaminhado ao suporte técnico
+04/08/2025 16:09:23,Gabriela Rocha,Leste,Black Friday,Ativo,126,finalizado,Venda realizada
+23/11/2025 10:16:21,Mariana Souza,Norte,Black Friday,Ativo,86,finalizado,Dúvida resolvida
+27/07/2025 11:37:23,Queila Rocha,Norte,Pesquisa NPS,Ativo,117,finalizado,Dúvida resolvida
+02/04/2025 16:36:46,Gabriela Ito,Centro,Pesquisa NPS,Receptivo,179,finalizado,Venda realizada
+16/01/2025 10:05:31,Mariana Barbosa,Centro,Black Friday,Ativo,266,finalizado,Dúvida resolvida
+22/11/2025 12:00:01,Yasmin Esteves,Norte,Renovação 2025,Receptivo,164,finalizado,Dúvida resolvida
+05/05/2025 19:46:48,Thiago Dias,Sul,Clientes inativos,Receptivo,359,finalizado,Reclamação registrada
+15/09/2025 16:11:49,Carla Teixeira,Norte,Pesquisa NPS,Receptivo,547,finalizado,Sem interesse
+15/08/2025 17:49:01,Sofia Esteves,Leste,Upgrade de plano,Receptivo,200,transferido,Encaminhado ao financeiro
+20/12/2025 18:47:04,Carla Queiroz,Leste,Upgrade de plano,Receptivo,342,finalizado,Sem interesse
+03/01/2025 12:37:42,Eduarda Barbosa,Oeste,Black Friday,Ativo,114,finalizado,Dúvida resolvida
+17/10/2025 17:38:51,Sofia Cardoso,Centro,Clientes inativos,Receptivo,288,finalizado,Venda realizada
+13/07/2025 19:42:58,Heitor Ferraz,Oeste,Clientes inativos,Ativo,905,finalizado,Dúvida resolvida
+26/09/2025 15:37:26,Ana Esteves,Norte,Clientes inativos,Ativo,60,finalizado,Dúvida resolvida
+11/10/2025 19:14:22,Yasmin Lima,Oeste,Upgrade de plano,Ativo,840,finalizado,Sem interesse
+24/10/2025 11:38:27,Mariana Souza,Norte,Upgrade de plano,Receptivo,187,finalizado,Sem interesse
+22/05/2025 15:10:01,Queila Almeida,Centro,Black Friday,Ativo,236,finalizado,Dúvida resolvida
+06/02/2025 11:38:18,Vinícius Esteves,Leste,Pesquisa NPS,Chat,406,transferido,Encaminhado ao suporte técnico
+15/09/2025 16:26:22,Mariana Souza,Norte,Black Friday,Receptivo,403,finalizado,Dúvida resolvida
+09/10/2025 11:56:27,Rafael Souza,Sul,Black Friday,Receptivo,109,finalizado,Reclamação registrada
+27/04/2025 10:22:56,Heitor Ito,Leste,Pesquisa NPS,Receptivo,124,finalizado,Sem interesse
+29/03/2025 16:38:45,Karina Ito,Norte,Renovação 2025,Receptivo,150,finalizado,Reclamação registrada
+10/05/2025 09:49:07,Karina Gomes,Leste,Renovação 2025,Chat,329,finalizado,Reclamação registrada
+14/07/2025 12:39:25,Bruno Oliveira,Centro,Clientes inativos,Ativo,181,finalizado,Venda realizada
+27/12/2025 09:58:07,Eduarda Barbosa,Oeste,Upgrade de plano,Receptivo,83,transferido,Encaminhado ao suporte técnico
+12/05/2025 11:30:48,Thiago Queiroz,Leste,Black Friday,Ativo,149,finalizado,Venda realizada
+09/08/2025 15:46:24,Vinícius Oliveira,Oeste,Renovação 2025,Chat,191,finalizado,Dúvida resolvida
+27/04/2025 13:38:34,Yasmin Rocha,Sul,Black Friday,Ativo,77,finalizado,Venda realizada
+26/04/2025 13:35:24,Rafael Souza,Sul,Upgrade de plano,Receptivo,229,finalizado,Dúvida resolvida
+25/12/2025 18:03:40,Ana Esteves,Norte,Clientes inativos,Ativo,99,finalizado,Dúvida resolvida
+01/01/2025 11:57:49,Rafael Souza,Sul,Black Friday,Receptivo,143,finalizado,Dúvida resolvida
+11/02/2025 19:23:14,Thiago Dias,Sul,Black Friday,Receptivo,176,finalizado,Venda realizada
+16/10/2025 09:44:31,Sofia Cardoso,Centro,Clientes inativos,Chat,99,finalizado,Dúvida resolvida
+09/09/2025 15:09:21,Diego Cardoso,Oeste,Upgrade de plano,Receptivo,478,finalizado,Dúvida resolvida
+08/06/2025 14:14:00,Rafael Moraes,Leste,Renovação 2025,Ativo,305,finalizado,Venda realizada
+17/03/2025 15:49:32,Diego Cardoso,Oeste,Pesquisa NPS,Receptivo,201,transferido,Encaminhado ao suporte técnico
+27/09/2025 09:12:51,Vinícius Oliveira,Oeste,Upgrade de plano,Receptivo,309,finalizado,Sem interesse
+26/09/2025 12:55:12,Queila Almeida,Centro,Renovação 2025,Receptivo,195,finalizado,Dúvida resolvida
+20/03/2025 11:47:05,Mariana Barbosa,Centro,Pesquisa NPS,Receptivo,297,finalizado,Venda realizada
+20/12/2025 13:51:30,Bruno Pereira,Sul,Clientes inativos,Receptivo,170,finalizado,Dúvida resolvida
+01/11/2025 13:46:44,Heitor Queiroz,Oeste,Clientes inativos,Receptivo,319,finalizado,Venda realizada
+12/12/2025 10:10:56,Lucas Holanda,Oeste,Upgrade de plano,Ativo,138,finalizado,Sem interesse
+23/06/2025 16:16:04,Sofia Moraes,Norte,Upgrade de plano,Receptivo,77,finalizado,Dúvida resolvida
+26/10/2025 16:36:59,Lucas Dias,Centro,Upgrade de plano,Receptivo,188,finalizado,Dúvida resolvida
+10/06/2025 12:27:37,Mariana Dias,Norte,Upgrade de plano,Ativo,82,finalizado,Dúvida resolvida
+01/03/2025 09:25:03,Olívia Esteves,Oeste,Black Friday,Receptivo,169,finalizado,Venda realizada
+28/07/2025 10:51:57,Bruno Pereira,Sul,Pesquisa NPS,Receptivo,132,finalizado,Venda realizada
+30/12/2025 14:30:37,Rafael Moraes,Leste,Black Friday,Ativo,309,finalizado,Reclamação registrada
+19/10/2025 16:30:45,Wesley Souza,Sul,Renovação 2025,Ativo,73,finalizado,Venda realizada
+15/06/2025 18:01:39,Carla Queiroz,Leste,Upgrade de plano,Ativo,181,finalizado,Sem interesse
+31/10/2025 13:29:23,Karina Ito,Norte,Renovação 2025,Chat,198,finalizado,Sem interesse
+21/09/2025 13:44:00,Eduarda Barbosa,Oeste,Renovação 2025,Receptivo,802,finalizado,Venda realizada
+03/05/2025 14:50:52,Ana Oliveira,Norte,Black Friday,Ativo,483,finalizado,Dúvida resolvida
+01/11/2025 15:27:58,Sofia Cardoso,Centro,Pesquisa NPS,Ativo,36,abandonado,Cliente desligou
+16/03/2025 17:09:04,Carla Gomes,Norte,Black Friday,Receptivo,405,finalizado,Dúvida resolvida
+27/03/2025 11:56:34,Lucas Holanda,Oeste,Black Friday,Ativo,148,finalizado,Dúvida resolvida
+14/06/2025 14:51:24,Nicolas Nogueira,Sul,Clientes inativos,Ativo,432,finalizado,Venda realizada
+27/03/2025 17:58:20,Diego Cardoso,Oeste,Upgrade de plano,Receptivo,161,transferido,Encaminhado ao suporte técnico
+23/02/2025 10:29:11,Mariana Souza,Norte,Upgrade de plano,Receptivo,158,finalizado,Dúvida resolvida
+27/12/2025 10:43:32,Mariana Dias,Norte,Upgrade de plano,Ativo,336,finalizado,Dúvida resolvida
+23/03/2025 17:33:30,Eduarda Barbosa,Oeste,Clientes inativos,Ativo,332,finalizado,Reclamação registrada
+02/06/2025 13:06:34,Sofia Cardoso,Centro,Upgrade de plano,Ativo,185,finalizado,Reclamação registrada
+10/06/2025 14:32:04,Heitor Queiroz,Oeste,Upgrade de plano,Chat,150,finalizado,Dúvida resolvida
+07/02/2025 13:24:23,Ana Gomes,Sul,Pesquisa NPS,Receptivo,329,finalizado,Reclamação registrada
+06/07/2025 17:50:17,Úrsula Pereira,Norte,Black Friday,Chat,169,transferido,Encaminhado ao suporte técnico
+27/07/2025 12:18:38,Nicolas Oliveira,Sul,Black Friday,Receptivo,439,finalizado,Dúvida resolvida
+06/03/2025 14:01:13,Rafael Moraes,Leste,Black Friday,Receptivo,676,finalizado,Reclamação registrada
+01/07/2025 13:22:46,Mariana Esteves,Leste,Black Friday,Ativo,142,finalizado,Venda realizada
+17/10/2025 16:17:32,Carla Nogueira,Norte,Clientes inativos,Ativo,176,finalizado,Venda realizada
+31/07/2025 10:39:47,Olívia Esteves,Oeste,Renovação 2025,Ativo,479,finalizado,Dúvida resolvida
+06/02/2025 13:48:00,Ana Esteves,Norte,Clientes inativos,Receptivo,160,finalizado,Dúvida resolvida
+20/10/2025 11:43:56,Bruno Pereira,Sul,Renovação 2025,Ativo,326,finalizado,Dúvida resolvida
+15/03/2025 18:10:53,Karina Ito,Norte,Renovação 2025,Receptivo,148,finalizado,Dúvida resolvida
+25/09/2025 13:27:23,Queila Rocha,Norte,Upgrade de plano,Receptivo,184,finalizado,Dúvida resolvida
+13/11/2025 16:23:44,João Queiroz,Oeste,Renovação 2025,Receptivo,128,finalizado,Reclamação registrada
+10/12/2025 13:48:07,Nicolas Nogueira,Sul,Renovação 2025,Receptivo,61,abandonado,Cliente desligou
+08/11/2025 14:17:56,João Queiroz,Oeste,Renovação 2025,Ativo,316,transferido,Encaminhado ao financeiro
+01/02/2025 15:42:00,Diego Cardoso,Oeste,Pesquisa NPS,Receptivo,242,finalizado,Venda realizada
+26/07/2025 10:25:08,Nicolas Esteves,Oeste,Upgrade de plano,Receptivo,245,transferido,Encaminhado ao suporte técnico
+01/10/2025 11:26:09,Sofia Esteves,Leste,Upgrade de plano,Ativo,153,finalizado,Venda realizada
+08/03/2025 11:31:44,Queila Moraes,Sul,Clientes inativos,Receptivo,36,abandonado,Cliente desligou
+25/07/2025 14:02:32,Carla Nogueira,Norte,Upgrade de plano,Receptivo,45,abandonado,Cliente desligou
+16/12/2025 16:47:39,Ana Oliveira,Norte,Clientes inativos,Receptivo,273,finalizado,Sem interesse
+24/03/2025 08:12:21,Gabriela Ito,Centro,Clientes inativos,Receptivo,257,finalizado,Dúvida resolvida
+03/02/2025 16:59:40,Nicolas Esteves,Oeste,Renovação 2025,Ativo,170,finalizado,Venda realizada
+16/02/2025 14:15:52,Diego Ito,Norte,Black Friday,Receptivo,182,finalizado,Venda realizada
+20/05/2025 11:32:30,Eduarda Barbosa,Oeste,Clientes inativos,Receptivo,127,finalizado,Dúvida resolvida
+16/01/2025 11:16:28,Mariana Barbosa,Centro,Renovação 2025,Receptivo,52,finalizado,Dúvida resolvida
+29/01/2025 16:48:13,Karina Gomes,Leste,Renovação 2025,Ativo,61,finalizado,Reclamação registrada
+15/12/2025 09:04:47,Mariana Dias,Norte,Pesquisa NPS,Receptivo,106,finalizado,Dúvida resolvida
+07/03/2025 09:12:38,Lucas Dias,Centro,Clientes inativos,Chat,346,finalizado,Dúvida resolvida
+23/12/2025 17:08:51,Úrsula Pereira,Norte,Black Friday,Ativo,149,finalizado,Sem interesse
+09/10/2025 14:58:20,Queila Moraes,Sul,Black Friday,Ativo,275,finalizado,Sem interesse
+21/11/2025 12:19:57,Bruno Moraes,Centro,Upgrade de plano,Ativo,222,finalizado,Dúvida resolvida
+22/12/2025 13:03:30,Bruno Moraes,Centro,Pesquisa NPS,Receptivo,83,finalizado,Dúvida resolvida
+31/10/2025 09:59:15,Yasmin Lima,Oeste,Clientes inativos,Chat,169,finalizado,Reclamação registrada
+29/08/2025 19:06:59,Mariana Barbosa,Centro,Upgrade de plano,Ativo,86,finalizado,Dúvida resolvida
+14/11/2025 12:50:45,Carla Nogueira,Norte,Pesquisa NPS,Receptivo,297,finalizado,Venda realizada
+28/07/2025 12:58:15,Bruno Pereira,Sul,Renovação 2025,Receptivo,73,finalizado,Dúvida resolvida
+04/10/2025 15:59:47,Queila Almeida,Centro,Black Friday,Receptivo,163,finalizado,Sem interesse
+27/11/2025 16:15:41,Vinícius Oliveira,Oeste,Clientes inativos,Ativo,142,finalizado,Dúvida resolvida
+27/08/2025 10:46:30,Rafael Moraes,Leste,Clientes inativos,Receptivo,685,finalizado,Dúvida resolvida
+02/12/2025 11:34:15,Úrsula Lima,Norte,Pesquisa NPS,Receptivo,129,finalizado,Dúvida resolvida
+17/01/2025 15:30:37,Heitor Ito,Leste,Renovação 2025,Receptivo,112,finalizado,Reclamação registrada
+26/09/2025 19:17:33,Karina Ito,Norte,Renovação 2025,Ativo,217,transferido,Encaminhado ao suporte técnico
+13/05/2025 17:10:07,Diego Ito,Norte,Upgrade de plano,Ativo,197,finalizado,Venda realizada
+10/04/2025 15:52:31,Úrsula Lima,Norte,Clientes inativos,Receptivo,67,finalizado,Venda realizada
+28/11/2025 11:04:44,Sofia Cardoso,Centro,Upgrade de plano,Ativo,496,finalizado,Dúvida resolvida
+21/04/2025 11:51:07,Bruno Oliveira,Centro,Renovação 2025,Receptivo,294,finalizado,Sem interesse
+30/03/2025 15:36:53,Nicolas Esteves,Oeste,Upgrade de plano,Receptivo,405,finalizado,Sem interesse
+03/11/2025 10:55:49,Nicolas Esteves,Oeste,Black Friday,Ativo,155,transferido,Encaminhado ao financeiro
+14/04/2025 13:19:11,Úrsula Pereira,Norte,Clientes inativos,Ativo,122,finalizado,Dúvida resolvida
+24/02/2025 08:50:50,Sofia Esteves,Leste,Upgrade de plano,Receptivo,227,finalizado,Reclamação registrada
+02/11/2025 08:29:04,Vinícius Almeida,Sul,Renovação 2025,Receptivo,235,finalizado,Dúvida resolvida
+17/06/2025 15:56:27,Karina Dias,Oeste,Upgrade de plano,Receptivo,199,finalizado,Dúvida resolvida
+01/04/2025 18:18:40,Yasmin Esteves,Norte,Upgrade de plano,Ativo,430,transferido,Encaminhado ao suporte técnico
+23/01/2025 12:56:07,Ana Esteves,Norte,Clientes inativos,Receptivo,156,finalizado,Dúvida resolvida
+22/07/2025 10:26:37,Gabriela Holanda,Sul,Pesquisa NPS,Chat,176,finalizado,Dúvida resolvida
+16/01/2025 12:04:56,Sofia Cardoso,Centro,Clientes inativos,Receptivo,191,finalizado,Dúvida resolvida
+28/07/2025 18:08:05,Carla Teixeira,Norte,Black Friday,Receptivo,148,finalizado,Dúvida resolvida
+01/01/2025 14:33:23,Diego Almeida,Centro,Black Friday,Ativo,82,finalizado,Sem interesse
+19/05/2025 15:33:51,Bruno Pereira,Sul,Black Friday,Receptivo,105,finalizado,Sem interesse
+31/05/2025 09:25:37,Mariana Esteves,Leste,Upgrade de plano,Receptivo,212,finalizado,Dúvida resolvida
+08/04/2025 11:11:07,Heitor Lima,Centro,Pesquisa NPS,Ativo,117,finalizado,Sem interesse
+17/03/2025 10:12:36,Rafael Souza,Sul,Pesquisa NPS,Ativo,67,finalizado,Dúvida resolvida
+14/03/2025 11:39:54,Lucas Dias,Centro,Pesquisa NPS,Receptivo,358,transferido,Encaminhado ao financeiro
+13/05/2025 19:59:49,Rafael Moraes,Leste,Clientes inativos,Ativo,280,finalizado,Reclamação registrada
+24/08/2025 16:49:28,Carla Queiroz,Leste,Black Friday,Receptivo,332,finalizado,Dúvida resolvida
+07/03/2025 15:18:21,Karina Ito,Norte,Pesquisa NPS,Chat,642,finalizado,Sem interesse
+14/11/2025 10:46:04,Vinícius Almeida,Sul,Pesquisa NPS,Ativo,176,finalizado,Reclamação registrada
+18/02/2025 09:09:11,Úrsula Lima,Norte,Upgrade de plano,Receptivo,216,transferido,Encaminhado ao suporte técnico
+18/03/2025 16:58:08,Eduarda Barbosa,Oeste,Black Friday,Ativo,245,finalizado,Dúvida resolvida
+05/09/2025 11:29:09,Rafael Moraes,Leste,Upgrade de plano,Receptivo,147,finalizado,Reclamação registrada
+15/03/2025 15:04:17,Rafael Moraes,Leste,Clientes inativos,Receptivo,303,finalizado,Reclamação registrada
+07/10/2025 11:01:10,Queila Rocha,Norte,Black Friday,Receptivo,282,finalizado,Venda realizada
+01/08/2025 19:48:51,Olívia Dias,Oeste,Clientes inativos,Ativo,284,finalizado,Venda realizada
+10/06/2025 14:13:48,Heitor Queiroz,Oeste,Black Friday,Ativo,36,abandonado,Cliente desligou
+10/10/2025 17:51:32,Rafael Souza,Sul,Upgrade de plano,Ativo,353,finalizado,Venda realizada
+13/05/2025 15:27:57,Diego Ito,Norte,Black Friday,Receptivo,168,finalizado,Venda realizada
+24/11/2025 15:21:17,Úrsula Pereira,Norte,Black Friday,Ativo,335,finalizado,Venda realizada
+08/12/2025 08:49:30,Bruno Oliveira,Centro,Pesquisa NPS,Ativo,183,finalizado,Venda realizada
+06/01/2025 19:13:35,João Queiroz,Oeste,Pesquisa NPS,Receptivo,75,finalizado,Dúvida resolvida
+08/11/2025 15:04:33,Yasmin Rocha,Sul,Clientes inativos,Receptivo,103,finalizado,Venda realizada
+24/04/2025 08:09:33,Bruno Pereira,Sul,Renovação 2025,Receptivo,109,finalizado,Dúvida resolvida
+21/11/2025 10:36:26,Nicolas Oliveira,Sul,Black Friday,Ativo,91,finalizado,Sem interesse
+27/10/2025 14:34:20,Ana Gomes,Sul,Renovação 2025,Receptivo,231,finalizado,Sem interesse
+03/05/2025 14:51:41,Carla Teixeira,Norte,Renovação 2025,Receptivo,244,finalizado,Venda realizada
+22/12/2025 19:26:23,Diego Ito,Norte,Black Friday,Receptivo,302,finalizado,Venda realizada
+07/03/2025 12:44:32,Olívia Esteves,Oeste,Clientes inativos,Ativo,265,finalizado,Venda realizada
+16/10/2025 15:43:31,Úrsula Pereira,Norte,Clientes inativos,Ativo,457,finalizado,Dúvida resolvida
+08/11/2025 19:28:51,Diego Almeida,Centro,Renovação 2025,Ativo,142,finalizado,Dúvida resolvida
+16/04/2025 19:14:13,João Queiroz,Oeste,Black Friday,Receptivo,114,finalizado,Sem interesse
+12/02/2025 11:53:06,Heitor Queiroz,Oeste,Black Friday,Receptivo,206,finalizado,Venda realizada
+08/05/2025 13:02:41,Eduarda Teixeira,Centro,Clientes inativos,Receptivo,118,finalizado,Dúvida resolvida
+11/09/2025 10:33:01,Carla Nogueira,Norte,Pesquisa NPS,Ativo,86,abandonado,Cliente desligou
+26/10/2025 09:12:39,Vinícius Esteves,Leste,Black Friday,Chat,425,finalizado,Dúvida resolvida
+18/06/2025 16:53:24,Heitor Lima,Centro,Upgrade de plano,Ativo,118,transferido,Encaminhado ao suporte técnico
+20/11/2025 08:36:01,Ana Esteves,Norte,Renovação 2025,Receptivo,285,finalizado,Sem interesse
+07/02/2025 09:58:51,Carla Queiroz,Leste,Upgrade de plano,Ativo,543,finalizado,Venda realizada
+26/08/2025 16:02:32,Bruno Pereira,Sul,Black Friday,Ativo,66,finalizado,Dúvida resolvida
+14/06/2025 09:12:42,Nicolas Esteves,Oeste,Pesquisa NPS,Receptivo,122,finalizado,Venda realizada
+23/08/2025 19:13:49,Bruno Oliveira,Centro,Pesquisa NPS,Receptivo,62,finalizado,Sem interesse
+23/08/2025 15:29:18,Lucas Dias,Centro,Upgrade de plano,Ativo,280,finalizado,Dúvida resolvida
+24/07/2025 11:07:05,Queila Almeida,Centro,Renovação 2025,Ativo,219,finalizado,Sem interesse
+03/01/2025 10:44:13,Carla Gomes,Norte,Upgrade de plano,Ativo,212,finalizado,Dúvida resolvida
+01/07/2025 17:02:31,Yasmin Rocha,Sul,Black Friday,Receptivo,203,finalizado,Reclamação registrada
+03/10/2025 09:45:27,João Queiroz,Oeste,Pesquisa NPS,Receptivo,425,transferido,Encaminhado ao suporte técnico
+03/09/2025 17:26:39,Mariana Esteves,Leste,Upgrade de plano,Receptivo,415,transferido,Encaminhado ao suporte técnico
+23/11/2025 10:12:31,Karina Gomes,Leste,Upgrade de plano,Receptivo,69,finalizado,Dúvida resolvida
+29/06/2025 17:51:13,Olívia Dias,Oeste,Upgrade de plano,Receptivo,258,finalizado,Sem interesse
+14/02/2025 14:40:39,Carla Gomes,Norte,Black Friday,Receptivo,266,finalizado,Venda realizada
+29/06/2025 15:47:10,Heitor Lima,Centro,Clientes inativos,Chat,429,finalizado,Dúvida resolvida
+23/02/2025 09:38:29,Eduarda Teixeira,Centro,Upgrade de plano,Ativo,173,finalizado,Sem interesse
+31/10/2025 10:55:33,Thiago Dias,Sul,Upgrade de plano,Receptivo,202,finalizado,Dúvida resolvida
+10/05/2025 12:21:00,Olívia Esteves,Oeste,Renovação 2025,Receptivo,161,finalizado,Reclamação registrada
+22/02/2025 13:08:09,Heitor Ito,Leste,Clientes inativos,Receptivo,293,transferido,Encaminhado ao financeiro
+14/11/2025 16:15:55,Carla Queiroz,Leste,Clientes inativos,Ativo,183,finalizado,Dúvida resolvida
+26/08/2025 19:52:49,Karina Dias,Oeste,Clientes inativos,Ativo,105,finalizado,Dúvida resolvida
+28/12/2025 18:54:14,Wesley Souza,Sul,Upgrade de plano,Receptivo,372,finalizado,Reclamação registrada
+26/08/2025 17:24:03,Mariana Esteves,Leste,Upgrade de plano,Receptivo,847,finalizado,Dúvida resolvida
+26/05/2025 11:03:35,Rafael Moraes,Leste,Clientes inativos,Ativo,252,finalizado,Dúvida resolvida
+03/04/2025 08:59:14,Wesley Souza,Sul,Black Friday,Ativo,445,finalizado,Dúvida resolvida
+21/05/2025 08:36:28,Eduarda Barbosa,Oeste,Black Friday,Receptivo,59,finalizado,Sem interesse
+10/09/2025 09:52:57,Bruno Ferraz,Centro,Upgrade de plano,Ativo,162,finalizado,Sem interesse
+09/02/2025 11:42:49,Lucas Holanda,Oeste,Pesquisa NPS,Receptivo,49,abandonado,Cliente desligou
+09/10/2025 12:06:32,Queila Almeida,Centro,Clientes inativos,Receptivo,188,finalizado,Dúvida resolvida
+09/08/2025 11:18:43,Bruno Moraes,Centro,Black Friday,Chat,131,transferido,Encaminhado ao suporte técnico
+08/06/2025 17:26:43,Mariana Barbosa,Centro,Pesquisa NPS,Receptivo,310,finalizado,Sem interesse
+30/08/2025 16:36:42,Karina Dias,Oeste,Black Friday,Receptivo,91,finalizado,Reclamação registrada
+10/12/2025 10:09:01,Queila Moraes,Sul,Pesquisa NPS,Ativo,182,finalizado,Reclamação registrada
+08/06/2025 17:19:23,Yasmin Lima,Oeste,Black Friday,Receptivo,100,finalizado,Dúvida resolvida
+12/11/2025 15:11:54,Gabriela Ito,Centro,Upgrade de plano,Ativo,252,finalizado,Reclamação registrada
+02/12/2025 08:13:07,Heitor Ito,Leste,Upgrade de plano,Ativo,116,finalizado,Dúvida resolvida
+23/06/2025 15:26:34,João Queiroz,Oeste,Clientes inativos,Ativo,286,transferido,Encaminhado ao suporte técnico
+24/05/2025 12:55:09,Vinícius Oliveira,Oeste,Upgrade de plano,Receptivo,97,finalizado,Sem interesse
+03/04/2025 19:33:39,Vinícius Almeida,Sul,Renovação 2025,Receptivo,104,finalizado,Reclamação registrada
+27/03/2025 13:40:03,João Queiroz,Oeste,Clientes inativos,Ativo,200,finalizado,Reclamação registrada
+22/09/2025 08:14:19,Lucas Holanda,Oeste,Black Friday,Ativo,64,abandonado,Cliente desligou
+14/06/2025 15:26:16,Mariana Souza,Norte,Pesquisa NPS,Receptivo,110,finalizado,Reclamação registrada
+22/10/2025 19:38:31,Thiago Dias,Sul,Black Friday,Ativo,70,finalizado,Venda realizada
+22/11/2025 16:59:00,Bruno Pereira,Sul,Upgrade de plano,Receptivo,76,abandonado,Cliente desligou
+22/11/2025 17:38:15,Heitor Lima,Centro,Black Friday,Receptivo,126,transferido,Encaminhado ao suporte técnico
+03/10/2025 08:32:55,Gabriela Ito,Centro,Pesquisa NPS,Ativo,233,finalizado,Sem interesse
+03/12/2025 18:45:12,Nicolas Ito,Oeste,Black Friday,Ativo,136,finalizado,Dúvida resolvida
+27/04/2025 15:09:47,Sofia Esteves,Leste,Black Friday,Receptivo,100,finalizado,Reclamação registrada
+10/01/2025 13:10:36,Karina Ito,Norte,Black Friday,Receptivo,804,finalizado,Reclamação registrada
+28/04/2025 18:31:27,Thiago Dias,Sul,Black Friday,Ativo,173,finalizado,Dúvida resolvida
+01/07/2025 10:44:22,Nicolas Nogueira,Sul,Pesquisa NPS,Ativo,177,finalizado,Sem interesse
+31/12/2025 13:02:03,Nicolas Oliveira,Sul,Black Friday,Receptivo,296,finalizado,Sem interesse
+28/02/2025 16:38:44,Sofia Esteves,Leste,Renovação 2025,Receptivo,140,transferido,Encaminhado ao financeiro
+28/12/2025 14:07:33,Vinícius Oliveira,Oeste,Clientes inativos,Ativo,165,finalizado,Sem interesse
+18/10/2025 09:23:05,Heitor Ito,Leste,Pesquisa NPS,Ativo,182,finalizado,Sem interesse
+03/10/2025 08:39:07,Carla Gomes,Norte,Black Friday,Ativo,74,abandonado,Cliente desligou
+29/11/2025 17:53:00,Lucas Dias,Centro,Upgrade de plano,Receptivo,139,finalizado,Venda realizada
+18/12/2025 11:49:39,Mariana Dias,Norte,Renovação 2025,Ativo,96,finalizado,Sem interesse
+17/08/2025 11:48:27,Ana Oliveira,Norte,Upgrade de plano,Receptivo,242,finalizado,Sem interesse
+16/12/2025 12:41:15,Nicolas Ito,Oeste,Clientes inativos,Receptivo,215,finalizado,Dúvida resolvida
+21/10/2025 11:54:33,Yasmin Rocha,Sul,Pesquisa NPS,Ativo,77,abandonado,Cliente desligou
+04/12/2025 12:20:23,João Queiroz,Oeste,Clientes inativos,Ativo,82,finalizado,Venda realizada
+23/12/2025 13:53:25,Nicolas Oliveira,Sul,Renovação 2025,Receptivo,88,finalizado,Sem interesse
+12/08/2025 14:18:55,Rafael Gomes,Leste,Clientes inativos,Chat,77,abandonado,Cliente desligou
+12/11/2025 11:41:00,João Queiroz,Oeste,Black Friday,Receptivo,255,transferido,Encaminhado ao financeiro
+09/07/2025 19:31:42,Thiago Queiroz,Leste,Clientes inativos,Ativo,93,finalizado,Venda realizada
+16/01/2025 16:39:56,Úrsula Lima,Norte,Pesquisa NPS,Ativo,285,finalizado,Dúvida resolvida
+01/02/2025 15:04:56,Yasmin Esteves,Norte,Clientes inativos,Ativo,409,finalizado,Dúvida resolvida
+13/06/2025 19:14:15,Karina Ito,Norte,Clientes inativos,Ativo,59,finalizado,Sem interesse
+14/10/2025 13:58:37,Nicolas Esteves,Oeste,Upgrade de plano,Receptivo,214,finalizado,Dúvida resolvida
+15/12/2025 14:53:47,Ana Esteves,Norte,Black Friday,Receptivo,268,finalizado,Reclamação registrada
+14/12/2025 17:42:47,Bruno Pereira,Sul,Black Friday,Receptivo,475,finalizado,Dúvida resolvida
+24/09/2025 17:13:45,Heitor Ito,Leste,Clientes inativos,Receptivo,158,finalizado,Reclamação registrada
+08/09/2025 18:19:44,Lucas Holanda,Oeste,Black Friday,Receptivo,95,finalizado,Dúvida resolvida
+08/02/2025 17:54:57,Eduarda Barbosa,Oeste,Upgrade de plano,Receptivo,149,finalizado,Reclamação registrada
+11/12/2025 15:10:38,Úrsula Pereira,Norte,Upgrade de plano,Chat,697,finalizado,Dúvida resolvida
+15/08/2025 17:59:26,Ana Oliveira,Norte,Upgrade de plano,Receptivo,48,abandonado,Cliente desligou
+19/12/2025 12:29:27,Nicolas Nogueira,Sul,Clientes inativos,Ativo,361,finalizado,Sem interesse
+02/09/2025 15:10:04,Mariana Barbosa,Centro,Pesquisa NPS,Receptivo,401,transferido,Encaminhado ao financeiro
+27/04/2025 11:47:22,Wesley Souza,Sul,Upgrade de plano,Receptivo,10,abandonado,Cliente desligou
+01/08/2025 08:30:19,Heitor Ferraz,Oeste,Upgrade de plano,Receptivo,121,finalizado,Sem interesse
+04/05/2025 19:54:21,Heitor Lima,Centro,Upgrade de plano,Receptivo,66,abandonado,Cliente desligou
+19/11/2025 11:16:52,Gabriela Rocha,Leste,Clientes inativos,Ativo,233,finalizado,Dúvida resolvida
+02/08/2025 10:59:07,Eduarda Teixeira,Centro,Renovação 2025,Receptivo,214,finalizado,Dúvida resolvida
+07/02/2025 12:03:02,Thiago Dias,Sul,Clientes inativos,Ativo,286,finalizado,Dúvida resolvida
+22/05/2025 08:33:52,Karina Gomes,Leste,Pesquisa NPS,Chat,44,transferido,Encaminhado ao financeiro
+05/12/2025 19:17:20,Bruno Oliveira,Centro,Upgrade de plano,Receptivo,178,finalizado,Sem interesse
+15/02/2025 11:38:49,Bruno Moraes,Centro,Clientes inativos,Ativo,286,finalizado,Reclamação registrada
+19/10/2025 10:56:05,Vinícius Esteves,Leste,Pesquisa NPS,Receptivo,146,finalizado,Venda realizada
+05/06/2025 14:18:39,Yasmin Rocha,Sul,Pesquisa NPS,Ativo,101,finalizado,Dúvida resolvida
+19/02/2025 09:15:58,Nicolas Oliveira,Sul,Renovação 2025,Ativo,223,finalizado,Reclamação registrada
+21/11/2025 11:33:57,Karina Ito,Norte,Clientes inativos,Receptivo,37,abandonado,Cliente desligou
+26/04/2025 18:12:47,Heitor Ito,Leste,Upgrade de plano,Ativo,600,finalizado,Dúvida resolvida
+04/09/2025 17:21:03,Mariana Souza,Norte,Renovação 2025,Ativo,113,transferido,Encaminhado ao suporte técnico
+18/01/2025 12:39:10,Ana Gomes,Sul,Pesquisa NPS,Ativo,416,finalizado,Dúvida resolvida
+06/02/2025 15:54:10,Nicolas Esteves,Oeste,Upgrade de plano,Chat,320,transferido,Encaminhado ao suporte técnico
+20/04/2025 17:14:42,Sofia Cardoso,Centro,Upgrade de plano,Chat,317,finalizado,Dúvida resolvida
+29/06/2025 15:52:21,Thiago Queiroz,Leste,Clientes inativos,Receptivo,68,abandonado,Cliente desligou
+11/10/2025 10:48:39,Wesley Souza,Sul,Clientes inativos,Receptivo,47,abandonado,Cliente desligou
+06/10/2025 11:44:35,Olívia Dias,Oeste,Renovação 2025,Ativo,374,finalizado,Dúvida resolvida
+26/03/2025 19:07:00,Bruno Oliveira,Centro,Upgrade de plano,Receptivo,270,finalizado,Reclamação registrada
+27/08/2025 08:19:11,Wesley Souza,Sul,Black Friday,Ativo,345,finalizado,Venda realizada
+06/01/2025 19:28:03,Olívia Esteves,Oeste,Pesquisa NPS,Receptivo,299,transferido,Encaminhado ao suporte técnico
+20/04/2025 14:41:09,Wesley Souza,Sul,Upgrade de plano,Receptivo,200,finalizado,Dúvida resolvida
+19/10/2025 13:02:15,Mariana Souza,Norte,Renovação 2025,Chat,65,transferido,Encaminhado ao suporte técnico
+12/08/2025 11:58:35,Heitor Ito,Leste,Renovação 2025,Receptivo,168,transferido,Encaminhado ao suporte técnico
+05/04/2025 13:09:33,Ana Oliveira,Norte,Renovação 2025,Ativo,250,finalizado,Reclamação registrada
+28/02/2025 17:02:14,Gabriela Ito,Centro,Clientes inativos,Ativo,51,abandonado,Cliente desligou
+28/10/2025 19:09:26,Diego Cardoso,Oeste,Upgrade de plano,Receptivo,260,finalizado,Sem interesse
+25/09/2025 17:10:36,Mariana Souza,Norte,Black Friday,Receptivo,293,finalizado,Dúvida resolvida
+13/09/2025 15:51:20,Carla Teixeira,Norte,Upgrade de plano,Receptivo,78,finalizado,Dúvida resolvida
+16/08/2025 11:16:35,Bruno Pereira,Sul,Black Friday,Ativo,789,finalizado,Dúvida resolvida
+04/06/2025 09:36:25,Heitor Lima,Centro,Renovação 2025,Ativo,364,finalizado,Dúvida resolvida
+01/01/2025 18:34:51,Mariana Esteves,Leste,Pesquisa NPS,Ativo,219,finalizado,Reclamação registrada
+09/11/2025 15:14:40,Ana Esteves,Norte,Upgrade de plano,Ativo,166,finalizado,Reclamação registrada
+05/04/2025 14:09:46,Yasmin Lima,Oeste,Upgrade de plano,Ativo,68,finalizado,Dúvida resolvida
+08/06/2025 10:11:43,Nicolas Ito,Oeste,Clientes inativos,Ativo,151,finalizado,Sem interesse
+09/07/2025 19:01:07,João Queiroz,Oeste,Pesquisa NPS,Ativo,227,finalizado,Venda realizada
+22/08/2025 12:06:29,Yasmin Esteves,Norte,Black Friday,Ativo,159,finalizado,Venda realizada
+21/07/2025 18:59:10,Úrsula Lima,Norte,Renovação 2025,Receptivo,115,finalizado,Dúvida resolvida
+21/01/2025 17:36:24,Thiago Dias,Sul,Black Friday,Receptivo,155,finalizado,Venda realizada
+28/05/2025 14:24:23,Carla Gomes,Norte,Renovação 2025,Receptivo,272,finalizado,Reclamação registrada
+28/12/2025 16:52:43,Wesley Souza,Sul,Renovação 2025,Receptivo,479,finalizado,Dúvida resolvida
+15/11/2025 18:53:22,Mariana Barbosa,Centro,Pesquisa NPS,Receptivo,74,abandonado,Cliente desligou
+27/03/2025 15:22:47,Bruno Moraes,Centro,Upgrade de plano,Receptivo,191,transferido,Encaminhado ao suporte técnico
+13/03/2025 18:23:41,Heitor Ferraz,Oeste,Black Friday,Chat,78,abandonado,Cliente desligou
+12/07/2025 12:37:59,Bruno Ferraz,Centro,Pesquisa NPS,Ativo,137,finalizado,Dúvida resolvida
+05/01/2025 09:15:13,Olívia Dias,Oeste,Black Friday,Receptivo,222,finalizado,Sem interesse
+12/01/2025 12:14:10,Bruno Oliveira,Centro,Pesquisa NPS,Receptivo,120,finalizado,Reclamação registrada
+30/01/2025 12:36:46,Mariana Dias,Norte,Upgrade de plano,Receptivo,274,finalizado,Sem interesse
+04/08/2025 16:17:30,Úrsula Pereira,Norte,Renovação 2025,Chat,96,finalizado,Venda realizada
+28/10/2025 16:50:37,Eduarda Barbosa,Oeste,Renovação 2025,Receptivo,157,finalizado,Dúvida resolvida
+08/07/2025 10:20:24,Rafael Gomes,Leste,Pesquisa NPS,Receptivo,410,finalizado,Dúvida resolvida
+10/10/2025 18:10:21,Gabriela Ito,Centro,Upgrade de plano,Receptivo,113,finalizado,Venda realizada
+21/04/2025 14:55:37,Karina Gomes,Leste,Black Friday,Ativo,371,transferido,Encaminhado ao suporte técnico
+15/12/2025 10:46:54,Rafael Souza,Sul,Clientes inativos,Receptivo,469,finalizado,Venda realizada
+24/09/2025 19:03:49,Heitor Lima,Centro,Black Friday,Receptivo,470,finalizado,Reclamação registrada
+17/12/2025 10:43:20,Karina Gomes,Leste,Clientes inativos,Receptivo,170,transferido,Encaminhado ao suporte técnico
+11/01/2025 10:42:53,Wesley Souza,Sul,Black Friday,Ativo,353,finalizado,Dúvida resolvida
+11/04/2025 08:34:54,Eduarda Barbosa,Oeste,Clientes inativos,Receptivo,129,transferido,Encaminhado ao suporte técnico
+24/02/2025 17:48:52,Gabriela Ito,Centro,Renovação 2025,Ativo,165,transferido,Encaminhado ao suporte técnico
+31/03/2025 19:36:47,Nicolas Oliveira,Sul,Black Friday,Ativo,434,finalizado,Dúvida resolvida
+14/09/2025 10:28:33,Vinícius Almeida,Sul,Renovação 2025,Chat,202,finalizado,Sem interesse
+08/05/2025 10:46:03,Eduarda Barbosa,Oeste,Pesquisa NPS,Ativo,162,finalizado,Sem interesse
+17/12/2025 19:32:41,Nicolas Esteves,Oeste,Clientes inativos,Ativo,314,finalizado,Dúvida resolvida
+20/11/2025 10:11:55,Diego Cardoso,Oeste,Renovação 2025,Receptivo,174,finalizado,Venda realizada
+25/05/2025 17:23:21,Lucas Dias,Centro,Upgrade de plano,Ativo,151,finalizado,Venda realizada
+13/06/2025 10:01:42,Úrsula Pereira,Norte,Clientes inativos,Receptivo,255,finalizado,Venda realizada
+20/09/2025 12:13:57,Heitor Ferraz,Oeste,Black Friday,Receptivo,41,finalizado,Dúvida resolvida
+10/08/2025 17:56:18,Carla Gomes,Norte,Clientes inativos,Receptivo,349,finalizado,Dúvida resolvida
+13/07/2025 11:34:11,Olívia Dias,Oeste,Upgrade de plano,Receptivo,186,transferido,Encaminhado ao suporte técnico
+18/06/2025 15:32:40,Olívia Dias,Oeste,Upgrade de plano,Receptivo,148,finalizado,Venda realizada
+03/05/2025 13:28:42,Queila Almeida,Centro,Black Friday,Ativo,90,finalizado,Sem interesse
+13/06/2025 11:27:24,Mariana Esteves,Leste,Clientes inativos,Chat,449,finalizado,Dúvida resolvida
+24/10/2025 18:51:23,Queila Rocha,Norte,Pesquisa NPS,Chat,95,finalizado,Sem interesse
+09/06/2025 15:18:44,Rafael Gomes,Leste,Clientes inativos,Ativo,720,finalizado,Venda realizada
+16/04/2025 18:31:02,Carla Gomes,Norte,Upgrade de plano,Receptivo,132,transferido,Encaminhado ao financeiro
+22/11/2025 13:22:37,Yasmin Lima,Oeste,Black Friday,Receptivo,115,finalizado,Sem interesse
+03/04/2025 15:21:19,Olívia Esteves,Oeste,Renovação 2025,Receptivo,549,finalizado,Dúvida resolvida
+11/01/2025 17:42:02,Yasmin Lima,Oeste,Upgrade de plano,Receptivo,104,finalizado,Dúvida resolvida
+14/10/2025 12:27:04,Carla Teixeira,Norte,Black Friday,Ativo,198,finalizado,Sem interesse
+20/09/2025 12:03:25,Úrsula Pereira,Norte,Black Friday,Chat,9,abandonado,Cliente desligou
+06/09/2025 11:34:50,Ana Oliveira,Norte,Black Friday,Ativo,231,finalizado,Dúvida resolvida
+01/03/2025 18:14:44,Rafael Souza,Sul,Pesquisa NPS,Ativo,72,abandonado,Cliente desligou
+13/04/2025 17:19:27,João Oliveira,Centro,Clientes inativos,Receptivo,43,abandonado,Cliente desligou
+27/05/2025 13:45:26,Sofia Esteves,Leste,Pesquisa NPS,Ativo,1067,finalizado,Reclamação registrada
+11/08/2025 16:23:00,Nicolas Oliveira,Sul,Pesquisa NPS,Receptivo,152,transferido,Encaminhado ao financeiro
+11/07/2025 09:40:54,Úrsula Lima,Norte,Clientes inativos,Ativo,310,finalizado,Venda realizada
+05/09/2025 18:39:21,Nicolas Nogueira,Sul,Renovação 2025,Receptivo,262,finalizado,Venda realizada
+13/11/2025 13:57:57,Diego Cardoso,Oeste,Black Friday,Receptivo,566,finalizado,Venda realizada
+03/10/2025 18:16:42,Sofia Moraes,Norte,Black Friday,Receptivo,55,abandonado,Cliente desligou
+14/03/2025 10:15:05,Queila Rocha,Norte,Pesquisa NPS,Receptivo,357,finalizado,Sem interesse
+11/06/2025 16:52:30,Gabriela Rocha,Leste,Renovação 2025,Ativo,312,finalizado,Venda realizada
+10/01/2025 18:35:01,Eduarda Barbosa,Oeste,Renovação 2025,Receptivo,213,finalizado,Venda realizada
+10/03/2025 14:41:54,Carla Queiroz,Leste,Upgrade de plano,Ativo,9,abandonado,Cliente desligou
+13/11/2025 16:01:15,Vinícius Oliveira,Oeste,Upgrade de plano,Ativo,120,finalizado,Dúvida resolvida
+25/11/2025 16:30:53,Karina Dias,Oeste,Black Friday,Receptivo,146,finalizado,Dúvida resolvida
+25/07/2025 09:54:06,Mariana Souza,Norte,Pesquisa NPS,Receptivo,208,finalizado,Reclamação registrada
+28/09/2025 17:43:57,Mariana Barbosa,Centro,Clientes inativos,Receptivo,339,finalizado,Reclamação registrada
+15/04/2025 12:56:34,Diego Ito,Norte,Upgrade de plano,Receptivo,292,finalizado,Sem interesse
+26/05/2025 15:47:39,Thiago Queiroz,Leste,Clientes inativos,Chat,207,finalizado,Dúvida resolvida
+03/10/2025 16:24:16,Sofia Cardoso,Centro,Upgrade de plano,Ativo,137,finalizado,Dúvida resolvida
+23/09/2025 17:27:55,Carla Gomes,Norte,Upgrade de plano,Ativo,274,finalizado,Reclamação registrada
+17/12/2025 11:07:09,Eduarda Teixeira,Centro,Clientes inativos,Ativo,182,transferido,Encaminhado ao suporte técnico
+08/05/2025 16:25:29,Vinícius Esteves,Leste,Black Friday,Receptivo,285,finalizado,Sem interesse
+20/01/2025 09:07:51,Gabriela Rocha,Leste,Renovação 2025,Ativo,53,finalizado,Dúvida resolvida
+31/10/2025 12:47:45,Rafael Gomes,Leste,Black Friday,Ativo,179,finalizado,Venda realizada
+13/04/2025 13:22:14,Nicolas Nogueira,Sul,Upgrade de plano,Ativo,212,finalizado,Venda realizada
+22/03/2025 13:13:37,Heitor Ito,Leste,Upgrade de plano,Receptivo,311,finalizado,Dúvida resolvida
+16/11/2025 12:58:38,Heitor Ferraz,Oeste,Upgrade de plano,Receptivo,154,finalizado,Venda realizada
+24/10/2025 15:04:28,Sofia Esteves,Leste,Renovação 2025,Ativo,153,finalizado,Reclamação registrada
+18/07/2025 19:30:35,Heitor Ito,Leste,Clientes inativos,Ativo,235,finalizado,Reclamação registrada
+07/12/2025 19:53:17,Heitor Ito,Leste,Upgrade de plano,Ativo,468,finalizado,Reclamação registrada
+04/11/2025 18:04:18,Thiago Dias,Sul,Clientes inativos,Receptivo,267,finalizado,Reclamação registrada
+25/02/2025 11:29:02,Queila Moraes,Sul,Renovação 2025,Ativo,184,finalizado,Sem interesse
+11/02/2025 15:29:32,Ana Oliveira,Norte,Clientes inativos,Receptivo,534,finalizado,Reclamação registrada
+05/04/2025 12:40:42,Rafael Gomes,Leste,Upgrade de plano,Receptivo,367,finalizado,Dúvida resolvida
+08/05/2025 17:53:48,Carla Queiroz,Leste,Pesquisa NPS,Ativo,149,finalizado,Sem interesse
+21/03/2025 19:37:14,Yasmin Rocha,Sul,Renovação 2025,Ativo,278,finalizado,Dúvida resolvida
+20/12/2025 10:06:39,Heitor Queiroz,Oeste,Renovação 2025,Ativo,50,finalizado,Dúvida resolvida
+07/05/2025 09:03:49,Sofia Moraes,Norte,Clientes inativos,Ativo,162,finalizado,Reclamação registrada
+05/08/2025 19:07:59,Ana Esteves,Norte,Pesquisa NPS,Ativo,150,finalizado,Reclamação registrada
+21/10/2025 15:49:29,Mariana Esteves,Leste,Clientes inativos,Chat,342,finalizado,Sem interesse
+21/06/2025 12:45:55,Gabriela Rocha,Leste,Black Friday,Ativo,296,finalizado,Dúvida resolvida
+04/05/2025 16:49:50,Ana Gomes,Sul,Renovação 2025,Ativo,448,finalizado,Venda realizada
+25/09/2025 14:22:50,Sofia Cardoso,Centro,Clientes inativos,Ativo,69,abandonado,Cliente desligou
+28/01/2025 18:56:22,Carla Queiroz,Leste,Black Friday,Ativo,265,finalizado,Venda realizada
+08/07/2025 14:13:45,Karina Ito,Norte,Renovação 2025,Receptivo,156,finalizado,Sem interesse
+02/10/2025 16:27:37,Diego Almeida,Centro,Upgrade de plano,Chat,202,finalizado,Reclamação registrada
+03/02/2025 18:21:17,João Oliveira,Centro,Clientes inativos,Receptivo,368,finalizado,Sem interesse
+08/01/2025 08:08:51,Mariana Barbosa,Centro,Pesquisa NPS,Ativo,326,finalizado,Venda realizada
+10/07/2025 11:50:20,Queila Moraes,Sul,Pesquisa NPS,Ativo,163,transferido,Encaminhado ao suporte técnico
+16/12/2025 08:16:23,Mariana Dias,Norte,Clientes inativos,Receptivo,151,finalizado,Dúvida resolvida
+14/06/2025 15:37:51,Olívia Dias,Oeste,Pesquisa NPS,Receptivo,216,finalizado,Venda realizada
+19/08/2025 10:56:06,Eduarda Teixeira,Centro,Clientes inativos,Chat,271,finalizado,Sem interesse
+05/01/2025 19:29:16,Karina Dias,Oeste,Renovação 2025,Receptivo,320,finalizado,Reclamação registrada
+13/06/2025 10:53:40,Sofia Esteves,Leste,Pesquisa NPS,Receptivo,242,finalizado,Venda realizada
+10/03/2025 08:47:01,Eduarda Barbosa,Oeste,Clientes inativos,Ativo,555,transferido,Encaminhado ao suporte técnico
+16/04/2025 18:04:07,Mariana Souza,Norte,Clientes inativos,Receptivo,273,finalizado,Dúvida resolvida
+06/03/2025 18:20:58,Bruno Pereira,Sul,Renovação 2025,Receptivo,162,finalizado,Venda realizada
+02/12/2025 18:29:34,Wesley Souza,Sul,Clientes inativos,Ativo,180,transferido,Encaminhado ao suporte técnico
+31/08/2025 10:40:23,Bruno Ferraz,Centro,Black Friday,Receptivo,111,transferido,Encaminhado ao suporte técnico
+03/10/2025 19:53:59,Gabriela Ito,Centro,Pesquisa NPS,Receptivo,293,finalizado,Venda realizada
+16/04/2025 13:59:31,Mariana Souza,Norte,Upgrade de plano,Ativo,233,finalizado,Dúvida resolvida
+24/11/2025 12:16:38,Carla Teixeira,Norte,Pesquisa NPS,Receptivo,338,finalizado,Reclamação registrada
+01/09/2025 11:42:18,Yasmin Lima,Oeste,Clientes inativos,Ativo,262,finalizado,Dúvida resolvida
+22/08/2025 18:07:41,Olívia Esteves,Oeste,Clientes inativos,Receptivo,119,finalizado,Reclamação registrada
+25/08/2025 12:20:16,Queila Rocha,Norte,Renovação 2025,Ativo,107,finalizado,Reclamação registrada
+04/04/2025 10:34:52,Diego Cardoso,Oeste,Renovação 2025,Receptivo,111,finalizado,Venda realizada
+25/03/2025 15:09:40,Gabriela Ito,Centro,Upgrade de plano,Receptivo,149,finalizado,Reclamação registrada
+21/04/2025 08:59:32,Yasmin Rocha,Sul,Renovação 2025,Ativo,104,finalizado,Dúvida resolvida
+30/05/2025 09:00:08,Queila Rocha,Norte,Clientes inativos,Ativo,166,transferido,Encaminhado ao suporte técnico
+17/05/2025 12:25:13,Nicolas Ito,Oeste,Renovação 2025,Receptivo,186,finalizado,Venda realizada
+07/08/2025 08:07:32,Mariana Barbosa,Centro,Clientes inativos,Ativo,190,finalizado,Venda realizada
+21/04/2025 09:56:47,Thiago Dias,Sul,Black Friday,Chat,96,finalizado,Sem interesse
+12/05/2025 10:51:56,Queila Almeida,Centro,Upgrade de plano,Receptivo,132,finalizado,Dúvida resolvida
+17/03/2025 08:57:00,Olívia Dias,Oeste,Upgrade de plano,Receptivo,193,finalizado,Reclamação registrada
+31/08/2025 19:28:50,Nicolas Esteves,Oeste,Clientes inativos,Receptivo,430,finalizado,Dúvida resolvida
+18/06/2025 14:46:39,Ana Oliveira,Norte,Upgrade de plano,Ativo,281,finalizado,Sem interesse
+18/02/2025 16:26:28,Olívia Dias,Oeste,Renovação 2025,Receptivo,218,transferido,Encaminhado ao suporte técnico
+18/04/2025 19:15:38,Thiago Dias,Sul,Clientes inativos,Ativo,78,transferido,Encaminhado ao suporte técnico
+09/06/2025 11:32:26,Lucas Holanda,Oeste,Upgrade de plano,Ativo,143,finalizado,Sem interesse
+14/12/2025 15:27:19,Eduarda Barbosa,Oeste,Pesquisa NPS,Ativo,142,finalizado,Venda realizada
+29/05/2025 11:54:19,Nicolas Nogueira,Sul,Pesquisa NPS,Ativo,368,finalizado,Dúvida resolvida
+21/01/2025 18:56:57,Bruno Ferraz,Centro,Black Friday,Receptivo,130,finalizado,Reclamação registrada
+01/09/2025 17:01:50,Bruno Pereira,Sul,Clientes inativos,Ativo,165,finalizado,Dúvida resolvida
+02/06/2025 10:25:09,Rafael Gomes,Leste,Clientes inativos,Receptivo,133,transferido,Encaminhado ao financeiro
+12/06/2025 10:45:00,Vinícius Oliveira,Oeste,Black Friday,Receptivo,114,finalizado,Dúvida resolvida
+22/01/2025 14:07:22,Queila Rocha,Norte,Black Friday,Receptivo,169,transferido,Encaminhado ao suporte técnico
+26/09/2025 14:48:50,Bruno Ferraz,Centro,Renovação 2025,Receptivo,240,transferido,Encaminhado ao suporte técnico
+25/07/2025 15:39:19,Karina Ito,Norte,Renovação 2025,Ativo,184,finalizado,Venda realizada
+16/05/2025 17:41:52,Sofia Cardoso,Centro,Black Friday,Ativo,505,finalizado,Venda realizada
+23/02/2025 19:05:49,Gabriela Rocha,Leste,Black Friday,Ativo,88,abandonado,Cliente desligou
+24/03/2025 09:32:53,Lucas Dias,Centro,Black Friday,Chat,71,abandonado,Cliente desligou
+18/06/2025 08:15:59,Queila Rocha,Norte,Renovação 2025,Ativo,67,finalizado,Dúvida resolvida
+25/10/2025 10:59:23,Sofia Cardoso,Centro,Clientes inativos,Receptivo,169,transferido,Encaminhado ao suporte técnico
+24/07/2025 17:36:14,Diego Cardoso,Oeste,Upgrade de plano,Receptivo,332,finalizado,Dúvida resolvida
+04/05/2025 15:42:14,Rafael Moraes,Leste,Pesquisa NPS,Ativo,139,finalizado,Dúvida resolvida
+20/09/2025 19:33:46,Heitor Queiroz,Oeste,Pesquisa NPS,Receptivo,131,finalizado,Sem interesse
+21/11/2025 11:20:02,Vinícius Esteves,Leste,Clientes inativos,Receptivo,375,finalizado,Sem interesse
+15/11/2025 11:01:33,Vinícius Oliveira,Oeste,Renovação 2025,Chat,289,finalizado,Sem interesse
+07/02/2025 11:42:56,Karina Gomes,Leste,Pesquisa NPS,Ativo,191,transferido,Encaminhado ao suporte técnico
+31/03/2025 17:26:50,Olívia Dias,Oeste,Pesquisa NPS,Chat,373,finalizado,Venda realizada
+25/09/2025 16:29:46,João Oliveira,Centro,Pesquisa NPS,Receptivo,185,finalizado,Venda realizada
+13/07/2025 08:49:29,Vinícius Esteves,Leste,Black Friday,Receptivo,505,transferido,Encaminhado ao suporte técnico
+14/09/2025 08:43:55,Mariana Souza,Norte,Black Friday,Chat,81,abandonado,Cliente desligou
+27/02/2025 19:33:47,Sofia Cardoso,Centro,Upgrade de plano,Receptivo,273,finalizado,Reclamação registrada
+11/03/2025 17:44:04,Rafael Gomes,Leste,Black Friday,Receptivo,188,transferido,Encaminhado ao suporte técnico
+24/10/2025 16:56:42,Ana Esteves,Norte,Clientes inativos,Ativo,218,finalizado,Reclamação registrada
+04/01/2025 17:06:01,Lucas Dias,Centro,Clientes inativos,Chat,77,abandonado,Cliente desligou
+04/12/2025 09:06:19,Mariana Esteves,Leste,Black Friday,Receptivo,109,finalizado,Dúvida resolvida
+27/06/2025 10:32:21,Rafael Gomes,Leste,Pesquisa NPS,Receptivo,91,finalizado,Dúvida resolvida
+21/09/2025 15:02:23,João Oliveira,Centro,Upgrade de plano,Ativo,137,finalizado,Venda realizada
+13/11/2025 13:12:34,Rafael Gomes,Leste,Black Friday,Ativo,105,finalizado,Reclamação registrada
+13/04/2025 14:20:02,Nicolas Oliveira,Sul,Pesquisa NPS,Receptivo,163,finalizado,Sem interesse
+28/08/2025 14:23:06,Nicolas Oliveira,Sul,Upgrade de plano,Receptivo,89,finalizado,Sem interesse
+20/01/2025 12:29:03,Ana Esteves,Norte,Pesquisa NPS,Receptivo,641,finalizado,Dúvida resolvida
+24/05/2025 13:50:50,Yasmin Rocha,Sul,Upgrade de plano,Receptivo,87,finalizado,Reclamação registrada
+10/10/2025 15:47:36,Lucas Dias,Centro,Upgrade de plano,Ativo,62,abandonado,Cliente desligou
+04/09/2025 11:48:15,Nicolas Esteves,Oeste,Renovação 2025,Receptivo,221,finalizado,Venda realizada
+13/09/2025 16:23:04,Vinícius Oliveira,Oeste,Clientes inativos,Receptivo,145,finalizado,Venda realizada
+29/04/2025 12:17:48,João Oliveira,Centro,Black Friday,Receptivo,16,abandonado,Cliente desligou
+05/04/2025 19:34:10,Gabriela Ito,Centro,Clientes inativos,Receptivo,263,transferido,Encaminhado ao financeiro
+27/06/2025 15:56:08,João Queiroz,Oeste,Black Friday,Ativo,138,finalizado,Dúvida resolvida
+15/09/2025 14:40:31,Karina Gomes,Leste,Black Friday,Ativo,415,finalizado,Dúvida resolvida
+29/09/2025 11:52:22,Carla Gomes,Norte,Upgrade de plano,Receptivo,380,finalizado,Venda realizada
+28/04/2025 10:34:39,Sofia Moraes,Norte,Clientes inativos,Receptivo,72,abandonado,Cliente desligou
+18/01/2025 11:58:08,Karina Gomes,Leste,Renovação 2025,Receptivo,273,finalizado,Dúvida resolvida
+03/07/2025 17:48:58,Mariana Esteves,Leste,Clientes inativos,Receptivo,414,finalizado,Venda realizada
+22/06/2025 18:36:50,Queila Almeida,Centro,Pesquisa NPS,Ativo,191,finalizado,Dúvida resolvida
+16/05/2025 08:43:52,Úrsula Lima,Norte,Upgrade de plano,Receptivo,115,finalizado,Dúvida resolvida
+02/10/2025 16:24:54,Eduarda Barbosa,Oeste,Black Friday,Chat,153,finalizado,Dúvida resolvida
+24/10/2025 13:10:55,Úrsula Lima,Norte,Upgrade de plano,Ativo,95,finalizado,Venda realizada
+26/08/2025 16:58:03,Ana Esteves,Norte,Black Friday,Receptivo,609,finalizado,Sem interesse
+20/11/2025 09:57:21,Bruno Moraes,Centro,Clientes inativos,Ativo,53,finalizado,Sem interesse
+25/05/2025 11:31:30,Lucas Dias,Centro,Upgrade de plano,Ativo,182,finalizado,Dúvida resolvida
+14/07/2025 16:41:29,Yasmin Rocha,Sul,Renovação 2025,Ativo,219,finalizado,Venda realizada
+27/02/2025 15:01:14,Sofia Cardoso,Centro,Pesquisa NPS,Receptivo,186,finalizado,Dúvida resolvida
+16/10/2025 15:51:25,Carla Nogueira,Norte,Clientes inativos,Chat,15,abandonado,Cliente desligou
+28/06/2025 14:20:59,Sofia Esteves,Leste,Pesquisa NPS,Receptivo,440,finalizado,Sem interesse
+04/11/2025 14:45:03,Heitor Lima,Centro,Clientes inativos,Ativo,28,finalizado,Dúvida resolvida
+30/06/2025 16:17:40,Ana Esteves,Norte,Black Friday,Ativo,549,finalizado,Venda realizada
+27/10/2025 09:00:52,Eduarda Teixeira,Centro,Black Friday,Receptivo,189,finalizado,Dúvida resolvida
+25/04/2025 11:59:20,Carla Teixeira,Norte,Pesquisa NPS,Receptivo,202,finalizado,Sem interesse
+16/10/2025 12:28:06,Nicolas Oliveira,Sul,Upgrade de plano,Ativo,224,finalizado,Dúvida resolvida
+07/01/2025 11:40:25,Sofia Cardoso,Centro,Renovação 2025,Receptivo,98,finalizado,Reclamação registrada
+02/10/2025 18:34:18,Thiago Queiroz,Leste,Upgrade de plano,Receptivo,295,finalizado,Dúvida resolvida
+18/04/2025 13:50:19,Diego Almeida,Centro,Pesquisa NPS,Receptivo,187,transferido,Encaminhado ao financeiro
+15/07/2025 10:04:59,Mariana Souza,Norte,Upgrade de plano,Receptivo,240,transferido,Encaminhado ao financeiro
+21/09/2025 09:48:38,Eduarda Teixeira,Centro,Pesquisa NPS,Ativo,86,finalizado,Venda realizada
+25/03/2025 14:28:12,Yasmin Rocha,Sul,Clientes inativos,Ativo,529,transferido,Encaminhado ao suporte técnico
+02/10/2025 13:23:23,Yasmin Rocha,Sul,Black Friday,Receptivo,64,finalizado,Venda realizada
+14/09/2025 15:27:20,Bruno Moraes,Centro,Pesquisa NPS,Receptivo,511,transferido,Encaminhado ao financeiro
+17/06/2025 09:32:49,Carla Teixeira,Norte,Pesquisa NPS,Chat,239,finalizado,Sem interesse
+06/11/2025 17:35:27,Wesley Souza,Sul,Renovação 2025,Ativo,267,finalizado,Reclamação registrada
+08/05/2025 10:29:56,Diego Cardoso,Oeste,Upgrade de plano,Ativo,143,finalizado,Venda realizada
+01/05/2025 19:50:15,Heitor Ferraz,Oeste,Black Friday,Receptivo,185,finalizado,Venda realizada
+05/06/2025 17:42:51,Bruno Ferraz,Centro,Pesquisa NPS,Receptivo,64,finalizado,Dúvida resolvida
+29/04/2025 13:37:58,Yasmin Lima,Oeste,Pesquisa NPS,Receptivo,82,finalizado,Sem interesse
+04/06/2025 10:35:04,Mariana Souza,Norte,Upgrade de plano,Ativo,419,finalizado,Reclamação registrada
+27/10/2025 09:57:09,Carla Queiroz,Leste,Clientes inativos,Receptivo,54,finalizado,Reclamação registrada
+10/06/2025 12:29:47,Thiago Dias,Sul,Black Friday,Receptivo,156,finalizado,Sem interesse
+29/09/2025 19:59:37,Karina Dias,Oeste,Pesquisa NPS,Chat,309,finalizado,Reclamação registrada
+28/08/2025 08:45:12,Queila Rocha,Norte,Renovação 2025,Chat,452,finalizado,Sem interesse
+20/07/2025 15:07:57,Karina Ito,Norte,Clientes inativos,Ativo,396,finalizado,Sem interesse
+08/09/2025 15:08:15,Eduarda Barbosa,Oeste,Upgrade de plano,Receptivo,117,finalizado,Reclamação registrada
+07/12/2025 14:46:02,Ana Oliveira,Norte,Pesquisa NPS,Receptivo,170,finalizado,Dúvida resolvida
+11/04/2025 14:15:26,Diego Ito,Norte,Upgrade de plano,Chat,93,finalizado,Dúvida resolvida
+11/10/2025 12:19:06,Nicolas Ito,Oeste,Pesquisa NPS,Chat,161,finalizado,Sem interesse
+17/01/2025 10:17:37,Gabriela Ito,Centro,Pesquisa NPS,Ativo,103,finalizado,Dúvida resolvida
+13/04/2025 19:22:34,Diego Ito,Norte,Clientes inativos,Receptivo,190,finalizado,Venda realizada
+28/01/2025 18:35:20,Thiago Queiroz,Leste,Black Friday,Ativo,193,finalizado,Dúvida resolvida
+30/04/2025 13:21:51,Olívia Dias,Oeste,Clientes inativos,Ativo,262,finalizado,Dúvida resolvida
+05/09/2025 09:42:12,Olívia Dias,Oeste,Clientes inativos,Receptivo,46,abandonado,Cliente desligou
+22/08/2025 10:16:03,Nicolas Oliveira,Sul,Renovação 2025,Receptivo,213,finalizado,Sem interesse
+26/07/2025 12:48:29,Vinícius Oliveira,Oeste,Renovação 2025,Receptivo,219,transferido,Encaminhado ao suporte técnico
+05/10/2025 19:30:25,Diego Cardoso,Oeste,Upgrade de plano,Receptivo,141,finalizado,Dúvida resolvida
+18/04/2025 19:25:35,Vinícius Almeida,Sul,Renovação 2025,Ativo,388,finalizado,Reclamação registrada
+08/03/2025 13:05:27,Queila Moraes,Sul,Clientes inativos,Ativo,42,abandonado,Cliente desligou
+25/11/2025 16:38:52,Bruno Moraes,Centro,Renovação 2025,Ativo,440,finalizado,Sem interesse
+25/01/2025 09:20:45,Karina Ito,Norte,Clientes inativos,Receptivo,130,finalizado,Sem interesse
+15/10/2025 14:45:32,Mariana Souza,Norte,Renovação 2025,Ativo,225,finalizado,Dúvida resolvida
+14/02/2025 13:17:14,Rafael Gomes,Leste,Clientes inativos,Receptivo,181,finalizado,Dúvida resolvida
+24/07/2025 15:32:33,Nicolas Oliveira,Sul,Black Friday,Receptivo,258,finalizado,Dúvida resolvida
+13/03/2025 10:21:16,Carla Teixeira,Norte,Upgrade de plano,Ativo,237,finalizado,Venda realizada
+12/01/2025 18:22:59,Mariana Esteves,Leste,Renovação 2025,Ativo,116,finalizado,Dúvida resolvida
+11/08/2025 10:08:42,Wesley Souza,Sul,Clientes inativos,Ativo,389,transferido,Encaminhado ao financeiro
+12/10/2025 16:32:06,Ana Gomes,Sul,Upgrade de plano,Receptivo,582,finalizado,Sem interesse
+03/07/2025 17:51:28,Carla Nogueira,Norte,Pesquisa NPS,Ativo,92,finalizado,Dúvida resolvida
+31/03/2025 15:18:01,Sofia Esteves,Leste,Black Friday,Receptivo,77,finalizado,Reclamação registrada
+10/07/2025 10:21:08,Karina Gomes,Leste,Renovação 2025,Receptivo,167,transferido,Encaminhado ao financeiro
+12/03/2025 08:36:04,Karina Gomes,Leste,Black Friday,Ativo,157,finalizado,Dúvida resolvida
+20/02/2025 18:47:35,Vinícius Oliveira,Oeste,Upgrade de plano,Ativo,567,finalizado,Reclamação registrada
+03/12/2025 10:42:43,Gabriela Rocha,Leste,Upgrade de plano,Ativo,201,finalizado,Dúvida resolvida
+24/08/2025 08:46:26,Úrsula Pereira,Norte,Upgrade de plano,Ativo,403,finalizado,Dúvida resolvida
+30/09/2025 15:22:01,Bruno Oliveira,Centro,Clientes inativos,Ativo,311,finalizado,Reclamação registrada
+24/11/2025 16:51:32,Karina Dias,Oeste,Clientes inativos,Receptivo,81,abandonado,Cliente desligou
+02/05/2025 11:19:34,Karina Gomes,Leste,Upgrade de plano,Receptivo,297,finalizado,Dúvida resolvida
+10/10/2025 18:56:27,Ana Gomes,Sul,Renovação 2025,Chat,381,finalizado,Reclamação registrada
+19/11/2025 13:13:17,Sofia Moraes,Norte,Clientes inativos,Ativo,258,finalizado,Dúvida resolvida
+08/11/2025 15:39:57,Karina Ito,Norte,Clientes inativos,Receptivo,565,transferido,Encaminhado ao suporte técnico
+19/03/2025 10:21:25,Úrsula Lima,Norte,Pesquisa NPS,Ativo,93,finalizado,Sem interesse
+09/02/2025 10:55:11,Karina Gomes,Leste,Pesquisa NPS,Receptivo,130,finalizado,Venda realizada
+20/07/2025 12:50:17,Vinícius Oliveira,Oeste,Pesquisa NPS,Receptivo,132,finalizado,Reclamação registrada
+08/11/2025 10:34:53,Carla Nogueira,Norte,Pesquisa NPS,Ativo,131,finalizado,Sem interesse
+13/10/2025 15:06:11,João Oliveira,Centro,Renovação 2025,Ativo,252,finalizado,Dúvida resolvida
+26/02/2025 13:50:52,Ana Oliveira,Norte,Renovação 2025,Receptivo,102,finalizado,Reclamação registrada
+29/03/2025 17:15:06,Rafael Moraes,Leste,Upgrade de plano,Ativo,363,finalizado,Sem interesse
+16/11/2025 13:23:52,Thiago Queiroz,Leste,Black Friday,Ativo,832,finalizado,Sem interesse
+01/09/2025 12:39:00,Rafael Souza,Sul,Upgrade de plano,Receptivo,366,finalizado,Sem interesse
+05/11/2025 16:46:24,Carla Queiroz,Leste,Clientes inativos,Receptivo,795,finalizado,Venda realizada
+09/08/2025 19:07:20,Gabriela Holanda,Sul,Black Friday,Receptivo,170,transferido,Encaminhado ao suporte técnico
+27/05/2025 16:18:21,Sofia Cardoso,Centro,Pesquisa NPS,Receptivo,127,finalizado,Sem interesse
+17/01/2025 13:41:53,Lucas Dias,Centro,Clientes inativos,Receptivo,228,transferido,Encaminhado ao suporte técnico
+04/02/2025 08:51:20,Úrsula Pereira,Norte,Clientes inativos,Receptivo,150,finalizado,Reclamação registrada
+25/12/2025 16:58:35,Karina Ito,Norte,Renovação 2025,Ativo,214,finalizado,Dúvida resolvida
+11/04/2025 18:06:49,Karina Ito,Norte,Pesquisa NPS,Receptivo,76,finalizado,Venda realizada
+19/09/2025 14:54:50,Queila Moraes,Sul,Pesquisa NPS,Receptivo,82,abandonado,Cliente desligou
+22/03/2025 10:53:14,Thiago Queiroz,Leste,Upgrade de plano,Receptivo,174,finalizado,Dúvida resolvida
+06/08/2025 08:10:18,Ana Oliveira,Norte,Upgrade de plano,Receptivo,287,finalizado,Dúvida resolvida
+19/10/2025 08:17:26,Bruno Moraes,Centro,Pesquisa NPS,Receptivo,96,finalizado,Reclamação registrada
+08/08/2025 15:21:06,Mariana Souza,Norte,Black Friday,Receptivo,178,finalizado,Sem interesse
+20/02/2025 15:14:00,Úrsula Pereira,Norte,Renovação 2025,Receptivo,282,transferido,Encaminhado ao suporte técnico
+21/04/2025 10:12:46,Rafael Souza,Sul,Renovação 2025,Receptivo,82,finalizado,Dúvida resolvida
+27/10/2025 11:48:28,Olívia Esteves,Oeste,Clientes inativos,Ativo,118,finalizado,Dúvida resolvida
+28/10/2025 17:00:07,Heitor Queiroz,Oeste,Upgrade de plano,Receptivo,149,finalizado,Dúvida resolvida
+25/10/2025 14:48:44,Olívia Esteves,Oeste,Clientes inativos,Ativo,95,finalizado,Reclamação registrada
+07/07/2025 15:47:11,Karina Dias,Oeste,Upgrade de plano,Receptivo,137,finalizado,Dúvida resolvida
+18/04/2025 08:43:34,Nicolas Esteves,Oeste,Renovação 2025,Ativo,154,finalizado,Dúvida resolvida
+08/02/2025 13:08:21,Heitor Ferraz,Oeste,Pesquisa NPS,Receptivo,691,transferido,Encaminhado ao suporte técnico
+17/07/2025 08:08:11,Sofia Esteves,Leste,Pesquisa NPS,Receptivo,105,finalizado,Sem interesse
+24/07/2025 08:48:03,Bruno Ferraz,Centro,Renovação 2025,Ativo,259,finalizado,Dúvida resolvida
+17/04/2025 09:07:49,João Oliveira,Centro,Upgrade de plano,Ativo,312,finalizado,Dúvida resolvida
+03/12/2025 14:53:02,Sofia Cardoso,Centro,Black Friday,Receptivo,418,finalizado,Dúvida resolvida
+29/01/2025 14:29:25,Nicolas Oliveira,Sul,Clientes inativos,Receptivo,236,finalizado,Reclamação registrada
+26/01/2025 09:32:19,Olívia Dias,Oeste,Pesquisa NPS,Receptivo,108,finalizado,Sem interesse
+27/10/2025 18:37:17,Nicolas Oliveira,Sul,Clientes inativos,Ativo,83,finalizado,Sem interesse
+02/08/2025 16:21:57,Thiago Queiroz,Leste,Renovação 2025,Chat,447,finalizado,Dúvida resolvida
+28/02/2025 13:23:38,Karina Gomes,Leste,Pesquisa NPS,Receptivo,123,finalizado,Reclamação registrada
+20/10/2025 12:04:37,Carla Teixeira,Norte,Renovação 2025,Receptivo,307,finalizado,Dúvida resolvida
+16/03/2025 10:14:05,Sofia Cardoso,Centro,Black Friday,Receptivo,180,finalizado,Reclamação registrada
+10/11/2025 13:21:34,João Oliveira,Centro,Upgrade de plano,Receptivo,201,finalizado,Sem interesse
+06/06/2025 16:30:56,Nicolas Esteves,Oeste,Upgrade de plano,Ativo,178,finalizado,Reclamação registrada
+13/01/2025 09:13:08,João Queiroz,Oeste,Black Friday,Ativo,100,finalizado,Sem interesse
+05/06/2025 13:03:11,Heitor Ito,Leste,Clientes inativos,Ativo,274,finalizado,Reclamação registrada
+28/06/2025 09:13:37,Eduarda Teixeira,Centro,Black Friday,Receptivo,172,finalizado,Venda realizada
+27/12/2025 10:24:33,Yasmin Lima,Oeste,Black Friday,Receptivo,171,finalizado,Dúvida resolvida
+12/02/2025 16:02:55,Ana Gomes,Sul,Renovação 2025,Ativo,115,finalizado,Sem interesse
+24/05/2025 10:48:05,Gabriela Holanda,Sul,Black Friday,Receptivo,12,abandonado,Cliente desligou
+13/08/2025 18:38:07,Carla Teixeira,Norte,Upgrade de plano,Receptivo,121,finalizado,Dúvida resolvida
+19/04/2025 14:48:47,Bruno Moraes,Centro,Clientes inativos,Receptivo,231,finalizado,Sem interesse
+24/08/2025 14:28:09,Queila Rocha,Norte,Pesquisa NPS,Receptivo,73,finalizado,Sem interesse
+14/09/2025 14:26:04,Sofia Moraes,Norte,Clientes inativos,Ativo,30,abandonado,Cliente desligou
+30/12/2025 14:33:03,Lucas Dias,Centro,Black Friday,Receptivo,180,finalizado,Sem interesse
+08/01/2025 16:53:54,Mariana Esteves,Leste,Black Friday,Ativo,301,finalizado,Sem interesse
+04/01/2025 12:29:54,Sofia Esteves,Leste,Upgrade de plano,Receptivo,210,finalizado,Sem interesse
+23/08/2025 17:29:00,Nicolas Esteves,Oeste,Pesquisa NPS,Receptivo,88,abandonado,Cliente desligou
+22/02/2025 15:08:21,Carla Queiroz,Leste,Black Friday,Receptivo,88,abandonado,Cliente desligou
+16/10/2025 17:45:41,Yasmin Esteves,Norte,Clientes inativos,Receptivo,101,finalizado,Dúvida resolvida
+24/10/2025 13:35:12,Diego Cardoso,Oeste,Upgrade de plano,Receptivo,173,finalizado,Venda realizada
+03/04/2025 14:57:08,Carla Nogueira,Norte,Renovação 2025,Ativo,206,transferido,Encaminhado ao suporte técnico
+09/01/2025 19:39:39,Gabriela Holanda,Sul,Renovação 2025,Ativo,711,finalizado,Dúvida resolvida
+12/02/2025 15:52:30,Lucas Holanda,Oeste,Clientes inativos,Ativo,465,finalizado,Dúvida resolvida
+26/02/2025 13:06:48,Carla Nogueira,Norte,Pesquisa NPS,Receptivo,98,finalizado,Dúvida resolvida
+18/10/2025 17:11:42,Mariana Barbosa,Centro,Pesquisa NPS,Receptivo,115,finalizado,Reclamação registrada
+31/03/2025 11:25:27,Lucas Holanda,Oeste,Clientes inativos,Receptivo,248,finalizado,Dúvida resolvida
+17/01/2025 16:59:13,Ana Oliveira,Norte,Black Friday,Ativo,203,finalizado,Dúvida resolvida
+05/02/2025 16:52:03,Karina Gomes,Leste,Pesquisa NPS,Receptivo,146,finalizado,Reclamação registrada
+15/06/2025 11:58:18,Nicolas Oliveira,Sul,Pesquisa NPS,Receptivo,402,finalizado,Venda realizada
+06/02/2025 14:05:35,Sofia Esteves,Leste,Clientes inativos,Receptivo,715,finalizado,Reclamação registrada
+16/05/2025 15:57:11,Queila Almeida,Centro,Clientes inativos,Receptivo,155,finalizado,Dúvida resolvida
+28/06/2025 13:00:32,Carla Teixeira,Norte,Pesquisa NPS,Ativo,76,finalizado,Sem interesse
+03/11/2025 08:04:38,Carla Queiroz,Leste,Upgrade de plano,Receptivo,320,finalizado,Venda realizada
+21/10/2025 13:18:56,Nicolas Oliveira,Sul,Black Friday,Receptivo,63,finalizado,Dúvida resolvida
+03/01/2025 15:00:04,Vinícius Oliveira,Oeste,Black Friday,Ativo,466,finalizado,Venda realizada
+22/10/2025 08:30:24,Lucas Holanda,Oeste,Upgrade de plano,Receptivo,235,finalizado,Dúvida resolvida
+10/10/2025 18:17:46,Karina Dias,Oeste,Pesquisa NPS,Receptivo,233,finalizado,Dúvida resolvida
+24/02/2025 19:52:44,Gabriela Rocha,Leste,Upgrade de plano,Ativo,363,finalizado,Reclamação registrada
+07/03/2025 10:42:58,Úrsula Pereira,Norte,Renovação 2025,Receptivo,337,finalizado,Sem interesse
+06/11/2025 17:37:29,Mariana Barbosa,Centro,Pesquisa NPS,Receptivo,98,finalizado,Sem interesse
+31/08/2025 15:20:23,Karina Dias,Oeste,Upgrade de plano,Ativo,492,finalizado,Sem interesse
+02/09/2025 19:03:06,Yasmin Esteves,Norte,Upgrade de plano,Receptivo,150,finalizado,Dúvida resolvida
+03/01/2025 13:34:13,Nicolas Ito,Oeste,Renovação 2025,Receptivo,424,finalizado,Venda realizada
+13/04/2025 11:03:46,Heitor Queiroz,Oeste,Renovação 2025,Receptivo,341,finalizado,Dúvida resolvida
+08/08/2025 18:33:59,Nicolas Esteves,Oeste,Renovação 2025,Chat,160,finalizado,Reclamação registrada
+05/09/2025 11:14:27,Yasmin Esteves,Norte,Upgrade de plano,Ativo,144,finalizado,Sem interesse
+23/01/2025 14:17:26,Diego Almeida,Centro,Pesquisa NPS,Receptivo,310,transferido,Encaminhado ao suporte técnico
+08/11/2025 13:07:03,Ana Oliveira,Norte,Renovação 2025,Ativo,166,finalizado,Dúvida resolvida
+06/09/2025 17:21:35,Yasmin Rocha,Sul,Black Friday,Ativo,145,finalizado,Sem interesse
+03/07/2025 10:12:53,Nicolas Ito,Oeste,Pesquisa NPS,Receptivo,120,finalizado,Reclamação registrada
+11/09/2025 18:45:58,Queila Almeida,Centro,Black Friday,Receptivo,154,finalizado,Venda realizada
+11/01/2025 08:45:22,Bruno Moraes,Centro,Renovação 2025,Receptivo,181,transferido,Encaminhado ao suporte técnico
+28/04/2025 17:07:03,Lucas Holanda,Oeste,Pesquisa NPS,Ativo,114,transferido,Encaminhado ao suporte técnico
+04/09/2025 13:27:34,Sofia Moraes,Norte,Renovação 2025,Receptivo,111,finalizado,Reclamação registrada
+27/09/2025 13:53:36,Bruno Moraes,Centro,Clientes inativos,Receptivo,94,finalizado,Venda realizada
+18/11/2025 10:39:35,Mariana Souza,Norte,Clientes inativos,Receptivo,95,finalizado,Reclamação registrada
+10/06/2025 15:16:47,Nicolas Oliveira,Sul,Black Friday,Receptivo,216,finalizado,Dúvida resolvida
+06/05/2025 11:13:50,Yasmin Lima,Oeste,Black Friday,Chat,142,finalizado,Sem interesse
+02/03/2025 17:15:49,Nicolas Ito,Oeste,Black Friday,Receptivo,67,finalizado,Venda realizada
+28/06/2025 12:24:46,Carla Nogueira,Norte,Clientes inativos,Chat,87,finalizado,Venda realizada
+26/04/2025 11:32:28,Carla Gomes,Norte,Renovação 2025,Ativo,336,finalizado,Venda realizada
+19/06/2025 15:00:09,Nicolas Nogueira,Sul,Renovação 2025,Receptivo,214,transferido,Encaminhado ao suporte técnico
+27/02/2025 14:54:32,Olívia Esteves,Oeste,Clientes inativos,Chat,140,finalizado,Dúvida resolvida
+09/04/2025 08:14:29,Yasmin Esteves,Norte,Clientes inativos,Ativo,379,finalizado,Sem interesse
+01/03/2025 19:11:38,Bruno Pereira,Sul,Black Friday,Receptivo,214,finalizado,Venda realizada
+15/12/2025 18:01:05,Mariana Barbosa,Centro,Pesquisa NPS,Ativo,306,finalizado,Dúvida resolvida
+03/09/2025 15:16:37,Bruno Oliveira,Centro,Renovação 2025,Receptivo,340,finalizado,Sem interesse
+09/10/2025 18:50:48,Ana Oliveira,Norte,Renovação 2025,Ativo,137,finalizado,Venda realizada
+11/01/2025 17:50:23,João Queiroz,Oeste,Black Friday,Ativo,174,finalizado,Reclamação registrada
+03/04/2025 10:45:35,Mariana Souza,Norte,Renovação 2025,Ativo,85,finalizado,Dúvida resolvida
+17/04/2025 13:11:23,Karina Ito,Norte,Black Friday,Ativo,250,finalizado,Dúvida resolvida
+19/10/2025 11:21:02,Diego Almeida,Centro,Renovação 2025,Ativo,23,abandonado,Cliente desligou
+13/03/2025 09:42:38,Karina Dias,Oeste,Pesquisa NPS,Receptivo,255,finalizado,Reclamação registrada
+25/02/2025 13:22:40,Nicolas Esteves,Oeste,Renovação 2025,Receptivo,385,finalizado,Venda realizada
+27/03/2025 13:02:47,Nicolas Nogueira,Sul,Renovação 2025,Receptivo,328,finalizado,Sem interesse
+20/06/2025 14:27:14,Diego Almeida,Centro,Black Friday,Receptivo,165,finalizado,Venda realizada
+19/10/2025 12:55:05,Olívia Dias,Oeste,Clientes inativos,Receptivo,213,finalizado,Sem interesse
+05/11/2025 19:13:05,Rafael Gomes,Leste,Renovação 2025,Receptivo,800,finalizado,Dúvida resolvida
+09/05/2025 17:28:54,Karina Dias,Oeste,Upgrade de plano,Receptivo,168,finalizado,Dúvida resolvida
+22/07/2025 14:28:03,Lucas Holanda,Oeste,Pesquisa NPS,Ativo,14,abandonado,Cliente desligou
+13/06/2025 10:02:53,Vinícius Oliveira,Oeste,Clientes inativos,Receptivo,108,finalizado,Venda realizada
+17/02/2025 16:55:41,Heitor Lima,Centro,Black Friday,Receptivo,275,transferido,Encaminhado ao suporte técnico
+01/11/2025 15:16:39,Queila Moraes,Sul,Upgrade de plano,Ativo,333,finalizado,Sem interesse
+19/11/2025 09:18:20,Gabriela Rocha,Leste,Renovação 2025,Ativo,120,finalizado,Venda realizada
+11/10/2025 14:35:58,Heitor Lima,Centro,Pesquisa NPS,Receptivo,141,finalizado,Sem interesse
+30/04/2025 16:05:28,Nicolas Nogueira,Sul,Upgrade de plano,Receptivo,79,finalizado,Sem interesse
+26/01/2025 14:22:37,Thiago Queiroz,Leste,Upgrade de plano,Receptivo,127,finalizado,Reclamação registrada
+14/04/2025 16:46:00,Carla Queiroz,Leste,Pesquisa NPS,Receptivo,5,abandonado,Cliente desligou
+07/07/2025 19:30:49,Mariana Souza,Norte,Upgrade de plano,Receptivo,139,finalizado,Dúvida resolvida
+02/08/2025 09:01:41,Yasmin Rocha,Sul,Clientes inativos,Ativo,127,finalizado,Dúvida resolvida
+02/05/2025 13:24:40,Eduarda Teixeira,Centro,Clientes inativos,Receptivo,289,finalizado,Venda realizada
+24/01/2025 15:45:19,Nicolas Oliveira,Sul,Pesquisa NPS,Receptivo,307,finalizado,Dúvida resolvida
+24/11/2025 09:15:45,Úrsula Pereira,Norte,Upgrade de plano,Receptivo,172,finalizado,Dúvida resolvida
+20/01/2025 09:59:03,Karina Ito,Norte,Clientes inativos,Receptivo,105,transferido,Encaminhado ao financeiro
+14/01/2025 17:18:21,Thiago Dias,Sul,Clientes inativos,Ativo,245,finalizado,Reclamação registrada
+27/06/2025 17:00:57,Heitor Ferraz,Oeste,Upgrade de plano,Ativo,187,finalizado,Venda realizada
+26/11/2025 15:56:06,Olívia Esteves,Oeste,Renovação 2025,Ativo,196,finalizado,Dúvida resolvida
+05/02/2025 15:49:45,Vinícius Almeida,Sul,Clientes inativos,Chat,376,finalizado,Dúvida resolvida
+26/10/2025 17:29:15,Eduarda Barbosa,Oeste,Clientes inativos,Chat,94,finalizado,Sem interesse
