@@ -97,6 +97,70 @@ test('capturas de tela', async ({ page }) => {
   await expect(page.getByText(/registros atendem/)).toBeVisible()
   await shot(page, '12-explorer-filtros')
 
+  // Fase 4: dashboard geral, dashboard salvo e construtor.
+  await page.goto(`/dashboards/geral?dataset=${salesId}&medida=valor&categoria=equipe`)
+  await expect(page.getByRole('region', { name: 'Indicadores' }).getByText('1.000', { exact: true })).toBeVisible()
+  await shot(page, '13-dashboard-geral')
+
+  const csrf = (await page.context().cookies()).find((c) => c.name === 'df_csrf')?.value ?? ''
+  const sum = { aggregation: 'sum', column: 'valor' }
+  const created = await page.request.post('/api/v1/dashboards', {
+    headers: { 'X-CSRF-Token': csrf },
+    data: {
+      name: 'Comercial 2025',
+      description: 'Valor das vendas por mês, equipe, canal e vendedor',
+      dataset_id: salesId,
+      widgets: [
+        {
+          title: 'Valor em dezembro',
+          chart_type: 'kpi',
+          size: 'small',
+          query: {
+            metrics: [sum],
+            comparison: { column: 'data_venda', start: '2025-12-01', end: '2025-12-31' },
+          },
+        },
+        {
+          title: 'Vendas pagas',
+          chart_type: 'kpi',
+          size: 'small',
+          query: {
+            metrics: [{ aggregation: 'count' }],
+            filters: [{ column: 'status', operator: 'eq', value: 'pago' }],
+          },
+        },
+        { title: 'Valor médio', chart_type: 'kpi', size: 'small', query: { metrics: [{ aggregation: 'avg', column: 'valor' }] } },
+        { title: 'Vendedores', chart_type: 'kpi', size: 'small', query: { metrics: [{ aggregation: 'count_distinct', column: 'vendedor' }] } },
+        {
+          title: 'Valor por mês',
+          chart_type: 'area',
+          size: 'medium',
+          query: { metrics: [sum], dimension: { column: 'data_venda', granularity: 'month' } },
+        },
+        { title: 'Valor por equipe', chart_type: 'bar_horizontal', size: 'medium', query: { metrics: [sum], dimension: { column: 'equipe' } } },
+        { title: 'Vendas por canal', chart_type: 'donut', size: 'medium', query: { metrics: [{ aggregation: 'count' }], dimension: { column: 'canal' } } },
+        {
+          title: 'Principais vendedores',
+          chart_type: 'table',
+          size: 'medium',
+          query: {
+            metrics: [{ aggregation: 'count' }, sum, { aggregation: 'avg', column: 'valor' }],
+            dimension: { column: 'vendedor' },
+            limit: 6,
+          },
+        },
+      ],
+    },
+  })
+  expect(created.status()).toBe(201)
+  const dashboardId = (await created.json()).id as string
+  await page.goto(`/dashboards/${dashboardId}`)
+  await expect(page.getByRole('region', { name: 'Valor em dezembro' }).getByTestId('kpi-variation')).toBeVisible()
+  await shot(page, '15-dashboard')
+  await page.goto(`/dashboards/construtor/${dashboardId}`)
+  await expect(page.getByRole('region', { name: 'Valor por mês' })).toBeVisible()
+  await shot(page, '14-construtor')
+
   await page.evaluate(() => localStorage.setItem('df-theme', 'light'))
   await page.goto('/processamentos')
   await expect(page.getByText('Histórico de processamento').first()).toBeVisible()

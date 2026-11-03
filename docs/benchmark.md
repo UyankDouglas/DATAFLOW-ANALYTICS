@@ -103,9 +103,24 @@ A consulta usa um filtro "não é nulo" e uma busca por `a` nas colunas de texto
 
 No fluxo completo da CI com a Fase 3 ([execução 41683893654](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41683893654)), o job do `vendas_100000.csv` levou 929 ms em desenvolvimento e 702 ms em produção, comparável às execuções da tabela de 30/10 (741 a 1.046 ms) dado o ruído dos runners. Esse tempo vai até a publicação da versão: o relatório de qualidade é calculado logo depois e não entra nele.
 
+## Resultados — Fase 4: consultas dos dashboards (03/11/2026)
+
+Medido pelo mesmo `benchmark_pipeline`, que passou a executar as consultas analíticas sobre o Parquet publicado, no mesmo ambiente, em duas execuções. As colunas são as que um usuário escolheria: medida `valor` (decimal) ou `duracao_segundos` (inteiro), categoria `vendedor` ou `operador` e data `data_venda` (data) ou `data_atendimento` (data e hora).
+
+| Consulta (100 mil registros) | vendas_100000.csv | atendimentos_100000.csv |
+| --- | --- | --- |
+| KPIs: contagem, soma, média, mínimo, máximo e contagem distinta | 0,046–0,048 s | 0,039–0,040 s |
+| Soma por categoria, 10 maiores + "Outros" | 0,072–0,081 s | 0,053–0,055 s |
+| Série mensal | 0,050–0,054 s | 0,049 s |
+| Comparação entre períodos (30 dias contra os 30 anteriores) | 0,050–0,052 s | 0,048–0,057 s |
+| Comparação por categoria, 8 maiores + "Outros" | 0,084–0,091 s | 0,085–0,087 s |
+
+O tempo é só o da consulta, com o Parquet já em disco. Na API soma-se o download do Parquet para o cache na primeira consulta de cada versão, que é o mesmo do explorer (ver a tabela do fluxo completo). O agrupamento com "Outros" faz uma segunda consulta, sobre os registros fora dos grupos mostrados. Com 100 mil registros, recalcular a cada abertura cabe folgado nos 10 s de tempo-limite (ADR-021). Arquivos muito maiores ainda não foram medidos.
+
 ## Pendente
 
 - Medições com 1 milhão de linhas e com arquivos próximos do limite de 100 MB. Até lá, não há evidência de como a memória e o tempo escalam acima de 100 mil linhas.
 - Mais repetições em um ambiente dedicado, para obter média e variação confiáveis.
 - XLSX perto do limite de 25 MB e transformações com 1 milhão de linhas, inclusive o pico de memória da deduplicação (ADR-016).
 - XLSX e transformação no fluxo completo com infraestrutura real (CI), como foi feito para o CSV.
+- Consultas dos dashboards com 1 milhão de registros e com muitos widgets abertos ao mesmo tempo (cada widget é uma requisição).

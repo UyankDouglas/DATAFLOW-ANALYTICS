@@ -15,6 +15,7 @@ class Permission(StrEnum):
     DATASETS_PROCESS = "datasets:process"
     DATASETS_DELETE = "datasets:delete"
     TRANSFORMATIONS_MANAGE = "transformations:manage"
+    DASHBOARDS_MANAGE = "dashboards:manage"
     JOBS_VIEW = "jobs:view"
     JOBS_CANCEL = "jobs:cancel"
     DATA_EXPORT = "data:export"
@@ -31,6 +32,7 @@ _ANALYST = _VIEWER | {
     Permission.DATASETS_UPLOAD,
     Permission.DATASETS_PROCESS,
     Permission.TRANSFORMATIONS_MANAGE,
+    Permission.DASHBOARDS_MANAGE,
     Permission.JOBS_CANCEL,
     Permission.DATA_EXPORT,
 }

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.analytics.cache import local_parquet
 from app.analytics.query import WhereClause, build_where, count_rows, fetch_page
-from app.core.errors import NotFound, ServiceUnavailable
+from app.core.errors import ServiceUnavailable
 from app.models import Dataset, DatasetVersion, ProcessingJob, QualityReport, Upload, User
 from app.processing.convert import META_COLUMNS
 from app.processing.types import ColumnSpec
@@ -146,16 +146,6 @@ def list_versions(
     return [_version_out(version, name, numbers, score) for version, name, score in rows]
 
 
-def _resolve_version(
-    db: Session, workspace_id: uuid.UUID, dataset_id: uuid.UUID, version_id: uuid.UUID | None
-) -> DatasetVersion:
-    dataset = repo.get_dataset(db, workspace_id, dataset_id)
-    target = version_id or dataset.current_version_id
-    if target is None:
-        raise NotFound("Este dataset ainda não possui versão processada.", code="no_version")
-    return repo.get_version(db, workspace_id, dataset_id, target)
-
-
 def get_rows(
     db: Session,
     workspace_id: uuid.UUID,
@@ -169,7 +159,7 @@ def get_rows(
     columns: list[str] | None,
     query: RowsQuery | None = None,
 ) -> RowsResponse:
-    version = _resolve_version(db, workspace_id, dataset_id, version_id)
+    version = repo.resolve_version(db, workspace_id, dataset_id, version_id)
     schema = version.column_schema
     names = [c["name"] for c in schema]
     where = WhereClause()

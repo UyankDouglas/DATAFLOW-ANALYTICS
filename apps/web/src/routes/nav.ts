@@ -51,12 +51,12 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Análise',
     items: [
-      { label: 'Dashboards', to: '/dashboards', icon: BarChart3, phase: 4 },
+      { label: 'Dashboards', to: '/dashboards', icon: BarChart3 },
       {
         label: 'Construtor',
         to: '/dashboards/construtor',
         icon: LayoutTemplate,
-        phase: 4,
+        permission: 'dashboards:manage',
       },
       { label: 'Relatórios', to: '/relatorios', icon: FileSpreadsheet, phase: 5 },
       { label: 'Exportações', to: '/exportacoes', icon: FileDown, phase: 5 },
@@ -76,20 +76,6 @@ export const COMING_SOON: Record<
   string,
   { title: string; phase: number; description: string; icon: LucideIcon }
 > = {
-  '/dashboards': {
-    title: 'Dashboards',
-    phase: 4,
-    icon: BarChart3,
-    description:
-      'Dashboards interativos com KPIs, gráficos e filtros sobre os dados reais das versões publicadas.',
-  },
-  '/dashboards/construtor': {
-    title: 'Construtor de Dashboards',
-    phase: 4,
-    icon: LayoutTemplate,
-    description:
-      'Escolha dataset e versão, adicione widgets, defina dimensões, métricas, agregações e filtros.',
-  },
   '/relatorios': {
     title: 'Relatórios',
     phase: 5,

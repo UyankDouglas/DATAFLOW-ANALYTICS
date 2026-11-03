@@ -129,6 +129,41 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: '/dashboards',
+        lazy: page(
+          () => import('@/pages/dashboards/dashboards-page'),
+          (m) => m.DashboardsPage,
+        ),
+      },
+      {
+        path: '/dashboards/geral',
+        lazy: page(
+          () => import('@/pages/dashboards/general-dashboard-page'),
+          (m) => m.GeneralDashboardPage,
+        ),
+      },
+      {
+        path: '/dashboards/construtor',
+        lazy: page(
+          () => import('@/pages/dashboards/dashboard-builder-page'),
+          (m) => m.DashboardBuilderPage,
+        ),
+      },
+      {
+        path: '/dashboards/construtor/:dashboardId',
+        lazy: page(
+          () => import('@/pages/dashboards/dashboard-builder-page'),
+          (m) => m.DashboardBuilderPage,
+        ),
+      },
+      {
+        path: '/dashboards/:dashboardId',
+        lazy: page(
+          () => import('@/pages/dashboards/dashboard-view-page'),
+          (m) => m.DashboardViewPage,
+        ),
+      },
+      {
         path: '/usuarios',
         lazy: page(
           () => import('@/pages/users-page'),
