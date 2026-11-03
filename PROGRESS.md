@@ -7,8 +7,8 @@ Documento de retomada. Atualizado em **03/11/2026**.
 | Fase | Status |
 | --- | --- |
 | 1 — Fundação e primeiro dataset | ✅ Concluída e validada na CI com a infraestrutura real, nos Compose de desenvolvimento e de produção |
-| 2 — Motor ETL (XLSX, transformações, deduplicação, reprocessamento) | ✅ Concluída e validada na CI com a infraestrutura real ([PR #1](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/1), branch `fase-2-motor-etl`, ainda **não mesclado** na `main`) |
-| 3 — Qualidade e Data Explorer completo | ✅ Implementada e validada localmente (sem Docker), na branch `fase-3-qualidade` (criada a partir da `fase-2-motor-etl`), ainda **sem commit**. Falta a validação na CI |
+| 2 — Motor ETL (XLSX, transformações, deduplicação, reprocessamento) | ✅ Concluída, validada na CI com a infraestrutura real e mesclada na `main` ([PR #1](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/1)) |
+| 3 — Qualidade e Data Explorer completo | ✅ Concluída e validada na CI com a infraestrutura real ([PR #2](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/2)) |
 | 4 — Business Intelligence (dashboards) | ⏳ Próxima |
 | 5 — Relatórios, exportações e administração | Pendente |
 | 6 — Qualidade e produção | Pendente |
@@ -60,6 +60,20 @@ Documento de retomada. Atualizado em **03/11/2026**.
 - [x] **Documentação:** `docs/quality.md` (novo), ADR-019 e ADR-020, `data-pipeline.md`, `security.md`, `architecture.md`, `benchmark.md`, README; capturas 11 e 12 e as demais regeneradas.
 - **Fora desta fase, de propósito:** download do resultado filtrado do explorer (chega com as exportações protegidas da Fase 5).
 
+## Testes executados na CI — Fase 3 (03/11/2026, commit `06ca88b`, [execução 41683893654](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41683893654), PR #2)
+
+| Verificação | Resultado |
+| --- | --- |
+| Backend contra **PostgreSQL 17 real** | **139 passed**, cobertura de 88% |
+| Alembic `upgrade` (inclui `0002 -> 0003`) → `check` → `downgrade` → `upgrade` no PostgreSQL | OK; `check`: "No new upgrade operations detected" |
+| Ruff e mypy estrito | sem problemas (79 arquivos) |
+| Frontend: formatação, lint, tipos, Vitest, build | OK, **47 passed** |
+| E2E em desenvolvimento, com Celery, MinIO e Redis reais | **11 passed**, 1 ignorado (capturas de tela) — inclui `quality.spec.ts` (relatório publicado pelo worker, inconsistências, explorer com busca, filtro e colunas) |
+| E2E em produção, em HTTPS | **10 passed**, 2 ignorados (e-mail e capturas de tela) |
+| CSV de 100 mil linhas pela interface | job de 929 ms em desenvolvimento e 702 ms em produção (107.643 e 142.450 registros/s); pico de RSS do worker 371 e 369 MB. O tempo vai até a publicação da versão; o relatório de qualidade é calculado logo depois, fora dele |
+
+A primeira execução ([41682378950](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41682378950), commit `3cd6497`) falhou só no E2E de desenvolvimento: com os dois testes novos de qualidade, a suíte passou a criar 11 contas a partir do mesmo IP, acima do limite de 10 cadastros por hora, e o teste do explorer era barrado no cadastro. O limite ficou configurável (`REGISTER_LIMIT_PER_HOUR`, padrão 10, também no Compose de produção) e só os jobs de E2E da CI o elevam para 100 (commit `06ca88b`).
+
 ## Testes executados na CI — Fase 2 (03/11/2026, commit `2532df8`, [execução 41649777153](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41649777153), PR #1)
 
 | Verificação | Resultado |
@@ -100,7 +114,7 @@ Documento de retomada. Atualizado em **03/11/2026**.
 | Verificação manual no navegador | relatório calculado pelo worker, gráficos, inconsistências, explorer com busca/filtro/colunas; sem rolagem horizontal em 375 px nas duas telas |
 | `uv run python -m app.scripts.benchmark_pipeline …100000.csv` | relatório de qualidade em 0,19–0,28 s; consulta filtrada com contagem em 0,11–0,12 s |
 
-**Ainda não validado (depende da CI):** suíte contra PostgreSQL com a migration 0003, `alembic check` no PostgreSQL e os E2E da Fase 3 com Celery, MinIO e Redis reais.
+Validação na CI: ver "Testes executados na CI — Fase 3" ([execução 41683893654](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41683893654)).
 
 ## Testes executados localmente — Fase 2 (03/11/2026, Windows 10, sem Docker)
 
@@ -192,5 +206,4 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 
 ## Próxima tarefa
 
-1. **Mesclar o PR #1 (Fase 2)** na `main` quando o usuário decidir; depois, abrir o PR da Fase 3 (`fase-3-qualidade`) para a CI validar e registrar a execução aqui.
-2. **Fase 4 — Business Intelligence**, conforme o prompt mestre: dashboard geral com KPIs reais (soma, média, máximo, mínimo, contagem distinta, por categoria, evolução temporal, comparação entre períodos) sem presumir que coluna numérica é receita; gráficos de linha, barras, barras horizontais, área, pizza/rosca, tabelas analíticas e cards KPI; filtros por período, categoria, status, responsável, faixa de valores e colunas personalizadas, respeitando o tipo de cada coluna; Dashboard Builder com `Dashboard` e `DashboardWidget` persistidos (dataset e versão, widgets, tipo de gráfico, dimensão, métrica e agregação, filtros, reorganização e reabertura). Tudo renderizado a partir da API (DuckDB com construtor de consultas por colunas e operações permitidas, reaproveitando `build_where` do explorer).
+1. **Fase 4 — Business Intelligence**, conforme o prompt mestre: dashboard geral com KPIs reais (soma, média, máximo, mínimo, contagem distinta, por categoria, evolução temporal, comparação entre períodos) sem presumir que coluna numérica é receita; gráficos de linha, barras, barras horizontais, área, pizza/rosca, tabelas analíticas e cards KPI; filtros por período, categoria, status, responsável, faixa de valores e colunas personalizadas, respeitando o tipo de cada coluna; Dashboard Builder com `Dashboard` e `DashboardWidget` persistidos (dataset e versão, widgets, tipo de gráfico, dimensão, métrica e agregação, filtros, reorganização e reabertura). Tudo renderizado a partir da API (DuckDB com construtor de consultas por colunas e operações permitidas, reaproveitando `build_where` do explorer).

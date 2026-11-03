@@ -2,7 +2,7 @@
 
 Plataforma de engenharia de dados e Business Intelligence: transforma planilhas CSV e XLSX brutas em datasets tratados, versionados e consultáveis — com rastreabilidade de cada registro recebido.
 
-> **Status:** Fases 1 a 3 de 6 implementadas. As Fases 1 (fundação) e 2 (motor ETL) foram validadas na CI com a infraestrutura real; a Fase 3 (qualidade e Data Explorer) foi validada localmente, sem Docker, e ainda não passou pela CI. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
+> **Status:** Fases 1 a 3 de 6 concluídas — fundação, motor ETL, qualidade e Data Explorer —, todas validadas na CI com a infraestrutura real (PostgreSQL, Redis, MinIO e Celery), nos Compose de desenvolvimento e de produção. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
 
 ![Visão geral](docs/screenshots/02-visao-geral.png)
 
@@ -233,7 +233,7 @@ Fase 3, no mesmo ambiente: relatório de qualidade de 100 mil registros em 0,19 
 | --- | --- |
 | 1 ✅ | Fundação, autenticação, workspaces, upload CSV, preview, worker, versão Parquet, explorer paginado |
 | 2 ✅ | XLSX e abas, transformações configuráveis, deduplicação, reprocessamento a partir de versões |
-| 3 ✅ | Qualidade dos dados (pontuação documentada), Data Explorer com filtros, busca e seleção de colunas (validação na CI pendente) |
+| 3 ✅ | Qualidade dos dados (pontuação documentada), Data Explorer com filtros, busca e seleção de colunas |
 | 4 | Dashboards, KPIs, gráficos, filtros dinâmicos, comparação temporal, construtor de dashboards |
 | 5 | Relatórios, exportações CSV/XLSX em segundo plano, gestão de usuários, auditoria, retenção |
 | 6 | Testes ampliados, benchmarks com infraestrutura, revisão de segurança e performance, deploy |

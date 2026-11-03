@@ -101,6 +101,8 @@ Medido pelo mesmo `benchmark_pipeline` (que passou a calcular o relatório de qu
 
 A consulta usa um filtro "não é nulo" e uma busca por `a` nas colunas de texto, ordenada pela última coluna, e devolve a primeira página de 50 mais o `count(*)` filtrado. Como a busca casa com praticamente todos os registros, a medida é de varredura completa, o pior caso para a contagem. O relatório inclui o perfil de todas as colunas, a distribuição de nulos, os duplicados restantes em todas as colunas e o agrupamento das exclusões.
 
+No fluxo completo da CI com a Fase 3 ([execução 41683893654](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41683893654)), o job do `vendas_100000.csv` levou 929 ms em desenvolvimento e 702 ms em produção, comparável às execuções da tabela de 30/10 (741 a 1.046 ms) dado o ruído dos runners. Esse tempo vai até a publicação da versão: o relatório de qualidade é calculado logo depois e não entra nele.
+
 ## Pendente
 
 - Medições com 1 milhão de linhas e com arquivos próximos do limite de 100 MB. Até lá, não há evidência de como a memória e o tempo escalam acima de 100 mil linhas.
