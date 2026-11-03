@@ -28,6 +28,7 @@ from app.schemas.dataset import (
     UploadResponse,
 )
 from app.schemas.job import JobOut
+from app.schemas.quality import RowsQuery
 from app.services import (
     audit,
     datasets_service,
@@ -256,6 +257,20 @@ def get_rows(
         direction=direction,
         columns=selected,
     )
+
+
+@router.post(
+    "/{dataset_id}/rows/query",
+    response_model=RowsResponse,
+    summary="Consulta com filtros, busca, colunas e ordenação (Data Explorer)",
+)
+def query_rows(
+    dataset_id: uuid.UUID,
+    data: RowsQuery,
+    ctx: RequestContext = Depends(require(Permission.DATASETS_VIEW)),
+    db: Session = Depends(get_db),
+) -> RowsResponse:
+    return datasets_service.query_rows(db, ctx.workspace_id, dataset_id, data)
 
 
 @router.get("/{dataset_id}/versions/{version_id}/rejected", response_model=RejectedRowsResponse)

@@ -108,6 +108,13 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: '/qualidade',
+        lazy: page(
+          () => import('@/pages/quality/quality-page'),
+          (m) => m.QualityPage,
+        ),
+      },
+      {
         path: '/transformacoes',
         lazy: page(
           () => import('@/pages/transformations/transformations-page'),

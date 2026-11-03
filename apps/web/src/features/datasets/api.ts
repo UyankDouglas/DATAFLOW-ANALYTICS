@@ -9,6 +9,7 @@ import type {
   ParseOptions,
   Preview,
   RejectedRowsResponse,
+  RowsQuery,
   RowsResponse,
   UploadResponse,
 } from '@/types/api'
@@ -66,6 +67,9 @@ export const datasetsApi = {
         direction: p.direction,
       })}`,
     ),
+  /** Data Explorer: filtros tipados, busca, colunas e ordenação, tudo no servidor. */
+  queryRows: (id: string, body: RowsQuery) =>
+    api<RowsResponse>(`/datasets/${id}/rows/query`, { method: 'POST', body }),
   rejected: (id: string, versionId: string, page: number, pageSize: number) =>
     api<RejectedRowsResponse>(
       `/datasets/${id}/versions/${versionId}/rejected${query({ page, page_size: pageSize })}`,

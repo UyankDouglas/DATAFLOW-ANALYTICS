@@ -1,6 +1,5 @@
 import {
   BarChart3,
-  ClipboardCheck,
   Database,
   FileDown,
   FileSpreadsheet,
@@ -45,7 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Tratamento',
     items: [
       { label: 'Transformações', to: '/transformacoes', icon: Wand2 },
-      { label: 'Qualidade', to: '/qualidade', icon: ShieldCheck, phase: 3 },
+      { label: 'Qualidade', to: '/qualidade', icon: ShieldCheck },
       { label: 'Data Explorer', to: '/explorer', icon: Table2 },
     ],
   },
@@ -77,13 +76,6 @@ export const COMING_SOON: Record<
   string,
   { title: string; phase: number; description: string; icon: LucideIcon }
 > = {
-  '/qualidade': {
-    title: 'Qualidade dos Dados',
-    phase: 3,
-    icon: ClipboardCheck,
-    description:
-      'Pontuação de qualidade com fórmula documentada, completude por coluna, distribuição de nulos, duplicidades e tabela de inconsistências.',
-  },
   '/dashboards': {
     title: 'Dashboards',
     phase: 4,

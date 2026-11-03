@@ -7,10 +7,11 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.analytics.cache import local_parquet
-from app.analytics.query import fetch_page
+from app.analytics.query import WhereClause, build_where, count_rows, fetch_page
 from app.core.errors import NotFound, ServiceUnavailable
-from app.models import Dataset, DatasetVersion, ProcessingJob, Upload, User
+from app.models import Dataset, DatasetVersion, ProcessingJob, QualityReport, Upload, User
 from app.processing.convert import META_COLUMNS
+from app.processing.types import ColumnSpec
 from app.repositories import datasets as repo
 from app.schemas.common import Page
 from app.schemas.dataset import (
@@ -22,6 +23,7 @@ from app.schemas.dataset import (
     RowsResponse,
     UploadOut,
 )
+from app.schemas.quality import RowsQuery
 
 
 def list_datasets(
@@ -76,10 +78,14 @@ def list_datasets(
 
 
 def _version_out(
-    version: DatasetVersion, user_name: str | None, numbers: dict[uuid.UUID, int] | None = None
+    version: DatasetVersion,
+    user_name: str | None,
+    numbers: dict[uuid.UUID, int] | None = None,
+    quality_score: float | None = None,
 ) -> DatasetVersionOut:
     out = DatasetVersionOut.model_validate(version)
     out.created_by_name = user_name
+    out.quality_score = quality_score
     if version.parent_version_id and numbers is not None:
         out.parent_version_number = numbers.get(version.parent_version_id)
     return out
@@ -100,12 +106,14 @@ def get_detail(db: Session, workspace_id: uuid.UUID, dataset_id: uuid.UUID) -> D
     current = None
     if dataset.current_version_id:
         row = db.execute(
-            select(DatasetVersion, User.full_name)
+            select(DatasetVersion, User.full_name, QualityReport.score)
             .outerjoin(User, User.id == DatasetVersion.created_by_id)
+            .outerjoin(QualityReport, QualityReport.version_id == DatasetVersion.id)
             .where(DatasetVersion.id == dataset.current_version_id)
         ).first()
         if row:
-            current = _version_out(*row, _version_numbers(db, dataset.id))
+            version, name, score = row
+            current = _version_out(version, name, _version_numbers(db, dataset.id), score)
     return DatasetDetail(
         id=dataset.id,
         name=dataset.name,
@@ -128,13 +136,14 @@ def list_versions(
 ) -> list[DatasetVersionOut]:
     repo.get_dataset(db, workspace_id, dataset_id)
     rows = db.execute(
-        select(DatasetVersion, User.full_name)
+        select(DatasetVersion, User.full_name, QualityReport.score)
         .outerjoin(User, User.id == DatasetVersion.created_by_id)
+        .outerjoin(QualityReport, QualityReport.version_id == DatasetVersion.id)
         .where(DatasetVersion.dataset_id == dataset_id, DatasetVersion.workspace_id == workspace_id)
         .order_by(DatasetVersion.version_number.desc())
     ).all()
-    numbers = {version.id: version.version_number for version, _ in rows}
-    return [_version_out(version, name, numbers) for version, name in rows]
+    numbers = {version.id: version.version_number for version, _, _ in rows}
+    return [_version_out(version, name, numbers, score) for version, name, score in rows]
 
 
 def _resolve_version(
@@ -158,10 +167,15 @@ def get_rows(
     sort: str | None,
     direction: Literal["asc", "desc"],
     columns: list[str] | None,
+    query: RowsQuery | None = None,
 ) -> RowsResponse:
     version = _resolve_version(db, workspace_id, dataset_id, version_id)
     schema = version.column_schema
     names = [c["name"] for c in schema]
+    where = WhereClause()
+    if query is not None:
+        specs = [ColumnSpec.model_validate(c) for c in schema]
+        where = build_where(query.filters, query.match, query.search, specs)
     path = local_parquet(f"v-{version.id}", version.storage_key, version.checksum_sha256)
     try:
         result = fetch_page(
@@ -172,7 +186,9 @@ def get_rows(
             direction=direction,
             limit=page_size,
             offset=(page - 1) * page_size,
+            where=where,
         )
+        total = count_rows(path, where) if where.sql else version.row_count
     except duckdb.Error as exc:
         raise ServiceUnavailable("Não foi possível consultar os dados agora.") from exc
     by_name = {c["name"]: c for c in schema}
@@ -189,9 +205,28 @@ def get_rows(
             for n in result.columns
         ],
         rows=result.rows,
-        total=version.row_count,
+        total=total,
+        total_unfiltered=version.row_count,
         page=page,
         page_size=page_size,
+    )
+
+
+def query_rows(
+    db: Session, workspace_id: uuid.UUID, dataset_id: uuid.UUID, query: RowsQuery
+) -> RowsResponse:
+    """Consulta do Data Explorer: filtros tipados, busca, colunas escolhidas e ordenação."""
+    return get_rows(
+        db,
+        workspace_id,
+        dataset_id,
+        version_id=query.version_id,
+        page=query.page,
+        page_size=query.page_size,
+        sort=query.sort,
+        direction=query.direction,
+        columns=query.columns,
+        query=query,
     )
 
 

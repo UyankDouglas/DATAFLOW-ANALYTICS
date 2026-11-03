@@ -148,7 +148,7 @@ OPERATOR_LABELS = {
     "is_false": "é falso",
 }  # fmt: skip
 
-_OPERATORS_BY_TYPE: dict[DataType, set[str]] = {
+OPERATORS_BY_TYPE: dict[DataType, set[str]] = {
     DataType.TEXT: {"eq", "ne", "contains", "not_contains", "starts_with", "ends_with", "in", "not_in", "is_null", "not_null"},
     DataType.BOOLEAN: {"is_true", "is_false", "is_null", "not_null"},
     **{
@@ -156,13 +156,13 @@ _OPERATORS_BY_TYPE: dict[DataType, set[str]] = {
         for data_type in (*NUMERIC, *TEMPORAL)
     },
 }  # fmt: skip
-_NO_VALUE = {"is_null", "not_null", "is_true", "is_false"}
+NO_VALUE_OPERATORS = {"is_null", "not_null", "is_true", "is_false"}
 _CASE_CHANGES: dict[str, Callable[[pl.Expr], pl.Expr]] = {
     "upper": lambda e: e.str.to_uppercase(),
     "lower": lambda e: e.str.to_lowercase(),
     "title": lambda e: e.str.to_titlecase(),
 }
-_LIST_VALUE = {"in", "not_in"}
+LIST_OPERATORS = {"in", "not_in"}
 
 
 class Condition(BaseModel):
@@ -320,7 +320,7 @@ def _check_unique(schema: list[ColumnSpec]) -> None:
         seen.add(key)
 
 
-def _literal(spec: ColumnSpec, text: str | None) -> Any:
+def literal_for(spec: ColumnSpec, text: str | None) -> Any:
     if text is None:
         raise ValueError(f"informe um valor para a coluna '{spec.name}'")
     return canonical_value(spec.data_type, spec.scale, text)
@@ -395,27 +395,27 @@ def _plan_one(rule: Any, schema: list[ColumnSpec]) -> tuple[list[ColumnSpec], di
             for name in rule.columns:
                 spec = _column(schema, name)
                 if rule.strategy == "fill":
-                    literals[name] = _literal(spec, rule.fill_value)
+                    literals[name] = literal_for(spec, rule.fill_value)
             return schema, literals
         case RemoveEmptyRowsRule():
             return schema, literals
         case FilterRowsRule():
             for i, condition in enumerate(rule.conditions):
                 spec = _column(schema, condition.column)
-                if condition.operator not in _OPERATORS_BY_TYPE[spec.data_type]:
+                if condition.operator not in OPERATORS_BY_TYPE[spec.data_type]:
                     raise ValueError(
                         f"o operador '{OPERATOR_LABELS[condition.operator]}' não se aplica a {type_label(spec.data_type)}"
                     )
-                if condition.operator in _NO_VALUE:
+                if condition.operator in NO_VALUE_OPERATORS:
                     continue
-                if condition.operator in _LIST_VALUE:
+                if condition.operator in LIST_OPERATORS:
                     if not condition.values:
                         raise ValueError("informe ao menos um valor para a lista")
-                    literals[f"{i}:values"] = [_literal(spec, v) for v in condition.values]
+                    literals[f"{i}:values"] = [literal_for(spec, v) for v in condition.values]
                     continue
-                literals[f"{i}:value"] = _literal(spec, condition.value)
+                literals[f"{i}:value"] = literal_for(spec, condition.value)
                 if condition.operator == "between":
-                    literals[f"{i}:value_to"] = _literal(spec, condition.value_to)
+                    literals[f"{i}:value_to"] = literal_for(spec, condition.value_to)
             return schema, literals
         case RenameColumnsRule():
             for old_name in rule.mapping:
@@ -620,7 +620,7 @@ def _condition_expr(
     if op == "is_false":
         return column.eq(False)
     dtype = polars_dtype(spec.data_type, spec.scale)
-    if op in _LIST_VALUE:
+    if op in LIST_OPERATORS:
         values = literals[f"{i}:values"]
         if spec.data_type == DataType.TEXT and condition.case_insensitive:
             expr = column.str.to_lowercase().is_in([str(v).lower() for v in values])
@@ -668,9 +668,9 @@ def _condition_expr(
 
 def describe_condition(condition: Condition) -> str:
     label = OPERATOR_LABELS[condition.operator]
-    if condition.operator in _NO_VALUE:
+    if condition.operator in NO_VALUE_OPERATORS:
         return f"{condition.column} {label}"
-    if condition.operator in _LIST_VALUE:
+    if condition.operator in LIST_OPERATORS:
         return f"{condition.column} {label} ({', '.join(condition.values or [])})"
     if condition.operator == "between":
         return f"{condition.column} {label} {condition.value} e {condition.value_to}"

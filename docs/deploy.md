@@ -21,6 +21,8 @@ Preencha no `.env` (obrigatórios no `docker-compose.prod.yml`):
 | `MINIO_IMAGE` | Recomendado fixar digest: `cgr.dev/chainguard/minio@sha256:…` (ADR-006). |
 | `SMTP_*` | Servidor SMTP real para e-mails de redefinição de senha. O `.env.example` traz os valores de desenvolvimento (`localhost:1025`, sem TLS): troque todos. |
 
+Opcionais: `MAX_CSV_MB`, `MAX_XLSX_MB` e `REGISTER_LIMIT_PER_HOUR` (cadastros por hora a partir do mesmo IP, padrão 10; a CI eleva o valor só para a suíte E2E, que cria várias contas seguidas).
+
 As senhas do PostgreSQL e do Redis entram nas URLs de conexão: use apenas caracteres seguros em URL, como hexadecimal (`openssl rand -hex 32`).
 
 ```bash

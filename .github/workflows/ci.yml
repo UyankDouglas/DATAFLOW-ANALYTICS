@@ -86,7 +86,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Preparar o .env como no README
-        run: cp .env.example .env
+        # A suíte E2E cria mais de 10 contas a partir do mesmo IP em poucos minutos;
+        # fora da CI o limite de cadastro continua em 10 por hora.
+        run: |
+          cp .env.example .env
+          sed -i "s|^REGISTER_LIMIT_PER_HOUR=.*|REGISTER_LIMIT_PER_HOUR=100|" .env
+          grep -qx "REGISTER_LIMIT_PER_HOUR=100" .env
       - name: Validar o arquivo Compose
         run: docker compose config --quiet
       - name: Build e subida do ambiente completo
@@ -148,6 +153,9 @@ jobs:
           set_env REDIS_PASSWORD "$(openssl rand -hex 16)"
           set_env MINIO_ROOT_PASSWORD "$(openssl rand -hex 16)"
           set_env SMTP_HOST ""
+          # Mesmo motivo do job de desenvolvimento: a suíte E2E cria mais de 10 contas.
+          set_env REGISTER_LIMIT_PER_HOUR 100
+          grep -qx "REGISTER_LIMIT_PER_HOUR=100" .env
       - name: Validar o arquivo Compose
         run: docker compose config --quiet
       - name: Build e subida do ambiente completo

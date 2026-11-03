@@ -17,8 +17,9 @@ O sistema recebe arquivos de usuários; segurança é requisito central. Esta p�
 
 - RBAC no backend (`core/permissions.py`): Administrador, Analista, Visualizador, com permissões explícitas. O frontend só esconde ações; quem decide é o servidor.
 - Workspace ativo na sessão do servidor; pertencimento e papel relidos do banco **a cada requisição**.
-- Recursos por ID (dataset, versão, job, rejeitados, registros, conjuntos de regras, prévia, análise de duplicidades e jobs de transformação) sempre filtrados por workspace; resposta 404 para inexistente ou alheio.
-- Transformações: Visualizador lê os conjuntos; criar, editar, excluir, gerar prévia, analisar duplicidades e aplicar exigem `transformations:manage` (Analista e Administrador).
+- Recursos por ID (dataset, versão, job, rejeitados, registros, consultas do explorer, relatórios de qualidade, inconsistências, frequência de valores, conjuntos de regras, prévia, análise de duplicidades e jobs de transformação) sempre filtrados por workspace; resposta 404 para inexistente ou alheio.
+- Transformações: Visualizador lê os conjuntos e pode rodar a análise de duplicidades (só leitura, usada também na tela Qualidade); criar, editar, excluir, gerar prévia e aplicar exigem `transformations:manage` (Analista e Administrador).
+- Qualidade: qualquer perfil lê relatórios, inconsistências e frequências; calcular ou recalcular um relatório exige `datasets:process`.
 - Testado: `backend/tests/test_isolation.py` e `backend/tests/test_transform_api.py` (API, inclusive todas as rotas de transformação com sessão de outro workspace) e `e2e/tests/isolation.spec.ts` (interface + API).
 
 ## Uploads
@@ -39,6 +40,8 @@ O sistema recebe arquivos de usuários; segurança é requisito central. Esta p�
 - Não existe SQL, Python ou JavaScript vindo do usuário; não há `eval`.
 - Transformações são regras JSON de uma lista fechada de operações, validadas por modelos Pydantic (`extra="forbid"`) e conferidas contra o esquema da versão antes de executar; colunas derivadas aceitam só operações enumeradas com coluna ou valor fixo. Regras com operação desconhecida ou campos extras (ex.: `code`, `sql`) são recusadas com 422 e nunca chegam ao motor (`test_code_like_rules_never_reach_the_engine`).
 - A análise de duplicidades usa o mesmo DuckDB isolado, com as colunas da chave validadas contra o esquema e citadas.
+- Data Explorer (`POST /datasets/{id}/rows/query`): filtros validados por tipo de coluna (mesmos operadores das regras de filtro), valores sempre parametrizados, busca com `contains()` (sem curingas), no máximo 20 filtros, 50 valores por lista, 100 caracteres de busca, 200 registros por página e **10 s por consulta**, interrompida pelo DuckDB ao exceder. Tentativas de injeção em nome de coluna, ordenação, operador ou valor são recusadas com 422 (`test_explorer_rejects_unsafe_or_invalid_queries`).
+- Relatórios de qualidade guardam só agregados no PostgreSQL; valores de texto dos registros (frequências, valor original de inconsistências) são lidos do Parquet sob demanda, após a checagem de workspace (ADR-019).
 - Identificadores validados contra o esquema da versão e citados; valores sempre parametrizados.
 - DuckDB isolado: sem acesso externo (rede/arquivos fora do cache), configuração travada, 2 threads e 512 MB por consulta, `page_size` máximo 200.
 
@@ -46,7 +49,7 @@ O sistema recebe arquivos de usuários; segurança é requisito central. Esta p�
 
 - Erros padronizados `{"error": {code, message, details}, "request_id"}`; exceções inesperadas viram 500 genérico, com detalhes só no log.
 - Logs JSON com `request_id`, método, rota, status e duração. Não registram e-mails, senhas, tokens nem conteúdo de arquivos.
-- Auditoria (`audit_logs`): cadastro, login (sucesso e falha), logout, troca de workspace, redefinição de senha, upload aceito/recusado (com o código do motivo), aba importada como dataset, mudança de configuração, importação e transformação solicitadas, conjunto de regras criado/alterado/excluído, cancelamento, versão publicada (com tipo e versão de origem), falha e cancelamento de job.
+- Auditoria (`audit_logs`): cálculo de relatório de qualidade sob demanda, cadastro, login (sucesso e falha), logout, troca de workspace, redefinição de senha, upload aceito/recusado (com o código do motivo), aba importada como dataset, mudança de configuração, importação e transformação solicitadas, conjunto de regras criado/alterado/excluído, cancelamento, versão publicada (com tipo e versão de origem), falha e cancelamento de job.
 - Cabeçalhos: `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Cache-Control: no-store` na API; CSP restritiva e `Permissions-Policy` no SPA (Caddy).
 
 ## Segredos e infraestrutura

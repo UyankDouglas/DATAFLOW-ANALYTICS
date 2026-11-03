@@ -361,7 +361,7 @@ export function RuleEditor({ rule, schema, onChange, disabled }: RuleEditorProps
   }
 }
 
-function FilterEditor({
+export function FilterEditor({
   conditions,
   match,
   schema,

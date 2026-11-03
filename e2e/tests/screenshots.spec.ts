@@ -83,6 +83,20 @@ test('capturas de tela', async ({ page }) => {
   await shot(page, '09-transformacoes')
   await page.setViewportSize({ width: 1440, height: 900 })
 
+  // Fase 3: qualidade da versão com problemas e explorer com busca e filtro.
+  const qualityId = await processSample(page, 'qualidade_1000.csv')
+  await page.goto(`/qualidade?dataset=${qualityId}`)
+  await expect(page.getByTestId('quality-score')).toBeVisible()
+  await shot(page, '11-qualidade')
+
+  await page.goto(`/datasets/${salesId}/explorar`)
+  await page.getByLabel('Buscar nas colunas de texto').fill('Lima')
+  await page.getByRole('button', { name: /Filtros/ }).click()
+  await page.getByRole('button', { name: 'Adicionar filtro' }).click()
+  await page.getByRole('button', { name: 'Aplicar filtros' }).click()
+  await expect(page.getByText(/registros atendem/)).toBeVisible()
+  await shot(page, '12-explorer-filtros')
+
   await page.evaluate(() => localStorage.setItem('df-theme', 'light'))
   await page.goto('/processamentos')
   await expect(page.getByText('Histórico de processamento').first()).toBeVisible()

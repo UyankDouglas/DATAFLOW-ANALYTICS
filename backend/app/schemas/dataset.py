@@ -53,6 +53,7 @@ class DatasetVersionOut(APIModel):
     reconciliation: dict[str, Any]
     rules_version: str
     created_at: datetime
+    quality_score: float | None = None  # nulo = relatório ainda não calculado
 
 
 class DatasetOut(APIModel):
@@ -156,7 +157,8 @@ class RowsResponse(BaseModel):
     version_number: int
     columns: list[dict[str, Any]]
     rows: list[list[Any]]
-    total: int
+    total: int  # registros que atendem aos filtros (sem filtros, todos da versão)
+    total_unfiltered: int | None = None
     page: int
     page_size: int
 

@@ -18,6 +18,7 @@ Dois tipos de processamento geram versões:
 | **Importação assíncrona** | Worker (`services/job_runner.py`) | Reivindica o job, baixa o original, confere o SHA-256, repete a verificação do contêiner XLSX e executa o pipeline em lotes. |
 | **Transformação assíncrona** | Worker | Baixa o Parquet da versão de origem, confere o SHA-256 registrado na publicação, valida as regras contra o esquema dessa versão e aplica-as em lotes; a deduplicação, se houver, roda numa segunda passada. |
 | **Armazenamento versionado** | Worker | `data.parquet` (válidos, tipados) e `rejected.parquet` (todo registro que não entrou na versão, com categoria, motivo, regra, coluna, detalhe e valores de entrada em texto). Publicação em uma única transação. |
+| **Relatório de qualidade** | Worker | Logo depois da publicação: nota, indicadores, perfil das colunas e grupos de exclusão, calculados com DuckDB sobre os dois Parquet (`docs/quality.md`). Uma falha aqui vira aviso no job, sem desfazer a versão. |
 
 ## Leitura de XLSX
 
