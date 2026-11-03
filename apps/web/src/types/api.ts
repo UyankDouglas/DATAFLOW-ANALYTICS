@@ -671,3 +671,144 @@ export interface ValueFrequency {
   values: { value: unknown; count: number }[]
   others: number
 }
+
+// ---------------------------------------------------------------- Fase 4: BI
+
+export type Aggregation = 'count' | 'count_distinct' | 'sum' | 'avg' | 'min' | 'max'
+export type Granularity = 'day' | 'week' | 'month' | 'quarter' | 'year'
+export type ChartType =
+  'kpi' | 'line' | 'bar' | 'bar_horizontal' | 'area' | 'pie' | 'donut' | 'table'
+export type WidgetSize = 'small' | 'medium' | 'large'
+
+export interface Metric {
+  aggregation: Aggregation
+  /** Sem coluna, "count" conta registros. */
+  column?: string | null
+}
+
+export interface Dimension {
+  column: string
+  granularity?: Granularity | null
+}
+
+export interface PeriodComparison {
+  column: string
+  start: string
+  end: string
+  mode?: 'previous_period' | 'previous_year'
+}
+
+/** Consulta analítica: o que calcular, sem SQL — colunas e operações de listas fechadas. */
+export interface AggregateSpec {
+  metrics: Metric[]
+  dimension?: Dimension | null
+  filters?: Condition[]
+  match?: 'all' | 'any'
+  sort?: 'metric' | 'dimension' | null
+  direction?: 'asc' | 'desc' | null
+  limit?: number
+  comparison?: PeriodComparison | null
+}
+
+export interface AnalyticsQuery extends AggregateSpec {
+  version_id?: Uuid | null
+  /** Grupos combinados com E aos filtros da consulta, cada um com o próprio E/OU. */
+  extra_filters?: FilterSet[]
+}
+
+export interface MetricInfo {
+  key: string
+  aggregation: Aggregation
+  column: string | null
+  label: string
+  /** Tipo do resultado (contagens são inteiras; a média é decimal). */
+  data_type: DataType
+  scale: number | null
+}
+
+export interface AggregateResult {
+  version_id: Uuid
+  version_number: number
+  metrics: MetricInfo[]
+  dimension: { column: string; data_type: DataType; granularity: Granularity | null } | null
+  rows: { key: unknown; values: unknown[]; previous: unknown[] | null }[]
+  matched_rows: number
+  total_groups: number | null
+  others: { groups: number; values: unknown[]; previous: unknown[] | null } | null
+  comparison: {
+    column: string
+    mode: 'previous_period' | 'previous_year'
+    current_start: string
+    current_end: string
+    previous_start: string
+    previous_end: string
+    previous_rows: number
+  } | null
+  duration_ms: number
+}
+
+export interface FilterSet {
+  filters: Condition[]
+  match: 'all' | 'any'
+}
+
+export interface WidgetConfig {
+  /** Ausente em widgets ainda não salvos. */
+  id?: Uuid | null
+  title: string
+  chart_type: ChartType
+  size: WidgetSize
+  query: AggregateSpec
+}
+
+export interface DashboardWidget extends WidgetConfig {
+  id: Uuid
+  position: number
+}
+
+export interface Dashboard {
+  id: Uuid
+  name: string
+  description: string | null
+  dataset_id: Uuid
+  dataset_name: string
+  /** Versão fixada; nula = acompanha a versão atual do dataset. */
+  version_id: Uuid | null
+  version_number: number | null
+  resolved_version_id: Uuid | null
+  resolved_version_number: number | null
+  filters: FilterSet
+  widgets: DashboardWidget[]
+  created_by_name: string | null
+  updated_by_name: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DashboardSummary {
+  id: Uuid
+  name: string
+  description: string | null
+  dataset_id: Uuid
+  dataset_name: string
+  version_id: Uuid | null
+  version_number: number | null
+  widget_count: number
+  chart_types: ChartType[]
+  updated_by_name: string | null
+  updated_at: string
+}
+
+export interface DashboardInput {
+  name: string
+  description?: string | null
+  dataset_id: Uuid
+  version_id?: Uuid | null
+  filters: FilterSet
+  widgets: WidgetConfig[]
+}
+
+export interface WidgetResult {
+  widget_id: Uuid
+  result: AggregateResult
+}

@@ -77,6 +77,17 @@ class WhereClause:
         return f" WHERE {self.sql}" if self.sql else ""
 
 
+def combine_where(*clauses: WhereClause) -> WhereClause:
+    """Junta cláusulas com E. Os nomes de parâmetro precisam ser distintos (prefixos)."""
+    parts = [c for c in clauses if c.sql]
+    params: dict[str, Any] = {}
+    for clause in parts:
+        clash = params.keys() & clause.params.keys()
+        assert not clash, f"parâmetros repetidos: {clash}"
+        params.update(clause.params)
+    return WhereClause(sql=" AND ".join(f"({c.sql})" for c in parts), params=params)
+
+
 _COMPARISON = {"eq": "=", "ne": "<>", "gt": ">", "gte": ">=", "lt": "<", "lte": "<="}
 
 
@@ -124,8 +135,15 @@ def build_where(
     match: Literal["all", "any"],
     search: str | None,
     schema: list[ColumnSpec],
+    *,
+    prefix: str = "f",
+    label: str = "Filtro",
 ) -> WhereClause:
-    """Filtros tipados e busca textual. Erros citam a posição do filtro (1-based)."""
+    """Filtros tipados e busca textual. Erros citam a posição do filtro (1-based).
+
+    `prefix` separa os nomes de parâmetro quando várias cláusulas são combinadas, e `label`
+    diz na mensagem de erro de qual grupo de filtros se trata.
+    """
     if len(conditions) > MAX_FILTERS:
         raise ValidationFailed(f"Use no máximo {MAX_FILTERS} filtros por consulta.")
     by_name = {c.name: c for c in schema}
@@ -136,22 +154,24 @@ def build_where(
         position = index + 1
         if spec is None:
             raise ValidationFailed(
-                f"Filtro {position}: coluna desconhecida.",
+                f"{label} {position}: coluna desconhecida.",
                 code="invalid_filter",
                 details={"filter_index": index},
             )
         if condition.operator not in OPERATORS_BY_TYPE[spec.data_type]:
             raise ValidationFailed(
-                f"Filtro {position}: o operador '{OPERATOR_LABELS[condition.operator]}' "
+                f"{label} {position}: o operador '{OPERATOR_LABELS[condition.operator]}' "
                 f"não se aplica à coluna '{spec.name}'.",
                 code="invalid_filter",
                 details={"filter_index": index},
             )
         try:
-            sql, values = _condition_sql(condition, spec, f"f{index}")
+            sql, values = _condition_sql(condition, spec, f"{prefix}{index}")
         except ValueError as exc:
             raise ValidationFailed(
-                f"Filtro {position}: {exc}", code="invalid_filter", details={"filter_index": index}
+                f"{label} {position}: {exc}",
+                code="invalid_filter",
+                details={"filter_index": index},
             ) from exc
         parts.append(f"({sql})")
         params.update(values)

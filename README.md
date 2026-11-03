@@ -2,7 +2,7 @@
 
 Plataforma de engenharia de dados e Business Intelligence: transforma planilhas CSV e XLSX brutas em datasets tratados, versionados e consultáveis — com rastreabilidade de cada registro recebido.
 
-> **Status:** Fases 1 a 3 de 6 concluídas — fundação, motor ETL, qualidade e Data Explorer —, todas validadas na CI com a infraestrutura real (PostgreSQL, Redis, MinIO e Celery), nos Compose de desenvolvimento e de produção. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
+> **Status:** Fases 1 a 4 de 6 concluídas — fundação, motor ETL, qualidade e Data Explorer, Business Intelligence —, todas validadas na CI com a infraestrutura real (PostgreSQL, Redis, MinIO e Celery), nos Compose de desenvolvimento e de produção. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
 
 ![Visão geral](docs/screenshots/02-visao-geral.png)
 
@@ -11,6 +11,13 @@ Plataforma de engenharia de dados e Business Intelligence: transforma planilhas 
 Equipes de vendas, atendimento e operações vivem de planilhas exportadas de sistemas diferentes: delimitadores diferentes, `1.234,56` misturado com `1234.56`, datas em `dd/mm` e `mm/dd`, linhas incompletas. Ferramentas de BI costumam descartar ou converter esses dados em silêncio. O DataFlow trata a importação e o tratamento como um **pipeline auditável**: cada registro é contabilizado como válido, rejeitado, filtrado ou duplicado, com motivo, regra, coluna e valor original — e cada processamento gera uma **versão imutável** do dataset, com a origem e as regras que a produziram.
 
 ## Funcionalidades
+
+### Fase 4 — Business Intelligence
+
+- **Dashboard geral**: escolha o dataset, a versão, a **medida numérica**, a categoria e a coluna de data. Total de registros, soma, média, máximo, mínimo e contagem distinta; evolução temporal por dia, semana, mês, trimestre ou ano; participação e tabela analítica por categoria; **comparação entre períodos** (anterior de mesma duração ou mesmo período do ano anterior). Nenhuma coluna numérica é tratada como receita: as medidas aparecem depois que o usuário escolhe.
+- **Filtros interativos** aplicados no servidor sobre os dados reais: período, valores de uma coluna (categoria, status, responsável), faixa de valores e filtros avançados em qualquer coluna, respeitando o tipo de cada uma.
+- **Construtor de Dashboards**: dataset e versão (fixa ou sempre a atual), filtros gerais e até 24 widgets — card KPI, linha, área, barras, barras horizontais, pizza, rosca e tabela analítica —, cada um com medidas e agregações, dimensão, ordenação, filtros próprios e comparação de períodos, com **prévia calculada pela API** enquanto se edita. Reorganizar, duplicar, redimensionar e salvar para reabrir depois.
+- **Dashboards persistidos** (`Dashboard` e `DashboardWidget`): guardam só a definição; os números são recalculados pelo DuckDB a cada abertura. Ver [docs/dashboards.md](docs/dashboards.md).
 
 ### Fase 3 — qualidade e Data Explorer
 
@@ -46,8 +53,10 @@ Geradas por `e2e/tests/screenshots.spec.ts` a partir de um fluxo real com os dad
 
 | | |
 | --- | --- |
-| ![Qualidade dos Dados](docs/screenshots/11-qualidade.png) | ![Data Explorer com filtros](docs/screenshots/12-explorer-filtros.png) |
-| ![Transformações](docs/screenshots/09-transformacoes.png) | ![Pré-visualização de XLSX](docs/screenshots/10-preview-xlsx.png) |
+| ![Dashboard salvo](docs/screenshots/15-dashboard.png) | ![Dashboard geral](docs/screenshots/13-dashboard-geral.png) |
+| ![Construtor de Dashboards](docs/screenshots/14-construtor.png) | ![Qualidade dos Dados](docs/screenshots/11-qualidade.png) |
+| ![Data Explorer com filtros](docs/screenshots/12-explorer-filtros.png) | ![Transformações](docs/screenshots/09-transformacoes.png) |
+| ![Pré-visualização de XLSX](docs/screenshots/10-preview-xlsx.png) | |
 | ![Login](docs/screenshots/01-login.png) | ![Importar](docs/screenshots/03-importar.png) |
 | ![Pré-visualização](docs/screenshots/04-preview.png) | ![Processamento concluído](docs/screenshots/05-job-concluido.png) |
 | ![Exclusões rastreáveis](docs/screenshots/06-rejeicoes.png) | ![Data Explorer](docs/screenshots/07-explorer.png) |
@@ -140,10 +149,17 @@ Para ver rejeições rastreáveis, importe `samples/qualidade_1000.csv` e defina
 4. No painel **Duplicidades na versão inteira**, escolha a chave e veja quantos registros seriam removidos, sem alterar nada.
 5. **Salvar conjunto** e **Aplicar e gerar nova versão**: o job mostra a reconciliação, as regras aplicadas e os registros excluídos; o detalhe do dataset passa a listar a nova versão com a origem (`v1 + nome do conjunto`).
 
+## Como montar um dashboard
+
+1. Em **Dashboards**, abra o **Dashboard geral** para explorar um dataset: escolha a medida, a categoria e a data, e filtre por período, valores ou faixa.
+2. Para guardar uma visão, clique em **Novo dashboard** (ou **Construtor** no menu; perfis Analista e Administrador): dê um nome, escolha o dataset e a versão — **Atual** acompanha as novas publicações, uma versão fixa congela os números.
+3. Adicione widgets: tipo de gráfico, medidas e agregações, dimensão e filtros. A prévia é calculada com os dados reais da versão enquanto você edita.
+4. Reorganize com as setas, duplique, remova e **Salvar dashboard**. Quem abrir o dashboard (inclusive o Visualizador) pode aplicar filtros na tela sem alterar o que foi salvo.
+
 ## Testes
 
 ```bash
-cd backend && uv run pytest                   # 139 testes (SQLite + S3/Redis simulados)
+cd backend && uv run pytest                   # 169 testes (SQLite + S3/Redis simulados)
 TEST_DATABASE_URL=postgresql+psycopg://dataflow:dataflow@localhost:5432/dataflow_test uv run pytest
 cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app
 
@@ -197,6 +213,10 @@ Base `/api/v1`, documentação interativa em `/api/docs`. Erros sempre no format
 | GET / POST | `/datasets/{id}/versions/{vid}/quality` | Relatório de qualidade da versão / cálculo sob demanda |
 | GET | `/datasets/{id}/versions/{vid}/quality/inconsistencies` | Inconsistências com regra e tratamento (`category`, `reason`, `column`, paginação) |
 | GET | `/datasets/{id}/versions/{vid}/quality/values` | Valores mais frequentes de uma coluna |
+| POST | `/datasets/{id}/analytics` | KPIs, agrupamentos, séries e comparação entre períodos sobre uma versão |
+| GET / POST | `/dashboards` | Lista e cria dashboards |
+| GET / PATCH / DELETE | `/dashboards/{id}` | Detalhe, alteração (nome, versão, filtros, widgets na nova ordem) e exclusão |
+| POST | `/dashboards/{id}/query` | Calcula um widget com os filtros escolhidos na tela |
 | GET | `/jobs` · `/jobs/{id}` | Histórico e detalhe de processamentos (`kind=import\|transform`) |
 | POST | `/jobs/{id}/cancel` | Cancelamento cooperativo |
 | GET | `/overview` | Indicadores reais do workspace |
@@ -214,6 +234,8 @@ Fase 2, medido localmente (Windows, sem infraestrutura): planilha XLSX de 100 mi
 
 Fase 3, no mesmo ambiente: relatório de qualidade de 100 mil registros em 0,19 a 0,28 s; consulta do explorer com filtro, busca e contagem em 0,11 a 0,12 s.
 
+Fase 4, no mesmo ambiente: com 100 mil registros, os KPIs (seis medidas) saem em 0,04 a 0,05 s, a soma por categoria com "Outros" em 0,05 a 0,08 s, a série mensal em 0,05 s e a comparação entre períodos em 0,05 a 0,09 s.
+
 ## Limitações conhecidas
 
 - XLSX é lido em Python pelo openpyxl, em duas passadas: ~2,5 mil registros/s na medição local; o progresso mostra só a contagem de registros. A tabela de textos compartilhados da planilha fica inteira em memória.
@@ -222,6 +244,7 @@ Fase 3, no mesmo ambiente: relatório de qualidade de 100 mil registros em 0,19 
 - Arredondamento de colunas derivadas é meio-para-par (1,005 → 1,00), diferente do "meio para cima" das planilhas.
 - Data Explorer sem download do resultado filtrado: chega com as exportações protegidas da Fase 5 (job assíncrono, expiração, proteção contra formula injection). A busca cobre só colunas de texto.
 - Relatórios de qualidade de versões publicadas antes da Fase 3 são calculados sob demanda na tela Qualidade.
+- Dashboards: vale a última gravação quando duas pessoas editam o mesmo dashboard; a ordem dos widgets muda pelas setas (sem arrastar e soltar); cada widget é uma consulta ao abrir, sem resultados guardados — medido até 100 mil registros. Decimais não servem como dimensão (use o filtro de faixa).
 - Gestão de membros, exportações, auditoria na interface e retenção de arquivos: Fase 5.
 - Gráfico da visão geral agrupa por dia em UTC (fuso por workspace chega com as configurações).
 - O MinIO Community foi arquivado; o projeto usa a imagem mantida pela Chainguard (ver ADR-006).
@@ -234,6 +257,6 @@ Fase 3, no mesmo ambiente: relatório de qualidade de 100 mil registros em 0,19 
 | 1 ✅ | Fundação, autenticação, workspaces, upload CSV, preview, worker, versão Parquet, explorer paginado |
 | 2 ✅ | XLSX e abas, transformações configuráveis, deduplicação, reprocessamento a partir de versões |
 | 3 ✅ | Qualidade dos dados (pontuação documentada), Data Explorer com filtros, busca e seleção de colunas |
-| 4 | Dashboards, KPIs, gráficos, filtros dinâmicos, comparação temporal, construtor de dashboards |
+| 4 ✅ | Dashboards, KPIs, gráficos, filtros dinâmicos, comparação temporal, construtor de dashboards |
 | 5 | Relatórios, exportações CSV/XLSX em segundo plano, gestão de usuários, auditoria, retenção |
 | 6 | Testes ampliados, benchmarks com infraestrutura, revisão de segurança e performance, deploy |

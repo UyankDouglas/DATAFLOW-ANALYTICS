@@ -26,10 +26,10 @@ flowchart TD
 | **FastAPI** | Autenticação, RBAC, validação, upload em streaming, pré-visualização, criação de jobs e consultas. Não executa processamento pesado. |
 | **Celery worker** | Executa o pipeline de importação. Compartilha modelos, regras e serviços com a API (mesma imagem e mesmo pacote `app`). |
 | **Celery beat** | A cada 60 s recupera jobs interrompidos e reenfileira jobs cuja publicação na fila se perdeu. |
-| **PostgreSQL** | Fonte da verdade: usuários, workspaces, sessões, datasets, colunas, uploads, jobs (estado durável) e versões. |
+| **PostgreSQL** | Fonte da verdade: usuários, workspaces, sessões, datasets, colunas, uploads, jobs (estado durável), versões, relatórios de qualidade e dashboards (só a definição dos widgets). |
 | **Redis** | Transporte da fila (sem backend de resultados) e contadores de rate limiting. |
 | **MinIO (S3)** | Arquivos originais e Parquet das versões. Bucket privado; não há URL pública. |
-| **DuckDB** | Consultas analíticas controladas sobre Parquet: ordenação, paginação (e, nas próximas fases, filtros e agregações). |
+| **DuckDB** | Consultas controladas sobre Parquet: paginação, filtros e busca do explorer, relatório de qualidade e as agregações dos dashboards (KPIs, grupos, séries e comparação entre períodos). |
 
 ## Estrutura do repositório
 
@@ -37,7 +37,7 @@ flowchart TD
 apps/web/            SPA (React, Vite, Tailwind, shadcn/ui)
   src/app            providers, router (code splitting por rota), QueryClient
   src/components     componentes compartilhados + ui/ (shadcn)
-  src/features       auth, datasets, jobs, transformations, quality: API, hooks, componentes de domínio
+  src/features       auth, datasets, jobs, transformations, quality, dashboards: API, hooks, componentes de domínio
   src/layouts        layout autenticado (sidebar/topbar) e de autenticação
   src/pages          telas
   src/services       cliente HTTP (CSRF, erros padronizados) e upload com progresso
@@ -47,9 +47,9 @@ backend/
   app/models         ORM SQLAlchemy 2
   app/schemas        contratos Pydantic da API
   app/repositories   consultas sempre filtradas por workspace
-  app/services       casos de uso (auth, upload, preview, importação, transformações, qualidade, jobs, armazenamento)
+  app/services       casos de uso (auth, upload, preview, importação, transformações, qualidade, análises, dashboards, jobs, armazenamento)
   app/processing     pipeline puro (sem banco): inspeção, inferência, leitura CSV/XLSX, conversão, regras
-  app/analytics      DuckDB: consultas filtradas, relatório de qualidade e cache de Parquet
+  app/analytics      DuckDB: consultas filtradas, agregações dos dashboards, relatório de qualidade e cache de Parquet
   app/tasks          Celery (app, tarefas, publicação)
   migrations/        Alembic
   tests/             Pytest

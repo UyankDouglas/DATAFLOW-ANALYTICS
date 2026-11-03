@@ -46,6 +46,17 @@ def get_version(
     return version
 
 
+def resolve_version(
+    db: Session, workspace_id: uuid.UUID, dataset_id: uuid.UUID, version_id: uuid.UUID | None
+) -> DatasetVersion:
+    """Versão pedida ou, sem id, a versão atual do dataset."""
+    dataset = get_dataset(db, workspace_id, dataset_id)
+    target = version_id or dataset.current_version_id
+    if target is None:
+        raise NotFound("Este dataset ainda não possui versão processada.", code="no_version")
+    return get_version(db, workspace_id, dataset_id, target)
+
+
 def get_job(db: Session, workspace_id: uuid.UUID, job_id: uuid.UUID) -> ProcessingJob:
     job = db.scalar(
         select(ProcessingJob).where(

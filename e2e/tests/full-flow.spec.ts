@@ -55,7 +55,7 @@ test('login → upload → preview → processamento → resultado → explorer'
   await page.goto('/')
   await expect(page.getByText('Registros publicados')).toBeVisible()
   await expect(page.getByText('1.000', { exact: true })).toBeVisible()
-  await page.goto('/dashboards')
+  await page.goto('/relatorios')
   await expect(page.getByText('Em desenvolvimento')).toBeVisible()
 })
 

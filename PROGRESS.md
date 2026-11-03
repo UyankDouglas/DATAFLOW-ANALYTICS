@@ -9,8 +9,8 @@ Documento de retomada. Atualizado em **03/11/2026**.
 | 1 — Fundação e primeiro dataset | ✅ Concluída e validada na CI com a infraestrutura real, nos Compose de desenvolvimento e de produção |
 | 2 — Motor ETL (XLSX, transformações, deduplicação, reprocessamento) | ✅ Concluída, validada na CI com a infraestrutura real e mesclada na `main` ([PR #1](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/1)) |
 | 3 — Qualidade e Data Explorer completo | ✅ Concluída e validada na CI com a infraestrutura real ([PR #2](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/2)) |
-| 4 — Business Intelligence (dashboards) | ⏳ Próxima |
-| 5 — Relatórios, exportações e administração | Pendente |
+| 4 — Business Intelligence (dashboards) | ✅ Concluída e validada na CI com a infraestrutura real ([PR #3](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/3)) |
+| 5 — Relatórios, exportações e administração | ⏳ Próxima |
 | 6 — Qualidade e produção | Pendente |
 
 ## Fase 1 — concluído
@@ -60,6 +60,35 @@ Documento de retomada. Atualizado em **03/11/2026**.
 - [x] **Documentação:** `docs/quality.md` (novo), ADR-019 e ADR-020, `data-pipeline.md`, `security.md`, `architecture.md`, `benchmark.md`, README; capturas 11 e 12 e as demais regeneradas.
 - **Fora desta fase, de propósito:** download do resultado filtrado do explorer (chega com as exportações protegidas da Fase 5).
 
+## Fase 4 — concluído
+
+- [x] **Consultas analíticas** (`analytics/aggregate.py`, `services/analytics_service.py`, `POST /datasets/{id}/analytics`): medidas de vocabulário fechado (contagem, contagem distinta, soma, média, mínimo, máximo) validadas pelo tipo da coluna; dimensão por categoria ou data (dia, semana, mês, trimestre, ano); grupos além do limite em "Outros", calculado sobre os registros restantes; séries temporais sem corte (acima de 1.000 pontos, pede granularidade maior); comparação com o período anterior de mesma duração ou com o ano anterior numa só leitura (`FILTER`); filtros tipados do explorer e grupos extras com o próprio E/OU; tempo-limite de 10 s (ADR-021).
+- [x] **Resultado tipado, sem presumir dinheiro**: cada medida informa tipo e escala (média com duas casas além da escala da coluna); decimais como texto; nada formatado como moeda.
+- [x] **Dashboards persistidos** (`models/dashboard.py`, tabelas `dashboards` e `dashboard_widgets`, migration 0004 aditiva): dataset, versão fixa ou sempre a atual, filtros gerais e até 24 widgets com tipo, tamanho, posição e consulta; CRUD em `/dashboards` e cálculo de cada widget em `POST /dashboards/{id}/query` com os filtros da tela (ADR-022).
+- [x] **Validação ao salvar** contra a versão resultante, com regras por tipo de gráfico (KPI sem dimensão; pizza e rosca só com contagem ou soma sobre categoria; linha e área sem comparação); o erro aponta o widget (`invalid_widget`). Widget que deixou de ser compatível com a versão atual responde `widget_incompatible` sem derrubar os outros.
+- [x] **Reorganização** pela lista enviada no `PATCH`, mantendo o id dos widgets; duplicar e remover no construtor.
+- [x] **Permissão nova** `dashboards:manage` (Analista e Administrador); Visualizador abre, filtra e usa o Dashboard geral. Auditoria `dashboard.created`, `dashboard.updated` e `dashboard.deleted`. Isolamento por workspace em todas as rotas, inclusive ao apontar dataset ou versão de outro workspace.
+- [x] **Interface**:
+  - **Dashboard geral** (`/dashboards/geral`): dataset, versão, medida, categoria, data e granularidade escolhidas pelo usuário; KPIs, evolução temporal, barras, rosca, tabela analítica e comparação entre períodos, com período sugerido a partir dos dados.
+  - **Dashboards**: lista e exclusão com confirmação.
+  - **Dashboard salvo**: filtros interativos (período, valores de uma coluna, faixa e filtros avançados) e widgets calculados um a um.
+  - **Construtor** (`/dashboards/construtor`): editor de widget com prévia ao vivo; setas para reorganizar; duplicar e remover.
+  - Gráficos Recharts com tabela equivalente para leitores de tela; sem rolagem horizontal em 375 px. Dashboards e Construtor saíram de "Em desenvolvimento".
+- [x] **Benchmark**: `benchmark_pipeline` mede KPIs, agrupamento com "Outros", série mensal e comparação entre períodos.
+- [x] **Documentação**: `docs/dashboards.md` (novo), ADR-021 e ADR-022, `security.md`, `architecture.md`, `benchmark.md`, README; capturas 13, 14 e 15, e as demais regeneradas.
+
+## Testes executados na CI — Fase 4 (03/11/2026, commit `f403a9e`, [execução 41699024371](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41699024371), PR #3)
+
+| Verificação | Resultado |
+| --- | --- |
+| Backend contra **PostgreSQL 17 real** | **169 passed**, cobertura de 89% |
+| Alembic `upgrade` (inclui `0003 -> 0004`) → `check` → `downgrade` → `upgrade` no PostgreSQL | OK; `check`: "No new upgrade operations detected" |
+| Ruff e mypy estrito | sem problemas (86 arquivos) |
+| Frontend: formatação, lint, tipos, Vitest, build | OK, **84 passed** |
+| E2E em desenvolvimento, com Celery, MinIO e Redis reais | **13 passed**, 1 ignorado (capturas de tela), sem retentativas — inclui `dashboards.spec.ts` (dashboard geral; criar, filtrar, reabrir e reorganizar) |
+| E2E em produção, em HTTPS | **12 passed**, 2 ignorados (e-mail e capturas de tela), sem retentativas |
+| CSV de 100 mil linhas pela interface | job de 534 ms em desenvolvimento e 875 ms em produção (187.266 e 114.286 registros/s); pico de RSS do worker 374 e 373 MB |
+
 ## Testes executados na CI — Fase 3 (03/11/2026, commit `06ca88b`, [execução 41683893654](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41683893654), PR #2)
 
 | Verificação | Resultado |
@@ -100,6 +129,26 @@ A primeira execução ([41682378950](https://github.com/UyankDouglas/DATAFLOW-AN
 | Borda de produção | HTTP responde 308 para HTTPS; cookies `Secure`; portas 5432, 6379, 8000, 8025, 8080, 9000 e 9001 fechadas; Redis responde `NOAUTH` sem senha |
 | E2E em produção | **5 passed**, 2 ignorados (e-mail, pois produção não tem Mailpit, e capturas de tela) |
 | Fluxo completo medido | job de 100 mil linhas entre 741 ms e 1.046 ms em 3 execuções; detalhes em `docs/benchmark.md` |
+
+## Testes executados localmente — Fase 4 (03/11/2026, Windows 10, sem Docker)
+
+| Comando | Resultado |
+| --- | --- |
+| `cd backend && uv run pytest --cov=app` | **169 passed** (30 novos: `test_analytics.py` ×22 e `test_dashboards_api.py` ×8), cobertura de 89% (`aggregate.py` 98%, `dashboards_service.py` 94%) |
+| `uv run ruff format --check . && uv run ruff check .` / `uv run mypy app` | sem problemas (86 arquivos no mypy) |
+| Alembic `upgrade head` → `downgrade 0003` → `upgrade head` + `check` no SQLite; `upgrade 0003:0004 --sql` para PostgreSQL | OK (o `check` só aponta as FKs por `ALTER` que o SQLite não cria; nenhuma da 0004) |
+| `cd apps/web && pnpm test` | **84 passed** (22 arquivos; 37 novos); lint, typecheck, format e build OK |
+| `cd e2e && E2E_BASE_URL=http://localhost:5173 pnpm test` | **11 passed**, 3 ignorados (limite do proxy sem Caddy, e-mail sem Mailpit, capturas); inclui `dashboards.spec.ts` ×2 (dashboard geral; criar, filtrar, reabrir e reorganizar). Na primeira rodada da suíte inteira, o primeiro teste falhou ainda no cadastro, antes de qualquer tela da Fase 4; passou nas três rodadas seguintes |
+| `CAPTURE_SCREENSHOTS=1 … pnpm test screenshots` | 15 capturas em `docs/screenshots/` |
+| Verificação manual no navegador | dashboard geral, filtros por valores e por faixa, construtor com prévia, salvar, reabrir e reorganizar; sem rolagem horizontal em 375 px nas quatro telas. Números conferidos com o CSV lido pelo Polars, fora do pipeline: somas por equipe, filtro "pago" com valor ≥ 1000 e comparação de dezembro |
+| `uv run python -m app.scripts.benchmark_pipeline …100000.csv` | KPIs em 0,04–0,05 s; por categoria com "Outros" em 0,05–0,08 s; série mensal em 0,05 s; comparação entre períodos em 0,05–0,09 s |
+
+Validação na CI: ver "Testes executados na CI — Fase 4" ([execução 41699024371](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41699024371)).
+
+**Corrigido durante a verificação:**
+- o construtor reenviava a posição dos widgets salvos ao editar, e a API recusava;
+- a tabela para leitores de tela vazava da página no celular;
+- escolher uma coluna depois de "Registros" mantinha a contagem em vez da soma.
 
 ## Testes executados localmente — Fase 3 (03/11/2026, Windows 10, sem Docker)
 
@@ -168,13 +217,14 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 | Área | Arquivos |
 | --- | --- |
 | Configuração | `backend/app/core/config.py`, `.env.example` |
-| Modelos / migrations | `backend/app/models/*`, `backend/migrations/versions/20261029_0001_initial_schema.py`, `20261103_0002_transformacoes_e_xlsx.py` |
+| Modelos / migrations | `backend/app/models/*`, `backend/migrations/versions/20261029_0001_initial_schema.py`, `20261103_0002_transformacoes_e_xlsx.py`, `20261103_0003_relatorios_de_qualidade.py`, `20261103_0004_dashboards_e_widgets.py` |
 | Autenticação | `backend/app/services/auth_service.py`, `backend/app/api/routes/auth.py`, `backend/app/api/deps.py`, `backend/app/api/middleware.py` |
 | Upload / preview / importação | `backend/app/services/{upload,preview,import}_service.py` |
 | Transformações | `backend/app/services/transformation_service.py`, `backend/app/api/routes/transformations.py`, `backend/app/schemas/transformation.py` |
 | Pipeline | `backend/app/processing/{inspection,inference,reader,xlsx,convert,transforms,pipeline,types}.py` |
 | Worker | `backend/app/services/job_runner.py`, `backend/app/tasks/*` |
 | Consultas e qualidade | `backend/app/analytics/{query,quality,cache}.py`, `backend/app/services/quality_service.py`, `backend/app/api/routes/quality.py` |
+| BI e dashboards | `backend/app/analytics/aggregate.py`, `backend/app/services/{analytics,dashboards}_service.py`, `backend/app/api/routes/dashboards.py`, `backend/app/schemas/{analytics,dashboard}.py`, `apps/web/src/features/dashboards/`, `apps/web/src/pages/dashboards/` |
 | Frontend | `apps/web/src/app/router.tsx`, `apps/web/src/pages/**`, `apps/web/src/features/**` (inclui `transformations/`), `apps/web/src/services/api-client.ts` |
 | Infra | `docker-compose.yml`, `docker-compose.prod.yml`, `docker/**`, `.github/workflows/ci.yml` |
 | Dados | `scripts/generate_samples.py`, `samples/` |
@@ -192,6 +242,8 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 - Categorias de exclusão mutuamente exclusivas; deduplicação como última regra e segunda passada (ADR-016).
 - Relatório de qualidade persistido por versão, só com agregados; valores de texto lidos do Parquet sob demanda (ADR-019). Mudar a fórmula exige incrementar `FORMULA_VERSION`.
 - Explorer com os mesmos operadores das regras de filtro, busca literal (`contains`) e tempo-limite de 10 s (ADR-020).
+- Consultas analíticas de vocabulário fechado, recalculadas a cada abertura, sem resultados guardados; "Outros" sobre os registros restantes; séries sem corte (ADR-021).
+- Dashboards guardam definições; versão nula acompanha a atual; tudo é revalidado ao salvar; widgets mantêm o id ao reorganizar (ADR-022). As regras por tipo de gráfico ficam no backend (`check_chart_rules`) e são espelhadas no frontend (`features/dashboards/rules.ts`) só para guiar a edição.
 
 ## Erros conhecidos / limitações
 
@@ -203,7 +255,12 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 - Deduplicação mantém chave e número do registro da versão inteira em memória; não medida acima de 100 mil registros.
 - A prévia de transformações vê só os primeiros 200 registros (a análise de duplicidades da versão inteira é separada).
 - Excluir um dataset ainda não existe na interface; conjuntos de regras e versões seguem o dataset por `ON DELETE CASCADE`.
+- Dashboards: vale a última gravação quando duas pessoas editam ao mesmo tempo; reorganização por setas (sem arrastar e soltar); consultas medidas até 100 mil registros. A exclusão controlada de versões (Fase 5) precisa tratar versões fixadas por dashboards (FK sem `ON DELETE`).
 
 ## Próxima tarefa
 
-1. **Fase 4 — Business Intelligence**, conforme o prompt mestre: dashboard geral com KPIs reais (soma, média, máximo, mínimo, contagem distinta, por categoria, evolução temporal, comparação entre períodos) sem presumir que coluna numérica é receita; gráficos de linha, barras, barras horizontais, área, pizza/rosca, tabelas analíticas e cards KPI; filtros por período, categoria, status, responsável, faixa de valores e colunas personalizadas, respeitando o tipo de cada coluna; Dashboard Builder com `Dashboard` e `DashboardWidget` persistidos (dataset e versão, widgets, tipo de gráfico, dimensão, métrica e agregação, filtros, reorganização e reabertura). Tudo renderizado a partir da API (DuckDB com construtor de consultas por colunas e operações permitidas, reaproveitando `build_where` do explorer).
+1. **Fase 5 — Relatórios, exportações e administração**, conforme o prompt mestre:
+   - tela **Relatórios**: dataset, versão, filtros personalizados, indicadores agregados e comparação entre períodos, reaproveitando `analytics/aggregate.py`;
+   - **exportações CSV e XLSX** dos dados tratados e dos relatórios, em jobs assíncronos, com histórico e aviso quando o arquivo estiver pronto;
+   - segurança das exportações: autorização, limite de volume, auditoria, proteção contra formula injection, nomes seguros, armazenamento temporário com expiração e sem URL pública permanente;
+   - gestão de usuários e permissões, tela de auditoria, configurações do workspace e retenção de arquivos, incluindo a exclusão controlada de versões fixadas por dashboards.

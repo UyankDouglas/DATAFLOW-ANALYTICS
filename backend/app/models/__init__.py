@@ -2,6 +2,7 @@
 
 from app.models.audit import AuditLog
 from app.models.base import Base
+from app.models.dashboard import Dashboard, DashboardWidget
 from app.models.dataset import Dataset, DatasetColumn, DatasetStatus, DatasetVersion
 from app.models.job import (
     RUNNING_STATUSES,
@@ -21,6 +22,8 @@ __all__ = [
     "TERMINAL_STATUSES",
     "AuditLog",
     "Base",
+    "Dashboard",
+    "DashboardWidget",
     "Dataset",
     "DatasetColumn",
     "DatasetStatus",

@@ -8,7 +8,16 @@ from fastapi import APIRouter, FastAPI
 
 from app.api.errors import register_error_handlers
 from app.api.middleware import CSRFMiddleware, RequestContextMiddleware
-from app.api.routes import auth, datasets, health, jobs, quality, transformations, workspaces
+from app.api.routes import (
+    auth,
+    dashboards,
+    datasets,
+    health,
+    jobs,
+    quality,
+    transformations,
+    workspaces,
+)
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.services import storage
@@ -47,7 +56,7 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestContextMiddleware)
 
     api = APIRouter(prefix="/api/v1")
-    for module in (auth, workspaces, datasets, transformations, quality, jobs):
+    for module in (auth, workspaces, datasets, transformations, quality, dashboards, jobs):
         api.include_router(module.router)
     app.include_router(api)
     app.include_router(health.router)

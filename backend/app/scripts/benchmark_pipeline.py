@@ -1,12 +1,15 @@
 """Benchmark reproduzível do pipeline (sem banco nem armazenamento).
 
 Mede as mesmas etapas executadas pelo worker: inspeção do arquivo, leitura/validação,
-conversão de tipos, escrita Parquet e uma consulta paginada com DuckDB.
+conversão de tipos, escrita Parquet e uma consulta paginada com DuckDB. Também mede o relatório
+de qualidade, uma consulta do explorer e as consultas analíticas dos dashboards (KPIs,
+agrupamento por categoria, série mensal e comparação entre períodos).
 
     uv run python -m app.scripts.benchmark_pipeline ../samples/generated/vendas_100000.csv
 """
 
 import argparse
+import datetime as dt
 import json
 import platform
 import sys
@@ -18,6 +21,7 @@ from pathlib import Path
 import duckdb
 import polars as pl
 
+from app.analytics.aggregate import AggregateResult, AggregateSpec, plan_aggregate, run_aggregate
 from app.analytics.quality import compute_quality
 from app.analytics.query import build_where, count_rows, fetch_page
 from app.processing.inference import infer_columns
@@ -34,6 +38,61 @@ def _peak_rss_mb() -> float | None:
         return None
     divisor = 1024 * 1024 if sys.platform == "darwin" else 1024
     return round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / divisor, 1)
+
+
+def _bi_timings(data_path: Path, columns: list[ColumnConfig]) -> dict[str, float]:
+    specs = specs_from_columns(columns)
+    by_type = {
+        t: next((c.name for c in columns if c.data_type.value == t), None)
+        for t in ("integer", "decimal", "text", "date", "datetime")
+    }
+    measure = by_type["decimal"] or by_type["integer"]
+    category = by_type["text"]
+    moment = by_type["date"] or by_type["datetime"]
+    value = {"aggregation": "sum", "column": measure} if measure else {"aggregation": "count"}
+
+    def timed(spec: dict[str, object]) -> tuple[float, AggregateResult]:
+        plan = plan_aggregate(AggregateSpec.model_validate(spec), specs)
+        start = time.perf_counter()
+        outcome = run_aggregate(data_path, plan)
+        return time.perf_counter() - start, outcome
+
+    timings: dict[str, float] = {}
+    kpis = [{"aggregation": "count"}]
+    if measure:
+        kpis += [{"aggregation": a, "column": measure} for a in ("sum", "avg", "min", "max")]
+    if category:
+        kpis.append({"aggregation": "count_distinct", "column": category})
+    timings["bi_kpis_s"], _ = timed({"metrics": kpis})
+    if category:
+        timings["bi_por_categoria_com_outros_s"], _ = timed(
+            {"metrics": [value], "dimension": {"column": category}, "limit": 10}
+        )
+    if moment:
+        timings["bi_serie_mensal_s"], _ = timed(
+            {"metrics": [value], "dimension": {"column": moment, "granularity": "month"}}
+        )
+        _, bounds = timed({"metrics": [{"aggregation": "max", "column": moment}]})
+        last = str(bounds.rows[0].values[0])[:10]
+        end = dt.date.fromisoformat(last)
+        comparison = {
+            "column": moment,
+            "start": (end - dt.timedelta(days=29)).isoformat(),
+            "end": end.isoformat(),
+        }
+        timings["bi_comparacao_periodos_s"], _ = timed(
+            {"metrics": [value], "comparison": comparison}
+        )
+        if category:
+            timings["bi_comparacao_por_categoria_s"], _ = timed(
+                {
+                    "metrics": [value],
+                    "dimension": {"column": category},
+                    "limit": 8,
+                    "comparison": comparison,
+                }
+            )
+    return timings
 
 
 def run(path: Path, batch_rows: int) -> dict[str, object]:
@@ -134,6 +193,10 @@ def run(path: Path, batch_rows: int) -> dict[str, object]:
         )
         filtered = count_rows(result.data_path, where)
         timings["consulta_filtrada_com_contagem_s"] = time.perf_counter() - t5
+
+        # Fase 4: consultas dos dashboards, com as colunas que o usuário escolheria.
+        bi = _bi_timings(result.data_path, columns)
+        timings.update(bi)
         parquet_mb = result.data_path.stat().st_size / 1024 / 1024
 
     return {
