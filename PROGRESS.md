@@ -10,7 +10,7 @@ Documento de retomada. Atualizado em **03/11/2026**.
 | 2 — Motor ETL (XLSX, transformações, deduplicação, reprocessamento) | ✅ Concluída, validada na CI com a infraestrutura real e mesclada na `main` ([PR #1](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/1)) |
 | 3 — Qualidade e Data Explorer completo | ✅ Concluída e validada na CI com a infraestrutura real ([PR #2](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/2)) |
 | 4 — Business Intelligence (dashboards) | ✅ Concluída e validada na CI com a infraestrutura real ([PR #3](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/3)) |
-| 5 — Relatórios, exportações e administração | ✅ Implementada e validada localmente (sem Docker); [PR #4](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/4) aberto, aguardando a CI |
+| 5 — Relatórios, exportações e administração | ✅ Concluída e validada na CI com a infraestrutura real ([PR #4](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/4)) |
 | 6 — Qualidade e produção | Pendente |
 
 ## Fase 1 — concluído
@@ -106,6 +106,18 @@ Documento de retomada. Atualizado em **03/11/2026**.
 - [x] **Benchmark**: `benchmark_pipeline` mede a exportação da versão inteira em CSV e XLSX.
 - [x] **Documentação**: `docs/administration.md` (novo), ADR-023 a ADR-025, `security.md`, `architecture.md`, `deploy.md`, `benchmark.md`, README; capturas 16, 17 e 18, e as demais regeneradas.
 
+## Testes executados na CI — Fase 5 (03/11/2026, commit `c766deb`, [execução 41711947219](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41711947219), PR #4)
+
+| Verificação | Resultado |
+| --- | --- |
+| Backend contra **PostgreSQL 17 real** | **205 passed**, cobertura de 89% |
+| Alembic `upgrade` (inclui `0004 -> 0005`) → `check` → `downgrade base` (inclui `0005 -> 0004`) → `upgrade` no PostgreSQL | OK; `check`: "No new upgrade operations detected" |
+| Ruff e mypy estrito | sem problemas (99 arquivos) |
+| Frontend: formatação, lint, tipos, Vitest, build | OK, **99 passed** |
+| E2E em desenvolvimento, com Celery, MinIO, Redis e Mailpit reais | **17 passed**, 1 ignorado (capturas de tela), sem retentativas — inclui o convite com o e-mail entregue ao Mailpit (cadastro pelo link, perfil do convite e auditoria), as exportações CSV e XLSX geradas pelo worker e baixadas pela API, e configurações, auditoria e exclusão controlada |
+| E2E em produção, em HTTPS | **15 passed**, 3 ignorados (convite e recuperação de senha, que dependem do e-mail, e capturas de tela), sem retentativas — inclui as exportações |
+| CSV de 100 mil linhas pela interface | job de 774 ms em desenvolvimento e 539 ms em produção (129.199 e 185.529 registros/s); pico de RSS do worker 387 e 386 MB |
+
 ## Testes executados na CI — Fase 4 (03/11/2026, commit `f403a9e`, [execução 41699024371](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41699024371), PR #3)
 
 | Verificação | Resultado |
@@ -172,11 +184,7 @@ A primeira execução ([41682378950](https://github.com/UyankDouglas/DATAFLOW-AN
 | Verificação manual no navegador | relatório agrupado, exportação XLSX pronta e baixada (assinatura `PK`, `no-store`, contagem de downloads), convite enviado → link → "Criar conta" → volta ao convite → aceito como Analista, auditoria do fluxo inteiro, configurações, diálogo de exclusão com o impacto |
 | `uv run python -m app.scripts.benchmark_pipeline …100000.csv` | exportação de 100 mil registros: CSV 1,6–2,0 s; XLSX 23,5–28,6 s |
 
-**Ainda não validado (depende da CI):**
-- suíte contra PostgreSQL com a migration 0005 e `alembic check` no PostgreSQL;
-- exportações com MinIO e Celery reais;
-- o E2E do convite com o e-mail real no Mailpit, em desenvolvimento;
-- os E2E da Fase 5 em produção.
+Validação na CI: ver "Testes executados na CI — Fase 5" ([execução 41711947219](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41711947219)).
 
 **Corrigido durante a verificação:**
 - o aviso da tela Exportações quebrava em pedaços;
@@ -305,7 +313,7 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 ## Erros conhecidos / limitações
 
 - Gráfico da visão geral agrupa por dia em UTC.
-- Objetos órfãos no S3 se o commit do upload falhar após o envio (limpeza prevista na Fase 5).
+- Objetos órfãos no S3 se o commit do upload falhar após o envio (limpeza prevista na Fase 6).
 - `peak_memory_mb` só é medido em Linux.
 - Worker Celery em Windows exige `--pool solo` (o Compose usa Linux).
 - XLSX ~40× mais lento que CSV (duas passadas do openpyxl em Python; ≈ 2.470 registros/s); tabela de textos compartilhados inteira em memória; não medido perto de 25 MB.
@@ -319,12 +327,7 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 
 ## Próxima tarefa
 
-1. **Validar a Fase 5 na CI** ([PR #4](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/4)) e registrar a execução:
-   - PostgreSQL com a migration 0005 e `alembic check`;
-   - exportações com MinIO e Celery reais;
-   - convite com o Mailpit;
-   - E2E em produção.
-2. **Fase 6 — Qualidade e produção**, conforme o prompt mestre:
+1. **Fase 6 — Qualidade e produção**, conforme o prompt mestre:
    - testes ampliados (unidade, integração e E2E de ponta a ponta: login → upload → preview → configuração → processamento → qualidade → dashboard → exportação);
    - benchmarks com a infraestrutura real (1 milhão de linhas, XLSX perto de 25 MB, exportações nos limites);
    - revisão de segurança e de performance;
