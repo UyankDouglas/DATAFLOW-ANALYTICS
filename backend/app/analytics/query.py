@@ -5,7 +5,8 @@ versão e citados com escaping; valores são sempre parâmetros.
 """
 
 import datetime as dt
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Literal
@@ -13,15 +14,27 @@ from typing import Any, Literal
 import duckdb
 
 from app.core.errors import ValidationFailed
+from app.processing.transforms import (
+    LIST_OPERATORS,
+    NO_VALUE_OPERATORS,
+    OPERATOR_LABELS,
+    OPERATORS_BY_TYPE,
+    Condition,
+    literal_for,
+)
+from app.processing.types import ColumnSpec, DataType
 
 JS_SAFE_INT = 2**53 - 1
+MAX_FILTERS = 20
+MAX_SEARCH_LENGTH = 100
+QUERY_TIMEOUT_SECONDS = 10.0
 
 
 def quote_identifier(name: str) -> str:
     return '"' + name.replace('"', '""') + '"'
 
 
-def _connect(allowed_dir: Path) -> duckdb.DuckDBPyConnection:
+def sandboxed_connection(allowed_dir: Path) -> duckdb.DuckDBPyConnection:
     con = duckdb.connect(database=":memory:")
     # Limites de recursos e sandbox: só o diretório de cache pode ser lido, sem rede,
     # e a configuração fica travada para a sessão.
@@ -53,6 +66,151 @@ class Page:
     rows: list[list[Any]]
 
 
+@dataclass
+class WhereClause:
+    """Condição SQL montada pelo backend: identificadores validados, valores em `params`."""
+
+    sql: str = ""
+    params: dict[str, Any] = field(default_factory=dict)
+
+    def apply(self) -> str:
+        return f" WHERE {self.sql}" if self.sql else ""
+
+
+_COMPARISON = {"eq": "=", "ne": "<>", "gt": ">", "gte": ">=", "lt": "<", "lte": "<="}
+
+
+def _condition_sql(
+    condition: Condition, spec: ColumnSpec, param: str
+) -> tuple[str, dict[str, Any]]:
+    column = quote_identifier(spec.name)
+    operator = condition.operator
+    if operator in NO_VALUE_OPERATORS:
+        return {
+            "is_null": f"{column} IS NULL",
+            "not_null": f"{column} IS NOT NULL",
+            "is_true": f"{column} IS TRUE",
+            "is_false": f"{column} IS FALSE",
+        }[operator], {}
+    fold = spec.data_type == DataType.TEXT and condition.case_insensitive
+    target = f"lower({column})" if fold else column
+
+    def literal(text: str | None) -> Any:
+        value = literal_for(spec, text)
+        return value.lower() if fold and isinstance(value, str) else value
+
+    if operator in LIST_OPERATORS:
+        values = [literal(v) for v in condition.values or []]
+        if not values:
+            raise ValueError("informe ao menos um valor para a lista")
+        negate = "NOT " if operator == "not_in" else ""
+        return f"{negate}list_contains(${param}, {target})", {param: values}
+    if operator == "between":
+        low, high = f"{param}a", f"{param}b"
+        return (
+            f"{target} BETWEEN ${low} AND ${high}",
+            {low: literal(condition.value), high: literal(condition.value_to)},
+        )
+    value = literal(condition.value)
+    if operator in _COMPARISON:
+        return f"{target} {_COMPARISON[operator]} ${param}", {param: value}
+    function = {"contains": "contains", "not_contains": "contains"}.get(operator, operator)
+    negate = "NOT " if operator == "not_contains" else ""
+    return f"{negate}{function}({target}, ${param})", {param: value}
+
+
+def build_where(
+    conditions: list[Condition],
+    match: Literal["all", "any"],
+    search: str | None,
+    schema: list[ColumnSpec],
+) -> WhereClause:
+    """Filtros tipados e busca textual. Erros citam a posição do filtro (1-based)."""
+    if len(conditions) > MAX_FILTERS:
+        raise ValidationFailed(f"Use no máximo {MAX_FILTERS} filtros por consulta.")
+    by_name = {c.name: c for c in schema}
+    parts: list[str] = []
+    params: dict[str, Any] = {}
+    for index, condition in enumerate(conditions):
+        spec = by_name.get(condition.column)
+        position = index + 1
+        if spec is None:
+            raise ValidationFailed(
+                f"Filtro {position}: coluna desconhecida.",
+                code="invalid_filter",
+                details={"filter_index": index},
+            )
+        if condition.operator not in OPERATORS_BY_TYPE[spec.data_type]:
+            raise ValidationFailed(
+                f"Filtro {position}: o operador '{OPERATOR_LABELS[condition.operator]}' "
+                f"não se aplica à coluna '{spec.name}'.",
+                code="invalid_filter",
+                details={"filter_index": index},
+            )
+        try:
+            sql, values = _condition_sql(condition, spec, f"f{index}")
+        except ValueError as exc:
+            raise ValidationFailed(
+                f"Filtro {position}: {exc}", code="invalid_filter", details={"filter_index": index}
+            ) from exc
+        parts.append(f"({sql})")
+        params.update(values)
+
+    clauses = []
+    if parts:
+        clauses.append("(" + (" AND " if match == "all" else " OR ").join(parts) + ")")
+    term = (search or "").strip()
+    if term:
+        if len(term) > MAX_SEARCH_LENGTH:
+            raise ValidationFailed(f"A busca aceita até {MAX_SEARCH_LENGTH} caracteres.")
+        text_columns = [c for c in schema if c.data_type == DataType.TEXT]
+        if not text_columns:
+            raise ValidationFailed(
+                "Esta versão não tem colunas de texto para buscar.", code="search_unavailable"
+            )
+        # contains() compara o texto literal: % e _ não são curingas.
+        clauses.append(
+            "("
+            + " OR ".join(
+                f"contains(lower({quote_identifier(c.name)}), $search)" for c in text_columns
+            )
+            + ")"
+        )
+        params["search"] = term.lower()
+    return WhereClause(sql=" AND ".join(clauses), params=params)
+
+
+def run_limited(
+    con: duckdb.DuckDBPyConnection, sql: str, params: dict[str, Any]
+) -> list[tuple[Any, ...]]:
+    """Executa com tempo-limite: consultas que passarem dele são interrompidas."""
+    timer = threading.Timer(QUERY_TIMEOUT_SECONDS, con.interrupt)
+    timer.start()
+    try:
+        return con.execute(sql, params).fetchall()
+    except duckdb.InterruptException as exc:
+        raise ValidationFailed(
+            f"A consulta excedeu o tempo limite de {QUERY_TIMEOUT_SECONDS:.0f} s. "
+            "Use filtros mais específicos ou menos colunas.",
+            code="query_timeout",
+        ) from exc
+    finally:
+        timer.cancel()
+
+
+def count_rows(path: Path, where: WhereClause) -> int:
+    con = sandboxed_connection(path.parent)
+    try:
+        rows = run_limited(
+            con,
+            f"SELECT count(*) FROM read_parquet($path){where.apply()}",  # noqa: S608 - montado pelo backend
+            {"path": str(path), **where.params},
+        )
+    finally:
+        con.close()
+    return int(rows[0][0])
+
+
 def fetch_page(
     path: Path,
     allowed_columns: list[str],
@@ -63,6 +221,7 @@ def fetch_page(
     limit: int,
     offset: int,
     tiebreak: str = "__df_row",
+    where: WhereClause | None = None,
 ) -> Page:
     selected = columns or allowed_columns
     unknown = [c for c in selected if c not in allowed_columns]
@@ -78,14 +237,17 @@ def fetch_page(
             f"{quote_identifier(sort)} {'DESC' if direction == 'desc' else 'ASC'} NULLS LAST"
         )
     order.append(quote_identifier(tiebreak))
+    where = where or WhereClause()
     sql = (
-        f"SELECT {select_sql} FROM read_parquet($path) "  # noqa: S608 - identificadores validados
+        f"SELECT {select_sql} FROM read_parquet($path){where.apply()} "  # noqa: S608 - identificadores validados
         f"ORDER BY {', '.join(order)} LIMIT $limit OFFSET $offset"
     )
-    con = _connect(path.parent)
+    con = sandboxed_connection(path.parent)
     try:
-        result = con.execute(sql, {"path": str(path), "limit": limit, "offset": offset})
-        rows = [[to_json_value(v) for v in row] for row in result.fetchall()]
+        found = run_limited(
+            con, sql, {"path": str(path), "limit": limit, "offset": offset, **where.params}
+        )
+        rows = [[to_json_value(v) for v in row] for row in found]
     finally:
         con.close()
     return Page(columns=selected, rows=rows)
@@ -108,7 +270,7 @@ def duplicate_summary(path: Path, keys: list[str], *, top: int = 20) -> Duplicat
         f"list(__df_row ORDER BY __df_row)[1:10] AS sample_rows "
         f"FROM read_parquet($path) GROUP BY {columns}"
     )
-    con = _connect(path.parent)
+    con = sandboxed_connection(path.parent)
     try:
         totals = con.execute(
             f"WITH g AS ({grouped}) SELECT COALESCE(SUM(n), 0), COUNT(*), "  # noqa: S608

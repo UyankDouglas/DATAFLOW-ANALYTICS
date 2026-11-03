@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import {
+  ClipboardCheck,
   FileText,
   GitBranch,
   Play,
@@ -31,6 +32,7 @@ import { DATA_TYPE_LABEL, DATE_FORMATS, DATETIME_FORMATS } from '@/features/data
 import { jobsApi } from '@/features/jobs/api'
 import { JobStatusBadge } from '@/features/jobs/job-components'
 import { DATASET_STATUS_LABEL, DATASET_STATUS_TONE, isActive } from '@/features/jobs/status'
+import { formatScore } from '@/features/quality/score'
 import { formatBytes, formatInteger, formatTimestamp } from '@/lib/format'
 
 export function DatasetDetailPage() {
@@ -89,6 +91,13 @@ export function DatasetDetailPage() {
               <Button asChild>
                 <Link to={`/datasets/${data.id}/explorar`}>
                   <Table2 /> Explorar registros
+                </Link>
+              </Button>
+            )}
+            {current && (
+              <Button asChild variant="outline">
+                <Link to={`/qualidade?dataset=${data.id}`}>
+                  <ClipboardCheck /> Qualidade
                 </Link>
               </Button>
             )}
@@ -164,6 +173,7 @@ export function DatasetDetailPage() {
                       <TableHead>Origem</TableHead>
                       <TableHead>Válidos</TableHead>
                       <TableHead>Excluídos</TableHead>
+                      <TableHead>Qualidade</TableHead>
                       <TableHead>Responsável</TableHead>
                       <TableHead>Publicada em</TableHead>
                     </TableRow>
@@ -207,6 +217,16 @@ export function DatasetDetailPage() {
                               version.filtered_count +
                               (version.duplicate_count ?? 0),
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <Link
+                            to={`/qualidade?dataset=${data.id}&versao=${version.id}`}
+                            className="tabular hover:text-primary"
+                          >
+                            {version.quality_score === null
+                              ? 'calcular'
+                              : formatScore(version.quality_score)}
+                          </Link>
                         </TableCell>
                         <TableCell>{version.created_by_name ?? '—'}</TableCell>
                         <TableCell className="tabular whitespace-nowrap">

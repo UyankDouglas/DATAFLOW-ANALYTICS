@@ -18,10 +18,12 @@ from pathlib import Path
 import duckdb
 import polars as pl
 
-from app.analytics.query import fetch_page
+from app.analytics.quality import compute_quality
+from app.analytics.query import build_where, count_rows, fetch_page
 from app.processing.inference import infer_columns
 from app.processing.inspection import StreamInspector, parse_sample
-from app.processing.pipeline import PipelineResult, run_csv_pipeline
+from app.processing.pipeline import PipelineResult, run_csv_pipeline, specs_from_columns
+from app.processing.transforms import Condition
 from app.processing.types import ColumnConfig, ParseOptions
 
 
@@ -107,6 +109,31 @@ def run(path: Path, batch_rows: int) -> dict[str, object]:
             offset=5000,
         )
         timings["consulta_pagina_ordenada_s"] = time.perf_counter() - t3
+
+        # Fase 3: relatório de qualidade e consulta do explorer com filtro + busca + contagem.
+        t4 = time.perf_counter()
+        schema = [{"name": c.name, "data_type": c.data_type.value} for c in columns]
+        quality = compute_quality(
+            result.data_path, result.rejected_path, schema, result.reconciliation
+        )
+        timings["relatorio_qualidade_s"] = time.perf_counter() - t4
+        specs = specs_from_columns(columns)
+        text = next((c.name for c in columns if c.data_type.value == "text"), None)
+        conditions = [Condition(column=names[0], operator="not_null")]
+        where = build_where(conditions, "all", "a" if text else None, specs)
+        t5 = time.perf_counter()
+        fetch_page(
+            result.data_path,
+            names,
+            columns=None,
+            sort=names[-1],
+            direction="desc",
+            limit=50,
+            offset=0,
+            where=where,
+        )
+        filtered = count_rows(result.data_path, where)
+        timings["consulta_filtrada_com_contagem_s"] = time.perf_counter() - t5
         parquet_mb = result.data_path.stat().st_size / 1024 / 1024
 
     return {
@@ -117,6 +144,8 @@ def run(path: Path, batch_rows: int) -> dict[str, object]:
         "rejeitados": result.rows_rejected,
         "motivos": dict(result.reasons),
         "parquet_mb": round(parquet_mb, 2),
+        "nota_qualidade": quality.score,
+        "registros_filtrados": filtered,
         "tempos_s": {k: round(v, 3) for k, v in timings.items()},
         "registros_por_segundo": round(result.rows_total / timings["pipeline_total_s"]),
         "memoria_pico_python_mb": round(python_peak / 1024 / 1024, 1),

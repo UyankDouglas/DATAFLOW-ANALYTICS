@@ -104,7 +104,8 @@ def analyze_duplicates(
     dataset_id: uuid.UUID,
     version_id: uuid.UUID,
     data: DuplicateAnalysisRequest,
-    ctx: RequestContext = Depends(require(Permission.TRANSFORMATIONS_MANAGE)),
+    # Só leitura: também alimenta a tela Qualidade, aberta a quem pode ver o dataset.
+    ctx: RequestContext = Depends(require(Permission.DATASETS_VIEW)),
     db: Session = Depends(get_db),
 ) -> DuplicateAnalysisResponse:
     return transformation_service.analyze_duplicates(

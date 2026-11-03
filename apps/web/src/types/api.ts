@@ -178,6 +178,8 @@ export interface DatasetVersion {
   reconciliation: Reconciliation
   rules_version: string
   created_at: string
+  /** Nota de qualidade (0–100); nula quando o relatório ainda não foi calculado. */
+  quality_score: number | null
 }
 
 export interface DatasetDetail extends Dataset {
@@ -340,9 +342,23 @@ export interface RowsResponse {
   version_number: number
   columns: { name: string; data_type: DataType; format: string | null; scale: number | null }[]
   rows: unknown[][]
+  /** Registros que atendem aos filtros; sem filtros, todos os da versão. */
   total: number
+  total_unfiltered: number | null
   page: number
   page_size: number
+}
+
+export interface RowsQuery {
+  version_id?: Uuid
+  page: number
+  page_size: number
+  sort?: string
+  direction?: 'asc' | 'desc'
+  columns?: string[]
+  filters: Condition[]
+  match: 'all' | 'any'
+  search?: string
 }
 
 export interface RejectedRowsResponse {
@@ -543,4 +559,115 @@ export interface DuplicateAnalysis {
   rows_after: number
   groups_with_duplicates: number
   top_groups: { key: unknown[]; count: number; kept_row: number; sample_rows: number[] }[]
+}
+
+// ---------------------------------------------------------------- qualidade
+
+export interface QualityComponents {
+  validity: number | null
+  completeness: number | null
+  uniqueness: number | null
+}
+
+export interface QualityIndicators {
+  received: number
+  valid: number
+  rejected: number
+  filtered: number
+  duplicates_removed: number | null
+  duplicates_remaining: number
+  null_cells: number
+  total_cells: number
+  completeness: number | null
+  columns_with_issues: number
+  rules_violated: number
+  violations: number
+}
+
+export interface QualityColumnProfile {
+  name: string
+  data_type: DataType
+  non_null: number
+  nulls: number
+  completeness: number | null
+  distinct: number
+  min: unknown
+  max: unknown
+  issues: number
+}
+
+export interface QualityIssue {
+  category: ExclusionCategory
+  reason: string
+  column: string | null
+  rule: number | null
+  rule_label: string
+  count: number
+  example_row: number | null
+}
+
+export interface QualityReport {
+  id: Uuid
+  dataset_id: Uuid
+  version_id: Uuid
+  version_number: number
+  formula_version: string
+  score: number | null
+  metrics: {
+    formula: { version: string; weights: Record<keyof QualityComponents, number> }
+    components: QualityComponents
+    indicators: QualityIndicators
+    columns: QualityColumnProfile[]
+    null_distribution: { nulls: number; rows: number }[]
+    issue_groups_total: number
+  }
+  issues: QualityIssue[]
+  computed_by_name: string | null
+  computed_at: string
+  duration_ms: number
+}
+
+export interface QualityVersionSummary {
+  version_id: Uuid
+  version_number: number
+  parent_version_number: number | null
+  kind: string
+  created_at: string
+  computed: boolean
+  score: number | null
+  indicators: Partial<QualityIndicators>
+  components: Partial<QualityComponents>
+}
+
+export interface InconsistencyRow {
+  row: number
+  line: number | null
+  category: ExclusionCategory
+  reason: string
+  column: string | null
+  original_value: string | null
+  rule: number | null
+  rule_label: string
+  treatment: string
+  detail: string | null
+  duplicate_of: number | null
+  record: Record<string, string | null>
+}
+
+export interface InconsistencyPage {
+  version_id: Uuid
+  items: InconsistencyRow[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface ValueFrequency {
+  column: string
+  data_type: DataType
+  total: number
+  nulls: number
+  distinct: number
+  values: { value: unknown; count: number }[]
+  others: number
 }

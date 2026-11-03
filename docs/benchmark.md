@@ -90,6 +90,17 @@ Observações:
 - A transformação lê Parquet tipado e roda em Polars, então custa o mesmo que a importação de CSV; a deduplicação domina o tempo porque precisa do resultado inteiro.
 - Os números de duplicados são altos porque a chave vendedor + produto tem só ~480 combinações nos dados sintéticos; servem para medir custo e conferir contagens, não como cenário realista.
 
+## Resultados — Fase 3: qualidade e Data Explorer (03/11/2026)
+
+Medido pelo mesmo `benchmark_pipeline` (que passou a calcular o relatório de qualidade e uma consulta do explorer depois do pipeline), no mesmo ambiente, em duas execuções.
+
+| Arquivo | Relatório de qualidade | Nota | Consulta filtrada (página + contagem) |
+| --- | --- | --- | --- |
+| vendas_100000.csv | 0,19–0,20 s | 100,0 | 0,11–0,12 s |
+| qualidade_100000.csv | 0,25–0,28 s | 98,2 | 0,11–0,12 s |
+
+A consulta usa um filtro "não é nulo" e uma busca por `a` nas colunas de texto, ordenada pela última coluna, e devolve a primeira página de 50 mais o `count(*)` filtrado. Como a busca casa com praticamente todos os registros, a medida é de varredura completa, o pior caso para a contagem. O relatório inclui o perfil de todas as colunas, a distribuição de nulos, os duplicados restantes em todas as colunas e o agrupamento das exclusões.
+
 ## Pendente
 
 - Medições com 1 milhão de linhas e com arquivos próximos do limite de 100 MB. Até lá, não há evidência de como a memória e o tempo escalam acima de 100 mil linhas.

@@ -20,6 +20,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
+import duckdb
 from pydantic import ValidationError
 from sqlalchemy import or_, select, update
 from sqlalchemy.exc import OperationalError
@@ -51,7 +52,7 @@ from app.processing.reader import EncodingMismatch, HeaderMismatch
 from app.processing.transforms import RuleError, plan_rules, resolve_rules
 from app.processing.types import ColumnConfig, ColumnSpec, ParseOptions
 from app.processing.xlsx import check_container
-from app.services import audit, storage
+from app.services import audit, quality_service, storage
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,9 @@ TRANSIENT_ERRORS: tuple[type[BaseException], ...] = (
     ConnectionError,
     TimeoutError,
 )
+
+# Falhas que impedem o relatório de qualidade sem invalidar a versão já publicada.
+QUALITY_ERRORS: tuple[type[BaseException], ...] = (duckdb.Error, OSError, *TRANSIENT_ERRORS)
 
 
 @dataclass
@@ -307,7 +311,7 @@ def _lineage(snapshot: JobSnapshot) -> dict[str, Any]:
     }
 
 
-def _publish(snapshot: JobSnapshot, result: PipelineResult, timings: dict[str, int]) -> None:
+def _publish(snapshot: JobSnapshot, result: PipelineResult, timings: dict[str, int]) -> uuid.UUID:
     assert result.data_path is not None
     prefix = storage.version_prefix(snapshot.workspace_id, snapshot.dataset_id, snapshot.id)
     data_key = prefix + "data.parquet"
@@ -411,6 +415,34 @@ def _publish(snapshot: JobSnapshot, result: PipelineResult, timings: dict[str, i
                 else None,
             },
         )
+        version_id = version.id
+    return version_id
+
+
+def _record_quality(snapshot: JobSnapshot, version_id: uuid.UUID, result: PipelineResult) -> None:
+    """Relatório de qualidade da versão recém-publicada, a partir dos arquivos locais.
+
+    Roda depois da publicação: uma falha aqui não desfaz a versão. O job registra um aviso e o
+    relatório pode ser calculado depois, sob demanda.
+    """
+    assert result.data_path is not None
+    try:
+        with session_scope() as db:
+            version = db.get(DatasetVersion, version_id)
+            assert version is not None
+            quality_service.build_report(
+                db, version, result.data_path, result.rejected_path, actor_id=None
+            )
+    except QUALITY_ERRORS as exc:
+        logger.warning(
+            "quality_report_failed",
+            extra={"job_id": str(snapshot.id), "error_type": type(exc).__name__},
+        )
+        with session_scope() as db:
+            job = db.get(ProcessingJob, snapshot.id)
+            if job is not None:
+                message = "Relatório de qualidade não calculado; calcule-o na tela Qualidade."
+                job.warnings = [*job.warnings, {"at": utcnow().isoformat(), "message": message}]
 
 
 def _discard_outputs(snapshot: JobSnapshot) -> None:
@@ -573,7 +605,8 @@ def run_job(job_id: uuid.UUID) -> str:
 
         # Etapa: salvamento e publicação
         _set_status(job_id, JobStatus.SAVING)
-        _publish(snapshot, result, timings)
+        version_id = _publish(snapshot, result, timings)
+        _record_quality(snapshot, version_id, result)
         logger.info("job_succeeded", extra={**log_extra, "rows": result.rows_total})
         return "succeeded"
     except JobCancelled:

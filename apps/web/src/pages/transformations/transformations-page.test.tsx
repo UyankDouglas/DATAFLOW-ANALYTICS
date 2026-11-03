@@ -56,6 +56,7 @@ const version: DatasetVersion = {
   },
   rules_version: '2.0.0',
   created_at: '2026-11-03T10:00:00Z',
+  quality_score: null,
 }
 
 const savedSet: TransformationSet = {

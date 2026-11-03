@@ -37,7 +37,7 @@ flowchart TD
 apps/web/            SPA (React, Vite, Tailwind, shadcn/ui)
   src/app            providers, router (code splitting por rota), QueryClient
   src/components     componentes compartilhados + ui/ (shadcn)
-  src/features       auth, datasets, jobs, transformations: API, hooks, componentes de domínio
+  src/features       auth, datasets, jobs, transformations, quality: API, hooks, componentes de domínio
   src/layouts        layout autenticado (sidebar/topbar) e de autenticação
   src/pages          telas
   src/services       cliente HTTP (CSRF, erros padronizados) e upload com progresso
@@ -47,9 +47,9 @@ backend/
   app/models         ORM SQLAlchemy 2
   app/schemas        contratos Pydantic da API
   app/repositories   consultas sempre filtradas por workspace
-  app/services       casos de uso (auth, upload, preview, importação, transformações, jobs, armazenamento)
+  app/services       casos de uso (auth, upload, preview, importação, transformações, qualidade, jobs, armazenamento)
   app/processing     pipeline puro (sem banco): inspeção, inferência, leitura CSV/XLSX, conversão, regras
-  app/analytics      DuckDB e cache de Parquet
+  app/analytics      DuckDB: consultas filtradas, relatório de qualidade e cache de Parquet
   app/tasks          Celery (app, tarefas, publicação)
   migrations/        Alembic
   tests/             Pytest

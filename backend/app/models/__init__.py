@@ -10,6 +10,7 @@ from app.models.job import (
     JobStatus,
     ProcessingJob,
 )
+from app.models.quality import QualityIssue, QualityReport
 from app.models.transformation import TransformationRule, TransformationSet
 from app.models.upload import Upload
 from app.models.user import PasswordResetToken, User, UserSession
@@ -28,6 +29,8 @@ __all__ = [
     "JobStatus",
     "PasswordResetToken",
     "ProcessingJob",
+    "QualityIssue",
+    "QualityReport",
     "Role",
     "TransformationRule",
     "TransformationSet",

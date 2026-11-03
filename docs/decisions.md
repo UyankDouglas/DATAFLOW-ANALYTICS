@@ -106,3 +106,14 @@ Versões estáveis verificadas em 29/10/2026. Escolhas conscientes de não usar 
 
 **Decisão.** Colunas derivadas aritméticas operam em `Decimal(38, escala)` com escala de trabalho maior que a de saída; o ajuste para a escala pedida segue o cast do Polars, que arredonda meio-para-par (1,005 → 1,00; 1,015 → 1,02). Conversões de tipo e de escala configuradas pelo usuário continuam sem arredondar: se perder casas, o registro é rejeitado (ADR-005). Divisão por zero rejeita o registro com `divisao_por_zero`.
 **Consequências.** Resultado determinístico e sem viés estatístico de arredondamento; difere do arredondamento "meio para cima" de planilhas, o que está documentado em `docs/data-pipeline.md`.
+
+## ADR-019 — Relatório de qualidade persistido por versão, só com agregados
+
+**Contexto.** O prompt mestre pede `QualityReport` e `QualityIssue`, uma nota de 0 a 100 com fórmula reproduzível e uma tabela de inconsistências consultável.
+**Decisão.** Um relatório por versão (`UNIQUE(version_id)`), calculado com DuckDB sobre os Parquet da versão. O worker calcula logo depois de publicar; versões antigas são calculadas sob demanda. O relatório guarda contagens, componentes, perfil das colunas e grupos de exclusão (categoria, motivo, coluna, regra, contagem e um registro de exemplo). Valores de texto dos dados ficam fora do PostgreSQL: frequência de valores e valor original de cada inconsistência são lidos do Parquet na hora, com a checagem de workspace. A fórmula tem versão (`FORMULA_VERSION`) e está em `docs/quality.md`.
+**Consequências.** A tabela de inconsistências não duplica o `rejected.parquet` no banco e serve qualquer volume com paginação no servidor. Uma falha no cálculo vira aviso no job, sem invalidar a versão. Mudar a fórmula exige recalcular os relatórios para que fiquem comparáveis.
+
+## ADR-020 — Data Explorer com filtros tipados, busca literal e tempo-limite
+
+**Decisão.** `POST /datasets/{id}/rows/query` recebe filtros com os mesmos operadores e a mesma validação por tipo das regras de filtro das transformações (ADR-015), combinados por E ou OU, mais uma busca textual. Colunas e ordenação são validadas contra o esquema da versão; valores sempre vão como parâmetros do DuckDB (`list_contains` para listas). A busca usa `contains(lower(coluna), $termo)`, então `%` e `_` são texto literal, e percorre só as colunas de texto. Limites: 20 filtros, 50 valores por lista, busca de 100 caracteres, página de no máximo 200 registros e 10 s por consulta, com `interrupt()` do DuckDB acionado por um timer.
+**Consequências.** O filtro do explorer e o da transformação têm a mesma semântica. A contagem filtrada custa uma segunda consulta (`count(*)`); sem filtros, usa a contagem da versão. O download do resultado filtrado fica para as exportações da Fase 5, que precisam de job assíncrono, expiração e proteção contra formula injection.

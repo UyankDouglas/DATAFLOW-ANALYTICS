@@ -2,7 +2,7 @@
 
 Plataforma de engenharia de dados e Business Intelligence: transforma planilhas CSV e XLSX brutas em datasets tratados, versionados e consultáveis — com rastreabilidade de cada registro recebido.
 
-> **Status:** Fases 1 e 2 de 6 implementadas. A Fase 1 (fundação e primeiro dataset) foi validada na CI com a infraestrutura real; a Fase 2 (motor ETL) foi validada localmente, sem Docker, e ainda não passou pela CI. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
+> **Status:** Fases 1 a 3 de 6 implementadas. As Fases 1 (fundação) e 2 (motor ETL) foram validadas na CI com a infraestrutura real; a Fase 3 (qualidade e Data Explorer) foi validada localmente, sem Docker, e ainda não passou pela CI. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
 
 ![Visão geral](docs/screenshots/02-visao-geral.png)
 
@@ -11,6 +11,13 @@ Plataforma de engenharia de dados e Business Intelligence: transforma planilhas 
 Equipes de vendas, atendimento e operações vivem de planilhas exportadas de sistemas diferentes: delimitadores diferentes, `1.234,56` misturado com `1234.56`, datas em `dd/mm` e `mm/dd`, linhas incompletas. Ferramentas de BI costumam descartar ou converter esses dados em silêncio. O DataFlow trata a importação e o tratamento como um **pipeline auditável**: cada registro é contabilizado como válido, rejeitado, filtrado ou duplicado, com motivo, regra, coluna e valor original — e cada processamento gera uma **versão imutável** do dataset, com a origem e as regras que a produziram.
 
 ## Funcionalidades
+
+### Fase 3 — qualidade e Data Explorer
+
+- **Qualidade dos Dados**: relatório por versão, calculado pelo worker ao publicar (ou sob demanda), com **nota de 0 a 100** de fórmula documentada — `100 × (0,4 validade + 0,4 completude + 0,2 unicidade)`, ver [docs/quality.md](docs/quality.md). Mostra total, válidos, rejeitados, duplicados, nulos, completude, colunas com inconsistências e regras violadas.
+- **Visualizações**: completude por coluna, distribuição de nulos, erros por categoria, frequência de valores, duplicidades por chave e comparação entre versões.
+- **Tabela de inconsistências**: registro, linha, coluna, valor original, tipo do problema, regra violada e tratamento aplicado, filtrável e paginada no servidor.
+- **Data Explorer completo**: filtros tipados (os mesmos operadores das regras de filtro, combinados por E ou OU), busca nas colunas de texto, seleção e ordem de colunas, contagem filtrada, ordenação e paginação no servidor, com limites de complexidade e tempo-limite de 10 s por consulta.
 
 ### Fase 2 — motor ETL
 
@@ -39,6 +46,7 @@ Geradas por `e2e/tests/screenshots.spec.ts` a partir de um fluxo real com os dad
 
 | | |
 | --- | --- |
+| ![Qualidade dos Dados](docs/screenshots/11-qualidade.png) | ![Data Explorer com filtros](docs/screenshots/12-explorer-filtros.png) |
 | ![Transformações](docs/screenshots/09-transformacoes.png) | ![Pré-visualização de XLSX](docs/screenshots/10-preview-xlsx.png) |
 | ![Login](docs/screenshots/01-login.png) | ![Importar](docs/screenshots/03-importar.png) |
 | ![Pré-visualização](docs/screenshots/04-preview.png) | ![Processamento concluído](docs/screenshots/05-job-concluido.png) |
@@ -135,7 +143,7 @@ Para ver rejeições rastreáveis, importe `samples/qualidade_1000.csv` e defina
 ## Testes
 
 ```bash
-cd backend && uv run pytest                   # 120 testes (SQLite + S3/Redis simulados)
+cd backend && uv run pytest                   # 139 testes (SQLite + S3/Redis simulados)
 TEST_DATABASE_URL=postgresql+psycopg://dataflow:dataflow@localhost:5432/dataflow_test uv run pytest
 cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app
 
@@ -184,6 +192,11 @@ Base `/api/v1`, documentação interativa em `/api/docs`. Erros sempre no format
 | POST | `/datasets/{id}/transformations/preview` | Aplica regras a uma amostra, sem gravar |
 | POST | `/datasets/{id}/versions/{vid}/duplicates` | Análise de duplicidades na versão inteira |
 | POST | `/datasets/{id}/transform-jobs` | Aplica um conjunto a uma versão (`Idempotency-Key` opcional) |
+| POST | `/datasets/{id}/rows/query` | Data Explorer: filtros tipados, busca, colunas, ordenação e contagem filtrada |
+| GET | `/datasets/{id}/quality` | Nota e componentes de cada versão (comparação) |
+| GET / POST | `/datasets/{id}/versions/{vid}/quality` | Relatório de qualidade da versão / cálculo sob demanda |
+| GET | `/datasets/{id}/versions/{vid}/quality/inconsistencies` | Inconsistências com regra e tratamento (`category`, `reason`, `column`, paginação) |
+| GET | `/datasets/{id}/versions/{vid}/quality/values` | Valores mais frequentes de uma coluna |
 | GET | `/jobs` · `/jobs/{id}` | Histórico e detalhe de processamentos (`kind=import\|transform`) |
 | POST | `/jobs/{id}/cancel` | Cancelamento cooperativo |
 | GET | `/overview` | Indicadores reais do workspace |
@@ -199,13 +212,16 @@ Fluxo completo com Caddy, PostgreSQL, Redis, MinIO e Celery reais, medido na CI 
 
 Fase 2, medido localmente (Windows, sem infraestrutura): planilha XLSX de 100 mil linhas importada em cerca de 40 s (≈ 2.470 registros/s — cerca de 40 vezes mais lento que o CSV, porque fórmulas e valores são lidos em duas passadas); transformação com quatro regras e deduplicação sobre 100 mil registros em 0,9 a 1,1 s, com a análise de duplicidades do DuckDB conferindo a contagem do pipeline.
 
+Fase 3, no mesmo ambiente: relatório de qualidade de 100 mil registros em 0,19 a 0,28 s; consulta do explorer com filtro, busca e contagem em 0,11 a 0,12 s.
+
 ## Limitações conhecidas
 
 - XLSX é lido em Python pelo openpyxl, em duas passadas: ~2,5 mil registros/s na medição local; o progresso mostra só a contagem de registros. A tabela de textos compartilhados da planilha fica inteira em memória.
 - A deduplicação carrega a chave de toda a versão em memória; não foi medida acima de 100 mil registros.
 - A prévia de transformações usa os primeiros 200 registros; a análise de duplicidades da versão inteira é separada.
 - Arredondamento de colunas derivadas é meio-para-par (1,005 → 1,00), diferente do "meio para cima" das planilhas.
-- Data Explorer sem filtros, busca e seleção de colunas na interface (Fase 3; a API já aceita seleção de colunas).
+- Data Explorer sem download do resultado filtrado: chega com as exportações protegidas da Fase 5 (job assíncrono, expiração, proteção contra formula injection). A busca cobre só colunas de texto.
+- Relatórios de qualidade de versões publicadas antes da Fase 3 são calculados sob demanda na tela Qualidade.
 - Gestão de membros, exportações, auditoria na interface e retenção de arquivos: Fase 5.
 - Gráfico da visão geral agrupa por dia em UTC (fuso por workspace chega com as configurações).
 - O MinIO Community foi arquivado; o projeto usa a imagem mantida pela Chainguard (ver ADR-006).
@@ -216,8 +232,8 @@ Fase 2, medido localmente (Windows, sem infraestrutura): planilha XLSX de 100 mi
 | Fase | Escopo |
 | --- | --- |
 | 1 ✅ | Fundação, autenticação, workspaces, upload CSV, preview, worker, versão Parquet, explorer paginado |
-| 2 ✅ | XLSX e abas, transformações configuráveis, deduplicação, reprocessamento a partir de versões (validação na CI pendente) |
-| 3 | Qualidade dos dados (pontuação documentada), Data Explorer com filtros, busca e seleção de colunas |
+| 2 ✅ | XLSX e abas, transformações configuráveis, deduplicação, reprocessamento a partir de versões |
+| 3 ✅ | Qualidade dos dados (pontuação documentada), Data Explorer com filtros, busca e seleção de colunas (validação na CI pendente) |
 | 4 | Dashboards, KPIs, gráficos, filtros dinâmicos, comparação temporal, construtor de dashboards |
 | 5 | Relatórios, exportações CSV/XLSX em segundo plano, gestão de usuários, auditoria, retenção |
 | 6 | Testes ampliados, benchmarks com infraestrutura, revisão de segurança e performance, deploy |
