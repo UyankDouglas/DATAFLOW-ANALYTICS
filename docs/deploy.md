@@ -21,7 +21,7 @@ Preencha no `.env` (obrigatórios no `docker-compose.prod.yml`):
 | `MINIO_IMAGE` | Recomendado fixar digest: `cgr.dev/chainguard/minio@sha256:…` (ADR-006). |
 | `SMTP_*` | Servidor SMTP real para e-mails de redefinição de senha. O `.env.example` traz os valores de desenvolvimento (`localhost:1025`, sem TLS): troque todos. |
 
-Opcionais: `MAX_CSV_MB`, `MAX_XLSX_MB` e `REGISTER_LIMIT_PER_HOUR` (cadastros por hora a partir do mesmo IP, padrão 10; a CI eleva o valor só para a suíte E2E, que cria várias contas seguidas).
+Opcionais: `MAX_CSV_MB`, `MAX_XLSX_MB`, `EXPORT_MAX_ROWS` (registros por CSV exportado, padrão 500 mil), `EXPORT_XLSX_MAX_ROWS` (padrão 100 mil) e `REGISTER_LIMIT_PER_HOUR` (cadastros por hora a partir do mesmo IP, padrão 10; a CI eleva o valor só para a suíte E2E, que cria várias contas seguidas).
 
 As senhas do PostgreSQL e do Redis entram nas URLs de conexão: use apenas caracteres seguros em URL, como hexadecimal (`openssl rand -hex 32`).
 
@@ -73,3 +73,7 @@ Restaure banco e bucket do **mesmo ponto no tempo**: versões referenciam objeto
 ## Alternativas de armazenamento
 
 O backend usa somente a API S3. Para usar um S3 gerenciado, edite o `docker-compose.prod.yml`: remova os serviços `minio*` e as dependências deles e defina `S3_ENDPOINT_URL`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY` e `S3_BUCKET` no bloco `x-backend`. Essa variação ainda não foi testada.
+
+## Tarefas periódicas
+
+O serviço `beat` precisa estar no ar. Ele recupera processamentos e exportações interrompidos (a cada minuto), apaga exportações vencidas (a cada 10 minutos) e aplica a retenção de originais configurada em cada workspace (a cada 6 horas). Convites e redefinição de senha dependem do SMTP configurado (`SMTP_*`).

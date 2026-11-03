@@ -52,7 +52,7 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
       </nav>
       {!collapsed && (
         <div className="border-t border-sidebar-border px-4 py-3 text-[11px] text-muted-foreground">
-          Fase 4 · Business Intelligence
+          Fase 5 · Relatórios e administração
         </div>
       )}
     </div>

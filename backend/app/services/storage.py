@@ -17,6 +17,7 @@ from botocore.exceptions import BotoCoreError, ClientError
 from app.core.config import get_settings
 
 if TYPE_CHECKING:
+    from botocore.response import StreamingBody
     from mypy_boto3_s3 import S3Client
 
 logger = logging.getLogger(__name__)
@@ -90,6 +91,15 @@ def read_range(key: str, length: int) -> bytes:
     return response["Body"].read()
 
 
+def open_object(key: str) -> "StreamingBody":
+    """Corpo do objeto para transmitir em partes (downloads autorizados pela API)."""
+    return get_s3().get_object(Bucket=bucket(), Key=key)["Body"]
+
+
+def delete_object(key: str) -> None:
+    get_s3().delete_object(Bucket=bucket(), Key=key)
+
+
 def delete_prefix(prefix: str) -> int:
     s3 = get_s3()
     deleted = 0
@@ -117,3 +127,11 @@ def upload_key(workspace_id: object, upload_id: object) -> str:
 
 def version_prefix(workspace_id: object, dataset_id: object, job_id: object) -> str:
     return f"workspaces/{workspace_id}/datasets/{dataset_id}/versions/{job_id}/"
+
+
+def dataset_prefix(workspace_id: object, dataset_id: object) -> str:
+    return f"workspaces/{workspace_id}/datasets/{dataset_id}/"
+
+
+def export_key(workspace_id: object, export_id: object, extension: str) -> str:
+    return f"workspaces/{workspace_id}/exports/{export_id}/arquivo.{extension}"

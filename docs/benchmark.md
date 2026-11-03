@@ -117,6 +117,17 @@ Medido pelo mesmo `benchmark_pipeline`, que passou a executar as consultas anal�
 
 O tempo é só o da consulta, com o Parquet já em disco. Na API soma-se o download do Parquet para o cache na primeira consulta de cada versão, que é o mesmo do explorer (ver a tabela do fluxo completo). O agrupamento com "Outros" faz uma segunda consulta, sobre os registros fora dos grupos mostrados. Com 100 mil registros, recalcular a cada abertura cabe folgado nos 10 s de tempo-limite (ADR-021). Arquivos muito maiores ainda não foram medidos.
 
+## Resultados — Fase 5: exportações (03/11/2026)
+
+Medido pelo mesmo `benchmark_pipeline`, que passou a exportar a versão inteira com o mesmo leitor (DuckDB em lotes de 5 mil) e os mesmos escritores do worker, no mesmo ambiente, em duas execuções.
+
+| Exportação (100 mil registros) | vendas_100000.csv (9 colunas) | atendimentos_100000.csv (8 colunas) |
+| --- | --- | --- |
+| CSV para Excel em português | 1,96–2,02 s | 1,59–1,67 s |
+| XLSX com números e datas formatados | 27,3–28,6 s | 23,5 s |
+
+O XLSX é cerca de 13 vezes mais lento, porque o openpyxl monta cada célula em Python. Numa medição isolada com as mesmas 900 mil células, a escrita levou 24,8 s com formato em todas as células, 21,3 s só tipando o texto e 17,4 s com valores puros. A formatação custa cerca de 30%, e o limite de 100 mil registros para XLSX segura o pior caso em torno de meio minuto, em segundo plano. O CSV ficou com 500 mil registros (≈ 10 s, por extrapolação linear, não medido).
+
 ## Pendente
 
 - Medições com 1 milhão de linhas e com arquivos próximos do limite de 100 MB. Até lá, não há evidência de como a memória e o tempo escalam acima de 100 mil linhas.
@@ -124,3 +135,4 @@ O tempo é só o da consulta, com o Parquet já em disco. Na API soma-se o downl
 - XLSX perto do limite de 25 MB e transformações com 1 milhão de linhas, inclusive o pico de memória da deduplicação (ADR-016).
 - XLSX e transformação no fluxo completo com infraestrutura real (CI), como foi feito para o CSV.
 - Consultas dos dashboards com 1 milhão de registros e com muitos widgets abertos ao mesmo tempo (cada widget é uma requisição).
+- Exportação CSV no limite de 500 mil registros e XLSX no limite de 100 mil, no fluxo completo com MinIO e Celery reais.

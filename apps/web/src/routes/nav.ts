@@ -58,49 +58,22 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: LayoutTemplate,
         permission: 'dashboards:manage',
       },
-      { label: 'Relatórios', to: '/relatorios', icon: FileSpreadsheet, phase: 5 },
-      { label: 'Exportações', to: '/exportacoes', icon: FileDown, phase: 5 },
+      { label: 'Relatórios', to: '/relatorios', icon: FileSpreadsheet },
+      { label: 'Exportações', to: '/exportacoes', icon: FileDown, permission: 'data:export' },
     ],
   },
   {
     label: 'Administração',
     items: [
       { label: 'Usuários e permissões', to: '/usuarios', icon: Users, permission: 'members:view' },
-      { label: 'Auditoria', to: '/auditoria', icon: ScrollText, phase: 5 },
-      { label: 'Configurações', to: '/configuracoes', icon: Settings, phase: 5 },
+      { label: 'Auditoria', to: '/auditoria', icon: ScrollText, permission: 'audit:view' },
+      { label: 'Configurações', to: '/configuracoes', icon: Settings },
     ],
   },
 ]
 
+/** Módulos anunciados e ainda não entregues aparecem como "Em desenvolvimento". */
 export const COMING_SOON: Record<
   string,
   { title: string; phase: number; description: string; icon: LucideIcon }
-> = {
-  '/relatorios': {
-    title: 'Relatórios',
-    phase: 5,
-    icon: FileSpreadsheet,
-    description:
-      'Indicadores agregados, comparação entre períodos e exportação CSV/XLSX em segundo plano.',
-  },
-  '/exportacoes': {
-    title: 'Exportações',
-    phase: 5,
-    icon: FileDown,
-    description:
-      'Histórico de exportações com expiração, proteção contra formula injection e download autorizado.',
-  },
-  '/auditoria': {
-    title: 'Auditoria',
-    phase: 5,
-    icon: ScrollText,
-    description:
-      'Consulta das ações registradas (login, uploads, processamentos, cancelamentos) com filtros.',
-  },
-  '/configuracoes': {
-    title: 'Configurações',
-    phase: 5,
-    icon: Settings,
-    description: 'Configurações do workspace, limites, retenção de arquivos e preferências.',
-  },
-}
+> = {}

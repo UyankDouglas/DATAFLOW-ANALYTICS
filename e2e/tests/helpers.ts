@@ -25,13 +25,18 @@ export function newUser(prefix: string): TestUser {
 
 export async function register(page: Page, user: TestUser): Promise<void> {
   await page.goto('/cadastro')
+  await submitRegistration(page, user)
+  await expect(page.getByRole('heading', { name: /Olá/ })).toBeVisible()
+}
+
+/** Preenche e envia o cadastro já aberto (o destino depois depende de onde a pessoa veio). */
+export async function submitRegistration(page: Page, user: TestUser): Promise<void> {
   await page.getByLabel('Nome completo').fill(user.name)
   await page.getByLabel('E-mail').fill(user.email)
   await page.getByLabel('Nome do workspace').fill(user.workspace)
   await page.getByLabel('Senha', { exact: true }).fill(user.password)
   await page.getByLabel('Confirmar senha').fill(user.password)
   await page.getByRole('button', { name: 'Criar conta' }).click()
-  await expect(page.getByRole('heading', { name: /Olá/ })).toBeVisible()
 }
 
 export async function uploadSample(page: Page, file: string): Promise<string> {

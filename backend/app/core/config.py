@@ -62,6 +62,16 @@ class Settings(BaseSettings):
     rows_page_size_max: int = 200
     transform_preview_rows: int = 200
 
+    # Exportações (arquivos temporários no armazenamento de objetos, baixados pela API)
+    export_max_rows: int = 500_000
+    export_xlsx_max_rows: int = 100_000
+    export_report_max_groups: int = 10_000
+    export_default_ttl_hours: int = 24
+    export_active_per_workspace: int = 3
+
+    # Convites para o workspace
+    invitation_ttl_days: int = 7
+
     # Celery / jobs
     job_max_attempts: int = 3
     job_stale_after_seconds: int = 300

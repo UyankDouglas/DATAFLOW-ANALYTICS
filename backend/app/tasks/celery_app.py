@@ -15,7 +15,12 @@ settings = get_settings()
 celery_app = Celery(
     "dataflow",
     broker=settings.redis_url,
-    include=["app.tasks.imports", "app.tasks.maintenance", "app.tasks.email"],
+    include=[
+        "app.tasks.imports",
+        "app.tasks.exports",
+        "app.tasks.maintenance",
+        "app.tasks.email",
+    ],
 )
 celery_app.conf.update(
     task_serializer="json",
@@ -34,10 +39,13 @@ celery_app.conf.update(
     broker_connection_retry_on_startup=True,
     broker_transport_options={"visibility_timeout": 4200},
     task_default_queue="default",
-    task_routes={"imports.*": {"queue": "imports"}},
+    task_routes={"imports.*": {"queue": "imports"}, "exports.*": {"queue": "imports"}},
     beat_schedule={
         "recover-jobs": {"task": "maintenance.recover_jobs", "schedule": 60.0},
         "cleanup-work-dir": {"task": "maintenance.cleanup_work_dir", "schedule": 3600.0},
+        "recover-exports": {"task": "maintenance.recover_exports", "schedule": 60.0},
+        "expire-exports": {"task": "maintenance.expire_exports", "schedule": 600.0},
+        "apply-retention": {"task": "maintenance.apply_retention", "schedule": 21600.0},
     },
 )
 

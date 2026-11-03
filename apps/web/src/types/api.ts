@@ -73,6 +73,8 @@ export interface SheetInfo {
 export interface UploadInfo {
   id: Uuid
   original_filename: string
+  /** Original apagado pela política de retenção; as versões continuam. */
+  purged_at?: string | null
   file_format: string
   size_bytes: number
   sha256: string
@@ -811,4 +813,131 @@ export interface DashboardInput {
 export interface WidgetResult {
   widget_id: Uuid
   result: AggregateResult
+}
+
+// ---------------------------------------------------------------- Fase 5: exportações e administração
+
+export type ExportStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'expired'
+export type ExportFormat = 'csv' | 'xlsx'
+export type CsvStyle = 'padrao' | 'excel_br'
+
+export interface RowsExportQuery {
+  filters?: Condition[]
+  match?: 'all' | 'any'
+  search?: string | null
+  columns?: string[] | null
+  sort?: string | null
+  direction?: 'asc' | 'desc'
+  /** Grupos de filtros da tela, combinados com E aos filtros acima. */
+  extra_filters?: FilterSet[]
+}
+
+export interface ExportRequest {
+  dataset_id: Uuid
+  version_id?: Uuid | null
+  kind: 'rows' | 'report'
+  format: ExportFormat
+  csv_style?: CsvStyle
+  rows?: RowsExportQuery
+  report?: AggregateSpec & { extra_filters?: FilterSet[] }
+}
+
+export interface ExportJob {
+  id: Uuid
+  dataset_id: Uuid
+  dataset_name: string
+  version_id: Uuid
+  version_number: number
+  kind: 'rows' | 'report'
+  format: ExportFormat
+  status: ExportStatus
+  file_name: string
+  params: {
+    csv_style?: CsvStyle
+    rows?: RowsExportQuery | null
+    report?: AggregateSpec | null
+    estimated_rows?: number | null
+  }
+  estimated_rows: number | null
+  row_count: number | null
+  size_bytes: number | null
+  error_code: string | null
+  error_message: string | null
+  created_by_name: string | null
+  created_at: string
+  started_at: string | null
+  finished_at: string | null
+  expires_at: string | null
+  duration_ms: number | null
+  download_count: number
+}
+
+export interface WorkspaceSettings {
+  export_ttl_hours: number
+  viewer_exports: boolean
+  original_retention_days: number | null
+}
+
+export interface WorkspaceSettingsInfo {
+  id: Uuid
+  name: string
+  slug: string
+  settings: WorkspaceSettings
+}
+
+export interface Invitation {
+  id: Uuid
+  email: string
+  role: Role
+  invited_by_name: string | null
+  created_at: string
+  expires_at: string
+}
+
+export interface InvitationPreview {
+  workspace_name: string
+  role: Role
+  email: string
+  expires_at: string
+}
+
+export interface AuditEntry {
+  id: Uuid
+  action: string
+  entity_type: string | null
+  entity_id: string | null
+  details: Record<string, unknown>
+  actor_id: Uuid | null
+  actor_name: string | null
+  ip_address: string | null
+  created_at: string
+}
+
+export interface DashboardRef {
+  id: Uuid
+  name: string
+}
+
+export interface DatasetImpact {
+  dataset_id: Uuid
+  dataset_name: string
+  versions: number
+  uploads: number
+  jobs: number
+  exports: number
+  stored_bytes: number
+  dashboards: DashboardRef[]
+  blocked_reason: string | null
+}
+
+export interface VersionImpact {
+  version_id: Uuid
+  version_number: number
+  is_current: boolean
+  next_current_number: number | null
+  derived_versions: number
+  exports: number
+  stored_bytes: number
+  pinned_by: DashboardRef[]
+  blocked_reason: string | null
 }

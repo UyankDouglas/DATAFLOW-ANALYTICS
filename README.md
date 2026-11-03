@@ -2,7 +2,7 @@
 
 Plataforma de engenharia de dados e Business Intelligence: transforma planilhas CSV e XLSX brutas em datasets tratados, versionados e consultáveis — com rastreabilidade de cada registro recebido.
 
-> **Status:** Fases 1 a 4 de 6 concluídas — fundação, motor ETL, qualidade e Data Explorer, Business Intelligence —, todas validadas na CI com a infraestrutura real (PostgreSQL, Redis, MinIO e Celery), nos Compose de desenvolvimento e de produção. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
+> **Status:** Fases 1 a 5 de 6 concluídas — fundação, motor ETL, qualidade e Data Explorer, Business Intelligence, relatórios, exportações e administração —, todas validadas na CI com a infraestrutura real (PostgreSQL, Redis, MinIO e Celery), nos Compose de desenvolvimento e de produção. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
 
 ![Visão geral](docs/screenshots/02-visao-geral.png)
 
@@ -11,6 +11,15 @@ Plataforma de engenharia de dados e Business Intelligence: transforma planilhas 
 Equipes de vendas, atendimento e operações vivem de planilhas exportadas de sistemas diferentes: delimitadores diferentes, `1.234,56` misturado com `1234.56`, datas em `dd/mm` e `mm/dd`, linhas incompletas. Ferramentas de BI costumam descartar ou converter esses dados em silêncio. O DataFlow trata a importação e o tratamento como um **pipeline auditável**: cada registro é contabilizado como válido, rejeitado, filtrado ou duplicado, com motivo, regra, coluna e valor original — e cada processamento gera uma **versão imutável** do dataset, com a origem e as regras que a produziram.
 
 ## Funcionalidades
+
+### Fase 5 — relatórios, exportações e administração
+
+- **Relatórios**: dataset e versão, agrupamento por categoria ou data, até seis medidas, filtros e comparação entre períodos, com a tabela calculada no servidor.
+- **Exportações CSV e XLSX em segundo plano**, a partir do Data Explorer (registros tratados, com os filtros, a busca e as colunas da tela) ou de Relatórios. O volume é conferido antes de enfileirar. O arquivo fica no armazenamento privado com validade (24 h por padrão) e só é baixado pela API, com auditoria. Há proteção contra **formula injection** (`=`, `+`, `-`, `@`… recebem apóstrofo; no XLSX, texto nunca vira fórmula). Ver [docs/administration.md](docs/administration.md).
+- **Usuários e permissões**: convites por e-mail com link de uso único, aceitos só pela conta do e-mail convidado; troca de perfil e remoção de membros, sem deixar o workspace sem administrador.
+- **Auditoria** consultável por ação e período: acessos, uploads, processamentos, exportações, membros, configurações e exclusões, sem conteúdo de arquivos nem senhas.
+- **Configurações**: nome do workspace, validade das exportações, exportação por visualizadores (só quando o administrador libera) e **retenção** dos arquivos originais (as versões publicadas continuam).
+- **Exclusão controlada** de datasets e versões: o impacto aparece antes, a exclusão do dataset exige o nome, e nada sai com processamento ou exportação em andamento nem com versão fixada por dashboard.
 
 ### Fase 4 — Business Intelligence
 
@@ -45,7 +54,7 @@ Equipes de vendas, atendimento e operações vivem de planilhas exportadas de si
 - **Processamento assíncrono** (Celery + Redis): estados duráveis no PostgreSQL, progresso medido por bytes lidos, cancelamento cooperativo, retentativas, idempotência, recuperação de jobs interrompidos.
 - **Versionamento**: Parquet por versão (válidos + rejeitados), publicação atômica, reconciliação `recebidos = válidos + rejeitados`, métricas de execução.
 - **Data Explorer**: paginação e ordenação no servidor (DuckDB sobre Parquet), seleção de versão, formatação pt-BR por tipo — decimais sem perda de precisão e sem formato monetário automático.
-- **Interface**: tema escuro padrão e tema claro, sidebar recolhível, responsiva, navegável por teclado, estados vazios, skeletons, toasts, erros claros. Módulos das próximas fases aparecem como **"Em desenvolvimento"**.
+- **Interface**: tema escuro padrão e tema claro, sidebar recolhível, responsiva, navegável por teclado, estados vazios, skeletons, toasts, erros claros.
 
 ## Capturas de tela
 
@@ -54,6 +63,8 @@ Geradas por `e2e/tests/screenshots.spec.ts` a partir de um fluxo real com os dad
 | | |
 | --- | --- |
 | ![Dashboard salvo](docs/screenshots/15-dashboard.png) | ![Dashboard geral](docs/screenshots/13-dashboard-geral.png) |
+| ![Relatórios](docs/screenshots/16-relatorios.png) | ![Exportações](docs/screenshots/17-exportacoes.png) |
+| ![Auditoria](docs/screenshots/18-auditoria.png) | |
 | ![Construtor de Dashboards](docs/screenshots/14-construtor.png) | ![Qualidade dos Dados](docs/screenshots/11-qualidade.png) |
 | ![Data Explorer com filtros](docs/screenshots/12-explorer-filtros.png) | ![Transformações](docs/screenshots/09-transformacoes.png) |
 | ![Pré-visualização de XLSX](docs/screenshots/10-preview-xlsx.png) | |
@@ -156,10 +167,17 @@ Para ver rejeições rastreáveis, importe `samples/qualidade_1000.csv` e defina
 3. Adicione widgets: tipo de gráfico, medidas e agregações, dimensão e filtros. A prévia é calculada com os dados reais da versão enquanto você edita.
 4. Reorganize com as setas, duplique, remova e **Salvar dashboard**. Quem abrir o dashboard (inclusive o Visualizador) pode aplicar filtros na tela sem alterar o que foi salvo.
 
+## Como exportar e administrar
+
+1. No **Data Explorer**, filtre, busque e escolha as colunas; em **Exportar**, escolha CSV para Excel em português, CSV padrão ou XLSX. Em **Relatórios**, exporte a tabela agregada ou os registros filtrados.
+2. A exportação roda em segundo plano. Em **Exportações**, o arquivo aparece como **Pronta** com o botão **Baixar**, que funciona até a validade.
+3. Em **Usuários e permissões**, o administrador convida por e-mail com o perfil desejado. A pessoa abre o link, entra ou cria a conta com aquele e-mail e aceita.
+4. Em **Configurações**, o administrador ajusta a validade das exportações, libera exportações para visualizadores e liga a retenção dos originais. Em **Auditoria**, consulta o que foi feito no workspace.
+
 ## Testes
 
 ```bash
-cd backend && uv run pytest                   # 169 testes (SQLite + S3/Redis simulados)
+cd backend && uv run pytest                   # 205 testes (SQLite + S3/Redis simulados)
 TEST_DATABASE_URL=postgresql+psycopg://dataflow:dataflow@localhost:5432/dataflow_test uv run pytest
 cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app
 
@@ -218,6 +236,16 @@ Base `/api/v1`, documentação interativa em `/api/docs`. Erros sempre no format
 | GET / PATCH / DELETE | `/dashboards/{id}` | Detalhe, alteração (nome, versão, filtros, widgets na nova ordem) e exclusão |
 | POST | `/dashboards/{id}/query` | Calcula um widget com os filtros escolhidos na tela |
 | GET | `/jobs` · `/jobs/{id}` | Histórico e detalhe de processamentos (`kind=import\|transform`) |
+| POST · GET | `/exports` | Pede uma exportação CSV/XLSX (registros ou relatório) / histórico |
+| GET · DELETE | `/exports/{id}` | Detalhe / exclusão (quem pediu ou administrador) |
+| GET | `/exports/{id}/download` | Download do arquivo, transmitido pela API |
+| GET · PATCH | `/workspaces/current/settings` · `/workspaces/current` | Configurações do workspace |
+| PATCH · DELETE | `/workspaces/current/members/{id}` | Troca de perfil / remoção de membro |
+| GET · POST · DELETE | `/workspaces/current/invitations` | Convites por e-mail |
+| POST | `/invitations/preview` · `/invitations/accept` | Dados e aceite de um convite |
+| GET | `/audit` · `/audit/actions` | Auditoria com filtros por ação e período |
+| GET · DELETE | `/datasets/{id}/deletion-impact` · `/datasets/{id}` | Impacto e exclusão controlada do dataset |
+| GET · DELETE | `/datasets/{id}/versions/{vid}/deletion-impact` · `/datasets/{id}/versions/{vid}` | Impacto e exclusão de uma versão |
 | POST | `/jobs/{id}/cancel` | Cancelamento cooperativo |
 | GET | `/overview` | Indicadores reais do workspace |
 | GET | `/health/live` · `/health/ready` | Saúde do processo e das dependências |
@@ -234,6 +262,8 @@ Fase 2, medido localmente (Windows, sem infraestrutura): planilha XLSX de 100 mi
 
 Fase 3, no mesmo ambiente: relatório de qualidade de 100 mil registros em 0,19 a 0,28 s; consulta do explorer com filtro, busca e contagem em 0,11 a 0,12 s.
 
+Fase 5, no mesmo ambiente: exportar 100 mil registros leva cerca de 2 s em CSV e 23 a 28 s em XLSX (o openpyxl escreve célula por célula), daí os limites de 500 mil e 100 mil registros.
+
 Fase 4, no mesmo ambiente: com 100 mil registros, os KPIs (seis medidas) saem em 0,04 a 0,05 s, a soma por categoria com "Outros" em 0,05 a 0,08 s, a série mensal em 0,05 s e a comparação entre períodos em 0,05 a 0,09 s.
 
 ## Limitações conhecidas
@@ -242,10 +272,12 @@ Fase 4, no mesmo ambiente: com 100 mil registros, os KPIs (seis medidas) saem em
 - A deduplicação carrega a chave de toda a versão em memória; não foi medida acima de 100 mil registros.
 - A prévia de transformações usa os primeiros 200 registros; a análise de duplicidades da versão inteira é separada.
 - Arredondamento de colunas derivadas é meio-para-par (1,005 → 1,00), diferente do "meio para cima" das planilhas.
-- Data Explorer sem download do resultado filtrado: chega com as exportações protegidas da Fase 5 (job assíncrono, expiração, proteção contra formula injection). A busca cobre só colunas de texto.
+- A busca do Data Explorer cobre só colunas de texto.
+- Exportação XLSX lenta (≈ 3,6 mil registros/s) e limitada a 100 mil registros; CSV até 500 mil. Para volumes maiores, filtre ou exporte em partes.
 - Relatórios de qualidade de versões publicadas antes da Fase 3 são calculados sob demanda na tela Qualidade.
 - Dashboards: vale a última gravação quando duas pessoas editam o mesmo dashboard; a ordem dos widgets muda pelas setas (sem arrastar e soltar); cada widget é uma consulta ao abrir, sem resultados guardados — medido até 100 mil registros. Decimais não servem como dimensão (use o filtro de faixa).
-- Gestão de membros, exportações, auditoria na interface e retenção de arquivos: Fase 5.
+- Convites dependem de SMTP funcionando; sem ele, o convite fica pendente e pode ser cancelado ou reenviado.
+- Objetos órfãos no armazenamento (quando a remoção falha depois do commit) ainda não têm limpeza periódica.
 - Gráfico da visão geral agrupa por dia em UTC (fuso por workspace chega com as configurações).
 - O MinIO Community foi arquivado; o projeto usa a imagem mantida pela Chainguard (ver ADR-006).
 - A CI usa a CA interna do Caddy e o Mailpit: certificado público com domínio real e SMTP real com TLS ainda não foram exercitados; ver PROGRESS.md.
@@ -258,5 +290,5 @@ Fase 4, no mesmo ambiente: com 100 mil registros, os KPIs (seis medidas) saem em
 | 2 ✅ | XLSX e abas, transformações configuráveis, deduplicação, reprocessamento a partir de versões |
 | 3 ✅ | Qualidade dos dados (pontuação documentada), Data Explorer com filtros, busca e seleção de colunas |
 | 4 ✅ | Dashboards, KPIs, gráficos, filtros dinâmicos, comparação temporal, construtor de dashboards |
-| 5 | Relatórios, exportações CSV/XLSX em segundo plano, gestão de usuários, auditoria, retenção |
+| 5 ✅ | Relatórios, exportações CSV/XLSX em segundo plano, gestão de usuários, auditoria, retenção |
 | 6 | Testes ampliados, benchmarks com infraestrutura, revisão de segurança e performance, deploy |

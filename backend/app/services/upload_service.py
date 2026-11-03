@@ -30,6 +30,7 @@ from app.processing.xlsx import inspect_xlsx
 from app.repositories import datasets as repo
 from app.schemas.dataset import SheetImportRequest
 from app.services import audit, storage
+from app.services.preview_service import ensure_original
 
 logger = logging.getLogger(__name__)
 
@@ -223,6 +224,7 @@ def import_sheet(
         raise ValidationFailed(
             f"A aba '{request.sheet}' não existe na planilha.", code="xlsx_sheet_not_found"
         )
+    ensure_original(upload)
     upload_id = uuid.uuid4()
     key = storage.upload_key(ctx.workspace_id, upload_id)
     try:

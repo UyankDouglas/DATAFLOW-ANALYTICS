@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.core import rate_limit
 from app.core.config import get_settings
 from app.core.errors import Conflict, NotFound, Unauthorized, ValidationFailed
-from app.core.permissions import permissions_for
+from app.core.permissions import effective_permissions
 from app.core.security import (
     csrf_token_for_session,
     hash_password,
@@ -194,7 +194,7 @@ def build_me(db: Session, user: User, session: UserSession) -> MeResponse:
             workspace_ref = WorkspaceRef(
                 id=workspace.id, name=workspace.name, slug=workspace.slug, role=role
             )
-            permissions = sorted(p.value for p in permissions_for(role))
+            permissions = sorted(p.value for p in effective_permissions(role, workspace.settings))
     return MeResponse(
         user=UserOut.model_validate(user),
         workspace=workspace_ref,

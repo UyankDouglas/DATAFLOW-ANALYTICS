@@ -8,14 +8,17 @@ import {
   Settings2,
   Table2,
   TableProperties,
+  Trash2,
   Wand2,
 } from 'lucide-react'
-import { Link, useParams } from 'react-router'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
 
 import { KpiCard } from '@/components/kpi-card'
 import { PageHeader } from '@/components/page-header'
 import { ErrorState, TableSkeleton } from '@/components/states'
 import { StatusBadge } from '@/components/status-badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -26,6 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { DeleteDatasetDialog, DeleteVersionDialog } from '@/features/admin/deletion-dialogs'
 import { usePermission } from '@/features/auth/use-auth'
 import { datasetsApi } from '@/features/datasets/api'
 import { DATA_TYPE_LABEL, DATE_FORMATS, DATETIME_FORMATS } from '@/features/datasets/column-form'
@@ -39,6 +43,9 @@ export function DatasetDetailPage() {
   const { datasetId = '' } = useParams()
   const canProcess = usePermission('datasets:process')
   const canTransform = usePermission('transformations:manage')
+  const canDelete = usePermission('datasets:delete')
+  const navigate = useNavigate()
+  const [deleting, setDeleting] = useState<'dataset' | { versionId: string } | null>(null)
   const dataset = useQuery({
     queryKey: ['datasets', datasetId],
     queryFn: () => datasetsApi.get(datasetId),
@@ -116,9 +123,23 @@ export function DatasetDetailPage() {
                 </Link>
               </Button>
             )}
+            {canDelete && (
+              <Button variant="ghost" onClick={() => setDeleting('dataset')}>
+                <Trash2 /> Excluir
+              </Button>
+            )}
           </>
         }
       />
+      {data.latest_upload?.purged_at && (
+        <Alert className="mb-4">
+          <AlertDescription>
+            O arquivo original foi apagado em {formatTimestamp(data.latest_upload.purged_at)} pela
+            política de retenção do workspace. As versões publicadas continuam disponíveis; para
+            reprocessar do zero, envie o arquivo de novo.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
@@ -176,6 +197,7 @@ export function DatasetDetailPage() {
                       <TableHead>Qualidade</TableHead>
                       <TableHead>Responsável</TableHead>
                       <TableHead>Publicada em</TableHead>
+                      {canDelete && <TableHead className="sr-only">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -232,6 +254,18 @@ export function DatasetDetailPage() {
                         <TableCell className="tabular whitespace-nowrap">
                           {formatTimestamp(version.created_at)}
                         </TableCell>
+                        {canDelete && (
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Excluir a versão ${version.version_number}`}
+                              onClick={() => setDeleting({ versionId: version.id })}
+                            >
+                              <Trash2 />
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -342,6 +376,20 @@ export function DatasetDetailPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+      {deleting === 'dataset' && (
+        <DeleteDatasetDialog
+          datasetId={data.id}
+          onClose={() => setDeleting(null)}
+          onDeleted={() => navigate('/datasets', { replace: true })}
+        />
+      )}
+      {deleting && deleting !== 'dataset' && (
+        <DeleteVersionDialog
+          datasetId={data.id}
+          versionId={deleting.versionId}
+          onClose={() => setDeleting(null)}
+        />
       )}
     </>
   )

@@ -28,3 +28,11 @@ def enqueue_job(job_id: uuid.UUID) -> bool:
 
 def enqueue_password_reset_email(email: str, token: str) -> bool:
     return _send("email.password_reset", [email, token])
+
+
+def enqueue_export(export_id: uuid.UUID) -> bool:
+    return _send("exports.run", [str(export_id)])
+
+
+def enqueue_invitation_email(email: str, token: str, workspace_name: str, role: str) -> bool:
+    return _send("email.invitation", [email, token, workspace_name, role])

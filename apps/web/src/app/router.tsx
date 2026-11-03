@@ -46,6 +46,13 @@ export const router = createBrowserRouter([
           (m) => m.ResetPasswordPage,
         ),
       },
+      {
+        path: '/convite',
+        lazy: page(
+          () => import('@/pages/auth/invitation-page'),
+          (m) => m.InvitationPage,
+        ),
+      },
     ],
   },
   {
@@ -161,6 +168,34 @@ export const router = createBrowserRouter([
         lazy: page(
           () => import('@/pages/dashboards/dashboard-view-page'),
           (m) => m.DashboardViewPage,
+        ),
+      },
+      {
+        path: '/relatorios',
+        lazy: page(
+          () => import('@/pages/reports/reports-page'),
+          (m) => m.ReportsPage,
+        ),
+      },
+      {
+        path: '/exportacoes',
+        lazy: page(
+          () => import('@/pages/exports/exports-page'),
+          (m) => m.ExportsPage,
+        ),
+      },
+      {
+        path: '/auditoria',
+        lazy: page(
+          () => import('@/pages/audit/audit-page'),
+          (m) => m.AuditPage,
+        ),
+      },
+      {
+        path: '/configuracoes',
+        lazy: page(
+          () => import('@/pages/settings/settings-page'),
+          (m) => m.SettingsPage,
         ),
       },
       {

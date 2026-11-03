@@ -20,8 +20,9 @@ O sistema recebe arquivos de usuários; segurança é requisito central. Esta p�
 - Recursos por ID (dataset, versão, job, rejeitados, registros, consultas do explorer, relatórios de qualidade, inconsistências, frequência de valores, conjuntos de regras, prévia, análise de duplicidades e jobs de transformação) sempre filtrados por workspace; resposta 404 para inexistente ou alheio.
 - Transformações: Visualizador lê os conjuntos e pode rodar a análise de duplicidades (só leitura, usada também na tela Qualidade); criar, editar, excluir, gerar prévia e aplicar exigem `transformations:manage` (Analista e Administrador).
 - Qualidade: qualquer perfil lê relatórios, inconsistências e frequências; calcular ou recalcular um relatório exige `datasets:process`.
+- Exportações: pedir, listar e baixar exigem `data:export` (Analista e Administrador; Visualizador só quando o administrador libera nas configurações). Excluir cabe a quem pediu ou a um administrador. Membros, convites, configurações, auditoria e exclusão de datasets e versões são do Administrador (`members:manage`, `workspace:manage`, `audit:view`, `datasets:delete`). O servidor não deixa o workspace sem administrador, e quem é removido perde o acesso na requisição seguinte.
 - Dashboards: qualquer perfil abre o Dashboard geral, lista e abre dashboards e aplica filtros na tela; criar, editar, reorganizar e excluir exigem `dashboards:manage` (Analista e Administrador). Dashboard, widget, dataset e versão fixada são conferidos contra o workspace da sessão: não é possível criar um dashboard apontando para dataset ou versão alheios (404).
-- Testado: `backend/tests/test_isolation.py`, `backend/tests/test_transform_api.py` e `backend/tests/test_dashboards_api.py` (API, inclusive todas as rotas de transformação e de dashboards com sessão de outro workspace) e `e2e/tests/isolation.spec.ts` (interface + API).
+- Testado: `backend/tests/test_isolation.py`, `test_transform_api.py`, `test_dashboards_api.py`, `test_exports_api.py`, `test_members_api.py` e `test_admin_api.py` (API, inclusive todas as rotas de transformação e de dashboards com sessão de outro workspace) e `e2e/tests/isolation.spec.ts` (interface + API).
 
 ## Uploads
 
@@ -61,9 +62,15 @@ O sistema recebe arquivos de usuários; segurança é requisito central. Esta p�
 - Produção expõe apenas o Caddy (80/443); PostgreSQL, Redis (com senha) e MinIO ficam na rede interna.
 - Worker com limites de CPU e memória (`deploy.resources.limits`) e `worker_max_tasks_per_child`.
 
+## Exportações, convites, retenção e exclusão
+
+- **Formula injection**: texto iniciado por `=`, `+`, `-`, `@`, tabulação, CR ou as variantes de largura total recebe um apóstrofo nas exportações CSV e XLSX; no XLSX, a célula de texto é gravada com o tipo texto e caracteres de controle são removidos (`test_export_writers.py`, `test_xlsx_export_neutralizes_formulas`).
+- **Exportações**: volume conferido antes de enfileirar (500 mil registros em CSV, 100 mil em XLSX, 3 em andamento por workspace); arquivo no MinIO privado, chave sem texto do usuário, nome de download ASCII montado pelo backend; download transmitido pela API com `no-store` e auditoria; expiração (24 h por padrão) com remoção do arquivo (ADR-023).
+- **Convites**: só o hash do token no banco, validade de 7 dias, uso único, aceitar exige o mesmo e-mail da sessão, limite de 50 convites por hora por workspace (ADR-024).
+- **Retenção**: originais apagados após o prazo configurado, nunca os de datasets sem versão ou em processamento; versões ficam (ADR-025).
+- **Exclusão controlada**: impacto mostrado antes, confirmação pelo nome, bloqueio com processamento ou exportação em andamento e com versão fixada por dashboard; banco limpo numa transação e objetos removidos depois (ADR-025).
+
 ## Pendências (fases seguintes)
 
-- Proteção contra CSV/Excel formula injection nas **exportações** (Fase 5 — não há exportação na Fase 1).
-- Políticas de retenção e exclusão controlada de arquivos e versões (Fase 5).
-- Limpeza de objetos órfãos quando o commit no banco falha após o envio ao S3 (Fase 5).
+- Limpeza periódica de objetos órfãos no MinIO (os que sobram quando a remoção falha depois do commit, ou quando o commit falha depois do envio).
 - Verificação de e-mail no cadastro e MFA (roadmap).
