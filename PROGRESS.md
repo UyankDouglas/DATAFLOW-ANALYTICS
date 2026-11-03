@@ -9,7 +9,7 @@ Documento de retomada. Atualizado em **03/11/2026**.
 | 1 — Fundação e primeiro dataset | ✅ Concluída e validada na CI com a infraestrutura real, nos Compose de desenvolvimento e de produção |
 | 2 — Motor ETL (XLSX, transformações, deduplicação, reprocessamento) | ✅ Concluída, validada na CI com a infraestrutura real e mesclada na `main` ([PR #1](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/1)) |
 | 3 — Qualidade e Data Explorer completo | ✅ Concluída e validada na CI com a infraestrutura real ([PR #2](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/2)) |
-| 4 — Business Intelligence (dashboards) | ✅ Implementada e validada localmente (sem Docker), na branch `fase-4-bi`, ainda **sem commit**. Falta a validação na CI |
+| 4 — Business Intelligence (dashboards) | ✅ Concluída e validada na CI com a infraestrutura real ([PR #3](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/3)) |
 | 5 — Relatórios, exportações e administração | ⏳ Próxima |
 | 6 — Qualidade e produção | Pendente |
 
@@ -77,6 +77,18 @@ Documento de retomada. Atualizado em **03/11/2026**.
 - [x] **Benchmark**: `benchmark_pipeline` mede KPIs, agrupamento com "Outros", série mensal e comparação entre períodos.
 - [x] **Documentação**: `docs/dashboards.md` (novo), ADR-021 e ADR-022, `security.md`, `architecture.md`, `benchmark.md`, README; capturas 13, 14 e 15, e as demais regeneradas.
 
+## Testes executados na CI — Fase 4 (03/11/2026, commit `f403a9e`, [execução 41699024371](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41699024371), PR #3)
+
+| Verificação | Resultado |
+| --- | --- |
+| Backend contra **PostgreSQL 17 real** | **169 passed**, cobertura de 89% |
+| Alembic `upgrade` (inclui `0003 -> 0004`) → `check` → `downgrade` → `upgrade` no PostgreSQL | OK; `check`: "No new upgrade operations detected" |
+| Ruff e mypy estrito | sem problemas (86 arquivos) |
+| Frontend: formatação, lint, tipos, Vitest, build | OK, **84 passed** |
+| E2E em desenvolvimento, com Celery, MinIO e Redis reais | **13 passed**, 1 ignorado (capturas de tela), sem retentativas — inclui `dashboards.spec.ts` (dashboard geral; criar, filtrar, reabrir e reorganizar) |
+| E2E em produção, em HTTPS | **12 passed**, 2 ignorados (e-mail e capturas de tela), sem retentativas |
+| CSV de 100 mil linhas pela interface | job de 534 ms em desenvolvimento e 875 ms em produção (187.266 e 114.286 registros/s); pico de RSS do worker 374 e 373 MB |
+
 ## Testes executados na CI — Fase 3 (03/11/2026, commit `06ca88b`, [execução 41683893654](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41683893654), PR #2)
 
 | Verificação | Resultado |
@@ -131,7 +143,7 @@ A primeira execução ([41682378950](https://github.com/UyankDouglas/DATAFLOW-AN
 | Verificação manual no navegador | dashboard geral, filtros por valores e por faixa, construtor com prévia, salvar, reabrir e reorganizar; sem rolagem horizontal em 375 px nas quatro telas. Números conferidos com o CSV lido pelo Polars, fora do pipeline: somas por equipe, filtro "pago" com valor ≥ 1000 e comparação de dezembro |
 | `uv run python -m app.scripts.benchmark_pipeline …100000.csv` | KPIs em 0,04–0,05 s; por categoria com "Outros" em 0,05–0,08 s; série mensal em 0,05 s; comparação entre períodos em 0,05–0,09 s |
 
-**Ainda não validado (depende da CI):** suíte contra PostgreSQL com a migration 0004, `alembic check` no PostgreSQL e os E2E da Fase 4 com Celery, MinIO e Redis reais, em desenvolvimento e em produção.
+Validação na CI: ver "Testes executados na CI — Fase 4" ([execução 41699024371](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41699024371)).
 
 **Corrigido durante a verificação:**
 - o construtor reenviava a posição dos widgets salvos ao editar, e a API recusava;
@@ -247,8 +259,7 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 
 ## Próxima tarefa
 
-1. **Validar a Fase 4 na CI**: commit e PR da branch `fase-4-bi` quando o usuário pedir; registrar aqui a execução (PostgreSQL com a migration 0004, `alembic check`, E2E de desenvolvimento e de produção).
-2. **Fase 5 — Relatórios, exportações e administração**, conforme o prompt mestre:
+1. **Fase 5 — Relatórios, exportações e administração**, conforme o prompt mestre:
    - tela **Relatórios**: dataset, versão, filtros personalizados, indicadores agregados e comparação entre períodos, reaproveitando `analytics/aggregate.py`;
    - **exportações CSV e XLSX** dos dados tratados e dos relatórios, em jobs assíncronos, com histórico e aviso quando o arquivo estiver pronto;
    - segurança das exportações: autorização, limite de volume, auditoria, proteção contra formula injection, nomes seguros, armazenamento temporário com expiração e sem URL pública permanente;
