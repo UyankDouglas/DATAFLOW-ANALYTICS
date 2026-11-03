@@ -9,8 +9,8 @@ Documento de retomada. Atualizado em **03/11/2026**.
 | 1 — Fundação e primeiro dataset | ✅ Concluída e validada na CI com a infraestrutura real, nos Compose de desenvolvimento e de produção |
 | 2 — Motor ETL (XLSX, transformações, deduplicação, reprocessamento) | ✅ Concluída, validada na CI com a infraestrutura real e mesclada na `main` ([PR #1](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/1)) |
 | 3 — Qualidade e Data Explorer completo | ✅ Concluída e validada na CI com a infraestrutura real ([PR #2](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/2)) |
-| 4 — Business Intelligence (dashboards) | ✅ Concluída; os 4 jobs da CI passaram no [PR #3](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/3) (commit `f403a9e`), ainda **não mesclado** e com os números da execução ainda não registrados aqui |
-| 5 — Relatórios, exportações e administração | ✅ Implementada e validada localmente (sem Docker), na branch `fase-5-relatorios` (criada a partir da `fase-4-bi`), ainda **sem commit**. Falta a validação na CI |
+| 4 — Business Intelligence (dashboards) | ✅ Concluída e validada na CI com a infraestrutura real ([PR #3](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/3)) |
+| 5 — Relatórios, exportações e administração | ✅ Implementada e validada localmente (sem Docker); [PR #4](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/4) aberto, aguardando a CI |
 | 6 — Qualidade e produção | Pendente |
 
 ## Fase 1 — concluído
@@ -106,6 +106,18 @@ Documento de retomada. Atualizado em **03/11/2026**.
 - [x] **Benchmark**: `benchmark_pipeline` mede a exportação da versão inteira em CSV e XLSX.
 - [x] **Documentação**: `docs/administration.md` (novo), ADR-023 a ADR-025, `security.md`, `architecture.md`, `deploy.md`, `benchmark.md`, README; capturas 16, 17 e 18, e as demais regeneradas.
 
+## Testes executados na CI — Fase 4 (03/11/2026, commit `f403a9e`, [execução 41699024371](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41699024371), PR #3)
+
+| Verificação | Resultado |
+| --- | --- |
+| Backend contra **PostgreSQL 17 real** | **169 passed**, cobertura de 89% |
+| Alembic `upgrade` (inclui `0003 -> 0004`) → `check` → `downgrade` → `upgrade` no PostgreSQL | OK; `check`: "No new upgrade operations detected" |
+| Ruff e mypy estrito | sem problemas (86 arquivos) |
+| Frontend: formatação, lint, tipos, Vitest, build | OK, **84 passed** |
+| E2E em desenvolvimento, com Celery, MinIO e Redis reais | **13 passed**, 1 ignorado (capturas de tela), sem retentativas — inclui `dashboards.spec.ts` (dashboard geral; criar, filtrar, reabrir e reorganizar) |
+| E2E em produção, em HTTPS | **12 passed**, 2 ignorados (e-mail e capturas de tela), sem retentativas |
+| CSV de 100 mil linhas pela interface | job de 534 ms em desenvolvimento e 875 ms em produção (187.266 e 114.286 registros/s); pico de RSS do worker 374 e 373 MB |
+
 ## Testes executados na CI — Fase 3 (03/11/2026, commit `06ca88b`, [execução 41683893654](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41683893654), PR #2)
 
 | Verificação | Resultado |
@@ -184,7 +196,7 @@ A primeira execução ([41682378950](https://github.com/UyankDouglas/DATAFLOW-AN
 | Verificação manual no navegador | dashboard geral, filtros por valores e por faixa, construtor com prévia, salvar, reabrir e reorganizar; sem rolagem horizontal em 375 px nas quatro telas. Números conferidos com o CSV lido pelo Polars, fora do pipeline: somas por equipe, filtro "pago" com valor ≥ 1000 e comparação de dezembro |
 | `uv run python -m app.scripts.benchmark_pipeline …100000.csv` | KPIs em 0,04–0,05 s; por categoria com "Outros" em 0,05–0,08 s; série mensal em 0,05 s; comparação entre períodos em 0,05–0,09 s |
 
-**Ainda não validado (depende da CI):** suíte contra PostgreSQL com a migration 0004, `alembic check` no PostgreSQL e os E2E da Fase 4 com Celery, MinIO e Redis reais, em desenvolvimento e em produção.
+Validação na CI: ver "Testes executados na CI — Fase 4" ([execução 41699024371](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41699024371)).
 
 **Corrigido durante a verificação:**
 - o construtor reenviava a posição dos widgets salvos ao editar, e a API recusava;
@@ -307,13 +319,12 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 
 ## Próxima tarefa
 
-1. **Registrar e mesclar a Fase 4**: ler os números da execução da CI do PR #3 (commit `f403a9e`) e registrá-los aqui e no README; mesclar o PR #3 quando o usuário decidir.
-2. **Validar a Fase 5 na CI**: commit e PR da branch `fase-5-relatorios` (empilhada sobre a `fase-4-bi`) quando o usuário pedir; registrar a execução:
+1. **Validar a Fase 5 na CI** ([PR #4](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/4)) e registrar a execução:
    - PostgreSQL com a migration 0005 e `alembic check`;
    - exportações com MinIO e Celery reais;
    - convite com o Mailpit;
    - E2E em produção.
-3. **Fase 6 — Qualidade e produção**, conforme o prompt mestre:
+2. **Fase 6 — Qualidade e produção**, conforme o prompt mestre:
    - testes ampliados (unidade, integração e E2E de ponta a ponta: login → upload → preview → configuração → processamento → qualidade → dashboard → exportação);
    - benchmarks com a infraestrutura real (1 milhão de linhas, XLSX perto de 25 MB, exportações nos limites);
    - revisão de segurança e de performance;
