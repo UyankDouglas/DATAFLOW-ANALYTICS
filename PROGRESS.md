@@ -9,8 +9,8 @@ Documento de retomada. Atualizado em **03/11/2026**.
 | 1 — Fundação e primeiro dataset | ✅ Concluída e validada na CI com a infraestrutura real, nos Compose de desenvolvimento e de produção |
 | 2 — Motor ETL (XLSX, transformações, deduplicação, reprocessamento) | ✅ Concluída, validada na CI com a infraestrutura real e mesclada na `main` ([PR #1](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/1)) |
 | 3 — Qualidade e Data Explorer completo | ✅ Concluída e validada na CI com a infraestrutura real ([PR #2](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/2)) |
-| 4 — Business Intelligence (dashboards) | ✅ Implementada e validada localmente (sem Docker), na branch `fase-4-bi`, ainda **sem commit**. Falta a validação na CI |
-| 5 — Relatórios, exportações e administração | ⏳ Próxima |
+| 4 — Business Intelligence (dashboards) | ✅ Concluída; os 4 jobs da CI passaram no [PR #3](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/3) (commit `f403a9e`), ainda **não mesclado** e com os números da execução ainda não registrados aqui |
+| 5 — Relatórios, exportações e administração | ✅ Implementada e validada localmente (sem Docker), na branch `fase-5-relatorios` (criada a partir da `fase-4-bi`), ainda **sem commit**. Falta a validação na CI |
 | 6 — Qualidade e produção | Pendente |
 
 ## Fase 1 — concluído
@@ -77,6 +77,35 @@ Documento de retomada. Atualizado em **03/11/2026**.
 - [x] **Benchmark**: `benchmark_pipeline` mede KPIs, agrupamento com "Outros", série mensal e comparação entre períodos.
 - [x] **Documentação**: `docs/dashboards.md` (novo), ADR-021 e ADR-022, `security.md`, `architecture.md`, `benchmark.md`, README; capturas 13, 14 e 15, e as demais regeneradas.
 
+## Fase 5 — concluído
+
+- [x] **Exportações em segundo plano** (`models/export.py` `ExportJob`, `services/export_service.py`, `services/export_runner.py`, tarefa `exports.run`, migration 0005 aditiva):
+  - registros tratados (filtros, busca, colunas e ordenação do explorer, mais os grupos de filtros da tela) ou um relatório agregado;
+  - CSV para Excel em português, CSV padrão ou XLSX;
+  - volume conferido antes de enfileirar (500 mil em CSV, 100 mil em XLSX, 3 em andamento por workspace);
+  - arquivo no MinIO com validade e download só pela API, com auditoria;
+  - expiração e recuperação pelo beat (ADR-023).
+- [x] **Proteção contra formula injection** nas exportações (`processing/export_writers.py`): apóstrofo em texto iniciado por `=`, `+`, `-`, `@`, tab, CR ou variantes de largura total; no XLSX, texto sempre como texto e caracteres de controle removidos; números, datas e booleanos tipados.
+- [x] **Relatórios**: agrupamento, até 6 medidas, filtros e comparação entre períodos, reaproveitando `analytics/aggregate.py`; exportação do relatório (até 10 mil grupos) e dos registros filtrados.
+- [x] **Membros e convites** (`services/members_service.py`, `WorkspaceInvitation`):
+  - convite por e-mail com hash do token e validade de 7 dias, enviado pelo worker (`email.invitation`);
+  - aceite só pela conta do e-mail convidado, com troca de perfil e remoção;
+  - proteção do último administrador e limite de 50 convites por hora (ADR-024).
+- [x] **Permissões efetivas**: a configuração "visualizadores podem exportar" concede `data:export` ao Visualizador, recalculado a cada requisição e exposto em `/auth/me`.
+- [x] **Auditoria consultável** (`GET /audit`, só Administrador): filtros por ação exata ou categoria e por período, paginação; rótulos em português na tela.
+- [x] **Configurações do workspace** (`workspaces.settings`): nome, validade das exportações, exportação por visualizadores e retenção dos originais, com auditoria do antes e depois.
+- [x] **Retenção dos originais** (`services/retention_service.py`, beat a cada 6 h): apaga originais mais antigos que o prazo, nunca de datasets sem versão ou em processamento; pré-visualização e reprocessamento respondem 410 `original_purged`; aviso no detalhe do dataset (ADR-025).
+- [x] **Exclusão controlada** (`services/deletion_service.py`):
+  - impacto mostrado antes; exclusão do dataset confirmada pelo nome;
+  - bloqueio com processamento ou exportação em andamento, versão fixada por dashboard ou única versão;
+  - ordem explícita no banco e limpeza do MinIO e do cache depois; a versão anterior vira a atual quando necessário (ADR-025).
+- [x] **Interface**:
+  - telas Relatórios, Exportações (histórico com atualização automática), Usuários e permissões (convites, perfis, remoção), Auditoria, Configurações e a página do convite (`/convite`, com cadastro e retorno);
+  - botão Exportar no Data Explorer e diálogos de exclusão no detalhe do dataset.
+  - Nada mais aparece como "Em desenvolvimento".
+- [x] **Benchmark**: `benchmark_pipeline` mede a exportação da versão inteira em CSV e XLSX.
+- [x] **Documentação**: `docs/administration.md` (novo), ADR-023 a ADR-025, `security.md`, `architecture.md`, `deploy.md`, `benchmark.md`, README; capturas 16, 17 e 18, e as demais regeneradas.
+
 ## Testes executados na CI — Fase 3 (03/11/2026, commit `06ca88b`, [execução 41683893654](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41683893654), PR #2)
 
 | Verificação | Resultado |
@@ -117,6 +146,30 @@ A primeira execução ([41682378950](https://github.com/UyankDouglas/DATAFLOW-AN
 | Borda de produção | HTTP responde 308 para HTTPS; cookies `Secure`; portas 5432, 6379, 8000, 8025, 8080, 9000 e 9001 fechadas; Redis responde `NOAUTH` sem senha |
 | E2E em produção | **5 passed**, 2 ignorados (e-mail, pois produção não tem Mailpit, e capturas de tela) |
 | Fluxo completo medido | job de 100 mil linhas entre 741 ms e 1.046 ms em 3 execuções; detalhes em `docs/benchmark.md` |
+
+## Testes executados localmente — Fase 5 (03/11/2026, Windows 10, sem Docker)
+
+| Comando | Resultado |
+| --- | --- |
+| `cd backend && uv run pytest --cov=app` | **205 passed** (36 novos: `test_export_writers.py` ×13, `test_exports_api.py` ×11, `test_members_api.py` ×5, `test_admin_api.py` ×7), cobertura de 89% |
+| `uv run ruff format --check . && uv run ruff check .` / `uv run mypy app` | sem problemas (99 arquivos no mypy) |
+| Alembic `upgrade head` → `downgrade 0004` → `upgrade head` + `check` no SQLite; `upgrade 0004:0005 --sql` para PostgreSQL | OK (`DEFAULT '{}'` na coluna `settings`; o `check` não aponta nada da 0005) |
+| `cd apps/web && pnpm test` | **99 passed** (28 arquivos; 15 novos); lint, typecheck, format e build OK |
+| `cd e2e && E2E_BASE_URL=http://localhost:5173 pnpm test` | **14 passed**, 4 ignorados. Os ignorados: convite e recuperação de senha precisam do Mailpit, o limite do proxy precisa do Caddy, as capturas são sob demanda. Novos: `exports.spec.ts` ×2 (explorer → CSV filtrado conferido linha a linha, outro workspace recebe 404; relatório → XLSX) e `admin.spec.ts` (configurações, auditoria e exclusão controlada) |
+| `CAPTURE_SCREENSHOTS=1 … pnpm test screenshots` | 18 capturas em `docs/screenshots/` |
+| Verificação manual no navegador | relatório agrupado, exportação XLSX pronta e baixada (assinatura `PK`, `no-store`, contagem de downloads), convite enviado → link → "Criar conta" → volta ao convite → aceito como Analista, auditoria do fluxo inteiro, configurações, diálogo de exclusão com o impacto |
+| `uv run python -m app.scripts.benchmark_pipeline …100000.csv` | exportação de 100 mil registros: CSV 1,6–2,0 s; XLSX 23,5–28,6 s |
+
+**Ainda não validado (depende da CI):**
+- suíte contra PostgreSQL com a migration 0005 e `alembic check` no PostgreSQL;
+- exportações com MinIO e Celery reais;
+- o E2E do convite com o e-mail real no Mailpit, em desenvolvimento;
+- os E2E da Fase 5 em produção.
+
+**Corrigido durante a verificação:**
+- o aviso da tela Exportações quebrava em pedaços;
+- a coluna de detalhes da auditoria invadia a do IP (ids agora com 8 caracteres);
+- o teste E2E lia a contagem do explorer antes da resposta filtrada.
 
 ## Testes executados localmente — Fase 4 (03/11/2026, Windows 10, sem Docker)
 
@@ -212,6 +265,7 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 | Pipeline | `backend/app/processing/{inspection,inference,reader,xlsx,convert,transforms,pipeline,types}.py` |
 | Worker | `backend/app/services/job_runner.py`, `backend/app/tasks/*` |
 | Consultas e qualidade | `backend/app/analytics/{query,quality,cache}.py`, `backend/app/services/quality_service.py`, `backend/app/api/routes/quality.py` |
+| Exportações e administração | `backend/app/services/{export,members,retention,deletion}_service.py`, `backend/app/services/export_runner.py`, `backend/app/processing/export_writers.py`, `backend/app/api/routes/{exports,audit,workspaces}.py`, `apps/web/src/features/admin/`, `apps/web/src/pages/{reports,exports,audit,settings}/` |
 | BI e dashboards | `backend/app/analytics/aggregate.py`, `backend/app/services/{analytics,dashboards}_service.py`, `backend/app/api/routes/dashboards.py`, `backend/app/schemas/{analytics,dashboard}.py`, `apps/web/src/features/dashboards/`, `apps/web/src/pages/dashboards/` |
 | Frontend | `apps/web/src/app/router.tsx`, `apps/web/src/pages/**`, `apps/web/src/features/**` (inclui `transformations/`), `apps/web/src/services/api-client.ts` |
 | Infra | `docker-compose.yml`, `docker-compose.prod.yml`, `docker/**`, `.github/workflows/ci.yml` |
@@ -231,6 +285,9 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 - Relatório de qualidade persistido por versão, só com agregados; valores de texto lidos do Parquet sob demanda (ADR-019). Mudar a fórmula exige incrementar `FORMULA_VERSION`.
 - Explorer com os mesmos operadores das regras de filtro, busca literal (`contains`) e tempo-limite de 10 s (ADR-020).
 - Consultas analíticas de vocabulário fechado, recalculadas a cada abertura, sem resultados guardados; "Outros" sobre os registros restantes; séries sem corte (ADR-021).
+- Exportações: `ExportJob` próprio, volume conferido antes de enfileirar, arquivo temporário no MinIO e download só pela API; formula injection neutralizada com apóstrofo e texto tipado no XLSX (ADR-023).
+- Convites só com hash do token e aceite pelo e-mail convidado; permissões efetivas = perfil + concessões das configurações do workspace; nunca sem administrador (ADR-024).
+- Exclusão com impacto antes, ordem explícita e limpeza do armazenamento depois do commit; retenção só de originais (ADR-025).
 - Dashboards guardam definições; versão nula acompanha a atual; tudo é revalidado ao salvar; widgets mantêm o id ao reorganizar (ADR-022). As regras por tipo de gráfico ficam no backend (`check_chart_rules`) e são espelhadas no frontend (`features/dashboards/rules.ts`) só para guiar a edição.
 
 ## Erros conhecidos / limitações
@@ -243,13 +300,22 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 - Deduplicação mantém chave e número do registro da versão inteira em memória; não medida acima de 100 mil registros.
 - A prévia de transformações vê só os primeiros 200 registros (a análise de duplicidades da versão inteira é separada).
 - Excluir um dataset ainda não existe na interface; conjuntos de regras e versões seguem o dataset por `ON DELETE CASCADE`.
-- Dashboards: vale a última gravação quando duas pessoas editam ao mesmo tempo; reorganização por setas (sem arrastar e soltar); consultas medidas até 100 mil registros. A exclusão controlada de versões (Fase 5) precisa tratar versões fixadas por dashboards (FK sem `ON DELETE`).
+- Dashboards: vale a última gravação quando duas pessoas editam ao mesmo tempo; reorganização por setas (sem arrastar e soltar); consultas medidas até 100 mil registros. Versões fixadas por dashboards não podem ser excluídas (FK sem `ON DELETE`; a tela explica).
+- Exportação XLSX lenta (≈ 3,6 mil registros/s, openpyxl em Python), por isso limitada a 100 mil registros.
+- Objetos órfãos no MinIO quando a remoção falha depois do commit (ou o commit falha depois do envio) ainda não têm limpeza periódica.
+- O nome sugerido do arquivo exportado usa o horário UTC.
 
 ## Próxima tarefa
 
-1. **Validar a Fase 4 na CI**: commit e PR da branch `fase-4-bi` quando o usuário pedir; registrar aqui a execução (PostgreSQL com a migration 0004, `alembic check`, E2E de desenvolvimento e de produção).
-2. **Fase 5 — Relatórios, exportações e administração**, conforme o prompt mestre:
-   - tela **Relatórios**: dataset, versão, filtros personalizados, indicadores agregados e comparação entre períodos, reaproveitando `analytics/aggregate.py`;
-   - **exportações CSV e XLSX** dos dados tratados e dos relatórios, em jobs assíncronos, com histórico e aviso quando o arquivo estiver pronto;
-   - segurança das exportações: autorização, limite de volume, auditoria, proteção contra formula injection, nomes seguros, armazenamento temporário com expiração e sem URL pública permanente;
-   - gestão de usuários e permissões, tela de auditoria, configurações do workspace e retenção de arquivos, incluindo a exclusão controlada de versões fixadas por dashboards.
+1. **Registrar e mesclar a Fase 4**: ler os números da execução da CI do PR #3 (commit `f403a9e`) e registrá-los aqui e no README; mesclar o PR #3 quando o usuário decidir.
+2. **Validar a Fase 5 na CI**: commit e PR da branch `fase-5-relatorios` (empilhada sobre a `fase-4-bi`) quando o usuário pedir; registrar a execução:
+   - PostgreSQL com a migration 0005 e `alembic check`;
+   - exportações com MinIO e Celery reais;
+   - convite com o Mailpit;
+   - E2E em produção.
+3. **Fase 6 — Qualidade e produção**, conforme o prompt mestre:
+   - testes ampliados (unidade, integração e E2E de ponta a ponta: login → upload → preview → configuração → processamento → qualidade → dashboard → exportação);
+   - benchmarks com a infraestrutura real (1 milhão de linhas, XLSX perto de 25 MB, exportações nos limites);
+   - revisão de segurança e de performance;
+   - limpeza de objetos órfãos;
+   - deploy documentado e verificado.

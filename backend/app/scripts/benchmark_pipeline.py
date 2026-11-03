@@ -3,7 +3,8 @@
 Mede as mesmas etapas executadas pelo worker: inspeção do arquivo, leitura/validação,
 conversão de tipos, escrita Parquet e uma consulta paginada com DuckDB. Também mede o relatório
 de qualidade, uma consulta do explorer e as consultas analíticas dos dashboards (KPIs,
-agrupamento por categoria, série mensal e comparação entre períodos).
+agrupamento por categoria, série mensal e comparação entre períodos) e as exportações completas da
+versão em CSV e XLSX, com o mesmo leitor e os mesmos escritores do worker.
 
     uv run python -m app.scripts.benchmark_pipeline ../samples/generated/vendas_100000.csv
 """
@@ -16,6 +17,7 @@ import sys
 import tempfile
 import time
 import tracemalloc
+from collections.abc import Iterator
 from pathlib import Path
 
 import duckdb
@@ -23,7 +25,14 @@ import polars as pl
 
 from app.analytics.aggregate import AggregateResult, AggregateSpec, plan_aggregate, run_aggregate
 from app.analytics.quality import compute_quality
-from app.analytics.query import build_where, count_rows, fetch_page
+from app.analytics.query import (
+    build_where,
+    count_rows,
+    fetch_page,
+    quote_identifier,
+    sandboxed_connection,
+)
+from app.processing.export_writers import ExportColumn, write_csv, write_xlsx
 from app.processing.inference import infer_columns
 from app.processing.inspection import StreamInspector, parse_sample
 from app.processing.pipeline import PipelineResult, run_csv_pipeline, specs_from_columns
@@ -92,6 +101,33 @@ def _bi_timings(data_path: Path, columns: list[ColumnConfig]) -> dict[str, float
                     "comparison": comparison,
                 }
             )
+    return timings
+
+
+def _export_timings(data_path: Path, columns: list[ColumnConfig], work: Path) -> dict[str, float]:
+    names = [c.name for c in columns]
+    export_columns = [ExportColumn(c.name, c.data_type, c.scale) for c in columns]
+
+    def rows() -> Iterator[tuple[object, ...]]:
+        con = sandboxed_connection(data_path.parent)
+        try:
+            cursor = con.execute(
+                f"SELECT {', '.join(quote_identifier(n) for n in names)} "  # noqa: S608
+                "FROM read_parquet($path) ORDER BY __df_row",
+                {"path": str(data_path)},
+            )
+            while batch := cursor.fetchmany(5_000):
+                yield from batch
+        finally:
+            con.close()
+
+    timings: dict[str, float] = {}
+    start = time.perf_counter()
+    write_csv(work / "exportacao.csv", export_columns, rows(), "excel_br")
+    timings["exportacao_csv_s"] = time.perf_counter() - start
+    start = time.perf_counter()
+    write_xlsx(work / "exportacao.xlsx", export_columns, rows(), "dados")
+    timings["exportacao_xlsx_s"] = time.perf_counter() - start
     return timings
 
 
@@ -197,6 +233,8 @@ def run(path: Path, batch_rows: int) -> dict[str, object]:
         # Fase 4: consultas dos dashboards, com as colunas que o usuário escolheria.
         bi = _bi_timings(result.data_path, columns)
         timings.update(bi)
+        # Fase 5: exportação da versão inteira, como o worker faz (leitura em lotes + escrita).
+        timings.update(_export_timings(result.data_path, columns, Path(tmp)))
         parquet_mb = result.data_path.stat().st_size / 1024 / 1024
 
     return {

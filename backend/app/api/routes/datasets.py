@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from urllib.parse import unquote
 
 import anyio
-from fastapi import APIRouter, Depends, Header, Query, Request, status
+from fastapi import APIRouter, Depends, Header, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import RequestContext, get_db, require
@@ -27,11 +27,13 @@ from app.schemas.dataset import (
     UploadOut,
     UploadResponse,
 )
+from app.schemas.deletion import DatasetImpact, DeleteDatasetRequest, VersionImpact
 from app.schemas.job import JobOut
 from app.schemas.quality import RowsQuery
 from app.services import (
     audit,
     datasets_service,
+    deletion_service,
     import_service,
     jobs_service,
     preview_service,
@@ -285,3 +287,60 @@ def get_rejected(
     return datasets_service.get_rejected_rows(
         db, ctx.workspace_id, dataset_id, version_id, page=page, page_size=page_size
     )
+
+
+@router.get(
+    "/{dataset_id}/deletion-impact",
+    response_model=DatasetImpact,
+    summary="O que seria apagado com o dataset (e se algo impede agora)",
+)
+def dataset_deletion_impact(
+    dataset_id: uuid.UUID,
+    ctx: RequestContext = Depends(require(Permission.DATASETS_DELETE)),
+    db: Session = Depends(get_db),
+) -> DatasetImpact:
+    return deletion_service.dataset_impact(db, ctx.workspace_id, dataset_id)
+
+
+@router.delete(
+    "/{dataset_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Exclui o dataset, suas versões, arquivos, dashboards e exportações",
+)
+def delete_dataset(
+    dataset_id: uuid.UUID,
+    data: DeleteDatasetRequest,
+    ctx: RequestContext = Depends(require(Permission.DATASETS_DELETE)),
+    db: Session = Depends(get_db),
+) -> Response:
+    deletion_service.delete_dataset(db, ctx, dataset_id, data.confirm_name)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    "/{dataset_id}/versions/{version_id}/deletion-impact",
+    response_model=VersionImpact,
+    summary="O que seria apagado com a versão (e se algo impede agora)",
+)
+def version_deletion_impact(
+    dataset_id: uuid.UUID,
+    version_id: uuid.UUID,
+    ctx: RequestContext = Depends(require(Permission.DATASETS_DELETE)),
+    db: Session = Depends(get_db),
+) -> VersionImpact:
+    return deletion_service.version_impact(db, ctx.workspace_id, dataset_id, version_id)
+
+
+@router.delete(
+    "/{dataset_id}/versions/{version_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Exclui uma versão (a anterior mais recente vira a atual, se for o caso)",
+)
+def delete_version(
+    dataset_id: uuid.UUID,
+    version_id: uuid.UUID,
+    ctx: RequestContext = Depends(require(Permission.DATASETS_DELETE)),
+    db: Session = Depends(get_db),
+) -> Response:
+    deletion_service.delete_version(db, ctx, dataset_id, version_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

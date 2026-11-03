@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { ExportMenu } from '@/features/admin/export-menu'
 import { ColumnChooser } from '@/features/datasets/column-chooser'
 import { DATA_TYPE_LABEL } from '@/features/datasets/column-form'
 import { CellValue } from '@/features/datasets/cell-value'
@@ -242,6 +243,25 @@ export function ExplorerPage() {
               >
                 <Columns3 /> Colunas ({visibleColumns.length}/{schema.length})
               </Button>
+              <ExportMenu
+                request={(format, style) => ({
+                  dataset_id: datasetId,
+                  version_id: selectedVersion?.id ?? null,
+                  kind: 'rows',
+                  format,
+                  csv_style: style,
+                  // A mesma consulta da tela: busca, filtros, colunas e ordenação.
+                  rows: {
+                    filters: applied.filters,
+                    match: applied.match,
+                    search: search || null,
+                    columns: chosenColumns,
+                    sort: sort?.id ?? null,
+                    direction: sort?.desc ? 'desc' : 'asc',
+                  },
+                })}
+                disabled={!selectedVersion || rows.data?.total === 0}
+              />
               {(filtered || chosenColumns) && (
                 <Button
                   variant="ghost"
@@ -344,8 +364,8 @@ export function ExplorerPage() {
                   <span className="text-muted-foreground">registros na versão</span>
                 )}
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Info className="size-3.5" /> Clique no cabeçalho para ordenar. O download do
-                  resultado chega com as exportações protegidas (Fase 5).
+                  <Info className="size-3.5" /> Clique no cabeçalho para ordenar. Use Exportar para
+                  baixar o resultado com estes filtros.
                 </span>
               </p>
               {rows.data.total === 0 ? (

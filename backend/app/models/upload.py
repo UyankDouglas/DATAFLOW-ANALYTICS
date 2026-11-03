@@ -31,4 +31,6 @@ class Upload(UUIDPrimaryKey, Base):
     # Resultado da inspeção no recebimento: encoding, delimitador, linhas estimadas...
     detection: Mapped[dict[str, Any]] = mapped_column(default=dict)
     upload_ms: Mapped[int | None]
+    # Original removido do armazenamento pela política de retenção (as versões ficam).
+    purged_at: Mapped[datetime | None]
     created_at: Mapped[datetime] = mapped_column(default=utcnow)

@@ -1,6 +1,7 @@
 """RBAC: cada perfil recebe um conjunto explícito de permissões verificadas no backend."""
 
 from enum import StrEnum
+from typing import Any
 
 from app.models.workspace import Role
 
@@ -50,3 +51,14 @@ def permissions_for(role: str) -> frozenset[Permission]:
         return ROLE_PERMISSIONS[Role(role)]
     except ValueError:
         return frozenset()
+
+
+def effective_permissions(
+    role: str, workspace_settings: dict[str, Any] | None
+) -> frozenset[Permission]:
+    """Permissões do perfil mais as concedidas pela configuração do workspace: o administrador
+    pode liberar exportações para visualizadores ("exportar somente quando autorizado")."""
+    granted = permissions_for(role)
+    if role == Role.VIEWER and (workspace_settings or {}).get("viewer_exports") is True:
+        return granted | {Permission.DATA_EXPORT}
+    return granted

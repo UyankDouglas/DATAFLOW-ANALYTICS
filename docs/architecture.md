@@ -24,11 +24,11 @@ flowchart TD
 | **apps/web** | SPA React + TypeScript. Consome apenas endpoints reais. Nunca mantém o dataset inteiro em memória: só a página atual. |
 | **Caddy** | Serve o build estático, aplica CSP e cabeçalhos de segurança, limita corpo de requisição e faz proxy de `/api` e `/health`. HTTPS automático em produção. |
 | **FastAPI** | Autenticação, RBAC, validação, upload em streaming, pré-visualização, criação de jobs e consultas. Não executa processamento pesado. |
-| **Celery worker** | Executa o pipeline de importação. Compartilha modelos, regras e serviços com a API (mesma imagem e mesmo pacote `app`). |
-| **Celery beat** | A cada 60 s recupera jobs interrompidos e reenfileira jobs cuja publicação na fila se perdeu. |
+| **Celery worker** | Executa importações, transformações, exportações (CSV/XLSX) e o envio de e-mails (redefinição de senha, convites). Compartilha modelos, regras e serviços com a API (mesma imagem e mesmo pacote `app`). |
+| **Celery beat** | A cada 60 s recupera jobs e exportações interrompidos ou não publicados; a cada 10 min apaga exportações vencidas; a cada 6 h aplica a retenção de originais. |
 | **PostgreSQL** | Fonte da verdade: usuários, workspaces, sessões, datasets, colunas, uploads, jobs (estado durável), versões, relatórios de qualidade e dashboards (só a definição dos widgets). |
 | **Redis** | Transporte da fila (sem backend de resultados) e contadores de rate limiting. |
-| **MinIO (S3)** | Arquivos originais e Parquet das versões. Bucket privado; não há URL pública. |
+| **MinIO (S3)** | Arquivos originais, Parquet das versões e exportações temporárias. Bucket privado; não há URL pública: downloads passam pela API. |
 | **DuckDB** | Consultas controladas sobre Parquet: paginação, filtros e busca do explorer, relatório de qualidade e as agregações dos dashboards (KPIs, grupos, séries e comparação entre períodos). |
 
 ## Estrutura do repositório
@@ -37,7 +37,7 @@ flowchart TD
 apps/web/            SPA (React, Vite, Tailwind, shadcn/ui)
   src/app            providers, router (code splitting por rota), QueryClient
   src/components     componentes compartilhados + ui/ (shadcn)
-  src/features       auth, datasets, jobs, transformations, quality, dashboards: API, hooks, componentes de domínio
+  src/features       auth, datasets, jobs, transformations, quality, dashboards, admin (exportações, membros, auditoria): API, hooks, componentes de domínio
   src/layouts        layout autenticado (sidebar/topbar) e de autenticação
   src/pages          telas
   src/services       cliente HTTP (CSRF, erros padronizados) e upload com progresso
@@ -47,8 +47,8 @@ backend/
   app/models         ORM SQLAlchemy 2
   app/schemas        contratos Pydantic da API
   app/repositories   consultas sempre filtradas por workspace
-  app/services       casos de uso (auth, upload, preview, importação, transformações, qualidade, análises, dashboards, jobs, armazenamento)
-  app/processing     pipeline puro (sem banco): inspeção, inferência, leitura CSV/XLSX, conversão, regras
+  app/services       casos de uso (auth, upload, preview, importação, transformações, qualidade, análises, dashboards, exportações, membros, retenção, exclusão, jobs, armazenamento)
+  app/processing     pipeline puro (sem banco): inspeção, inferência, leitura CSV/XLSX, conversão, regras, escrita de exportações
   app/analytics      DuckDB: consultas filtradas, agregações dos dashboards, relatório de qualidade e cache de Parquet
   app/tasks          Celery (app, tarefas, publicação)
   migrations/        Alembic

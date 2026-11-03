@@ -54,6 +54,12 @@ class Conflict(AppError):
     message = "A operação conflita com o estado atual do recurso."
 
 
+class Gone(AppError):
+    status_code = 410
+    code = "gone"
+    message = "O recurso não está mais disponível."
+
+
 class PayloadTooLarge(AppError):
     status_code = 413
     code = "payload_too_large"

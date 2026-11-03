@@ -16,6 +16,8 @@ class UploadOut(APIModel):
     sha256: str
     detection: dict[str, Any]
     upload_ms: int | None
+    # Apagado pela política de retenção (as versões publicadas continuam).
+    purged_at: datetime | None = None
     created_at: datetime
 
 

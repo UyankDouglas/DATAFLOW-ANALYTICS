@@ -12,9 +12,9 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.db import get_session_factory
 from app.core.errors import Forbidden, Unauthorized
-from app.core.permissions import Permission, permissions_for
+from app.core.permissions import Permission, effective_permissions
 from app.core.security import hash_token
-from app.models import User, UserSession, WorkspaceMember
+from app.models import User, UserSession, Workspace, WorkspaceMember
 from app.models.base import utcnow
 
 
@@ -84,20 +84,23 @@ def get_context(
     if workspace_id is None:
         raise Forbidden("Nenhum workspace ativo para esta sessão.", code="no_workspace")
     # O pertencimento é revalidado a cada requisição; o papel vem sempre do banco.
-    membership = db.scalar(
-        select(WorkspaceMember).where(
+    row = db.execute(
+        select(WorkspaceMember.role, Workspace.settings)
+        .join(Workspace, Workspace.id == WorkspaceMember.workspace_id)
+        .where(
             WorkspaceMember.workspace_id == workspace_id,
             WorkspaceMember.user_id == auth.user.id,
         )
-    )
-    if membership is None:
+    ).first()
+    if row is None:
         raise Forbidden("Você não pertence mais a este workspace.", code="not_a_member")
+    role, workspace_settings = row
     return RequestContext(
         user=auth.user,
         session=auth.session,
         workspace_id=workspace_id,
-        role=membership.role,
-        permissions=permissions_for(membership.role),
+        role=role,
+        permissions=effective_permissions(role, workspace_settings),
         ip=client_ip(request),
     )
 

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 
 import { Field } from '@/components/field'
@@ -15,6 +15,9 @@ import { ApiError, describeError } from '@/services/api-client'
 export function RegisterPage() {
   const register = useRegister()
   const navigate = useNavigate()
+  const location = useLocation()
+  // Vindo de um convite, volta para ele depois do cadastro.
+  const from = (location.state as { from?: string } | null)?.from ?? '/'
   const form = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -31,7 +34,7 @@ export function RegisterPage() {
     register.mutate(values, {
       onSuccess: (me) => {
         toast.success(`Bem-vindo(a), ${me.user.full_name.split(' ')[0]}! Workspace criado.`)
-        navigate('/', { replace: true })
+        navigate(from, { replace: true })
       },
       onError: (error) => {
         if (error instanceof ApiError) {

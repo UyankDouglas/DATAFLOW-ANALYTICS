@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.analytics.cache import local_file
 from app.core.config import get_settings
-from app.core.errors import NotFound, ServiceUnavailable, ValidationFailed
+from app.core.errors import Gone, NotFound, ServiceUnavailable, ValidationFailed
 from app.models import Dataset, DatasetVersion, Upload
 from app.processing.inference import ColumnInference, infer_columns
 from app.processing.inspection import FileRejected, SampleTable, parse_sample
@@ -35,6 +35,16 @@ class SampleAnalysis:
     xlsx: XlsxSample | None = None
 
 
+def ensure_original(upload: Upload) -> None:
+    """O original pode ter sido apagado pela política de retenção; as versões continuam."""
+    if upload.purged_at is not None:
+        raise Gone(
+            "O arquivo original foi apagado pela política de retenção do workspace. As versões "
+            "publicadas continuam disponíveis; para reprocessar do zero, envie o arquivo de novo.",
+            code="original_purged",
+        )
+
+
 def local_upload(upload: Upload) -> Path:
     """Cópia local do arquivo enviado (XLSX precisa do arquivo inteiro para ser aberto)."""
     return local_file(f"u-{upload.id}", upload.storage_key, upload.sha256, suffix=".xlsx")
@@ -53,6 +63,7 @@ def _read_csv(upload: Upload, options: ParseOptions) -> SampleTable:
 
 
 def read_sample(upload: Upload, options: ParseOptions) -> SampleAnalysis:
+    ensure_original(upload)
     settings = get_settings()
     xlsx: XlsxSample | None = None
     try:

@@ -51,12 +51,13 @@ test('login → upload → preview → processamento → resultado → explorer'
   await page.getByRole('button', { name: /valor_total/ }).click()
   await expect(page.getByRole('columnheader', { name: /valor_total/ })).toHaveAttribute('aria-sort', 'ascending')
 
-  // Visão geral reflete dados reais; módulos futuros aparecem como "Em desenvolvimento".
+  // Visão geral reflete dados reais; todos os módulos do menu já estão entregues.
   await page.goto('/')
   await expect(page.getByText('Registros publicados')).toBeVisible()
   await expect(page.getByText('1.000', { exact: true })).toBeVisible()
   await page.goto('/relatorios')
-  await expect(page.getByText('Em desenvolvimento')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Relatórios' })).toBeVisible()
+  await expect(page.getByText('Em desenvolvimento')).toHaveCount(0)
 })
 
 test('dataset com problemas: rejeições com motivo e valor original', async ({ page }) => {
