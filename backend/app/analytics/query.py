@@ -89,3 +89,55 @@ def fetch_page(
     finally:
         con.close()
     return Page(columns=selected, rows=rows)
+
+
+@dataclass
+class DuplicateSummary:
+    total_rows: int
+    distinct_keys: int
+    duplicate_rows: int
+    groups_with_duplicates: int
+    top_groups: list[dict[str, Any]]
+
+
+def duplicate_summary(path: Path, keys: list[str], *, top: int = 20) -> DuplicateSummary:
+    """Duplicidades da versão inteira pela chave escolhida (NULL agrupa com NULL)."""
+    columns = ", ".join(quote_identifier(k) for k in keys)
+    grouped = (
+        f"SELECT {columns}, COUNT(*) AS n, MIN(__df_row) AS first_row, MAX(__df_row) AS last_row, "  # noqa: S608 - identificadores validados
+        f"list(__df_row ORDER BY __df_row)[1:10] AS sample_rows "
+        f"FROM read_parquet($path) GROUP BY {columns}"
+    )
+    con = _connect(path.parent)
+    try:
+        totals = con.execute(
+            f"WITH g AS ({grouped}) SELECT COALESCE(SUM(n), 0), COUNT(*), "  # noqa: S608
+            "COALESCE(SUM(n - 1), 0), COUNT(*) FILTER (WHERE n > 1) FROM g",
+            {"path": str(path)},
+        ).fetchone()
+        assert totals is not None
+        top_rows = con.execute(
+            f"WITH g AS ({grouped}) SELECT * FROM g WHERE n > 1 "  # noqa: S608
+            "ORDER BY n DESC, first_row LIMIT $top",
+            {"path": str(path), "top": top},
+        ).fetchall()
+    finally:
+        con.close()
+    width = len(keys)
+    groups = [
+        {
+            "key": [to_json_value(v) for v in row[:width]],
+            "count": int(row[width]),
+            "first_row": int(row[width + 1]),
+            "last_row": int(row[width + 2]),
+            "sample_rows": [int(r) for r in row[width + 3]],
+        }
+        for row in top_rows
+    ]
+    return DuplicateSummary(
+        total_rows=int(totals[0]),
+        distinct_keys=int(totals[1]),
+        duplicate_rows=int(totals[2]),
+        groups_with_duplicates=int(totals[3]),
+        top_groups=groups,
+    )

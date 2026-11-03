@@ -2,7 +2,7 @@ import uuid
 from datetime import timedelta
 
 from sqlalchemy import Select, case, func, select, update
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.api.deps import RequestContext
 from app.core.errors import Conflict
@@ -12,6 +12,7 @@ from app.models import (
     Dataset,
     DatasetStatus,
     DatasetVersion,
+    JobKind,
     JobStatus,
     ProcessingJob,
     Upload,
@@ -23,8 +24,10 @@ from app.schemas.common import Page
 from app.schemas.job import JobOut, OverviewResponse
 from app.services import audit
 
+_SourceVersion = aliased(DatasetVersion)
 
-def _query() -> Select[ProcessingJob, str, str, str, int]:
+
+def _query() -> Select[ProcessingJob, str, str, str, int, int]:
     return (
         select(
             ProcessingJob,
@@ -32,12 +35,27 @@ def _query() -> Select[ProcessingJob, str, str, str, int]:
             Upload.original_filename,
             User.full_name,
             DatasetVersion.version_number,
+            _SourceVersion.version_number,
         )
         .join(Dataset, Dataset.id == ProcessingJob.dataset_id)
         .join(Upload, Upload.id == ProcessingJob.upload_id)
         .outerjoin(User, User.id == ProcessingJob.created_by_id)
         .outerjoin(DatasetVersion, DatasetVersion.id == ProcessingJob.result_version_id)
+        .outerjoin(_SourceVersion, _SourceVersion.id == ProcessingJob.source_version_id)
     )
+
+
+def _progress(job: ProcessingJob) -> float | None:
+    """Percentual sobre trabalho medido: bytes lidos (CSV) ou registros (transformação)."""
+    if job.status == JobStatus.SUCCEEDED:
+        return 100.0
+    if job.status not in RUNNING_STATUSES:
+        return None
+    if job.bytes_total and job.bytes_processed:
+        return round(min(job.bytes_processed / job.bytes_total, 1.0) * 100, 1)
+    if job.kind == JobKind.TRANSFORM and job.rows_total and job.rows_processed:
+        return round(min(job.rows_processed / job.rows_total, 1.0) * 100, 1)
+    return None  # XLSX: só a contagem de registros, sem percentual estimado
 
 
 def to_out(
@@ -46,17 +64,16 @@ def to_out(
     filename: str | None,
     user_name: str | None,
     version_number: int | None,
+    source_version_number: int | None = None,
 ) -> JobOut:
     out = JobOut.model_validate(job)
     out.dataset_name = dataset_name
     out.upload_filename = filename
     out.created_by_name = user_name
     out.result_version_number = version_number
+    out.source_version_number = source_version_number
     out.cancel_requested = job.cancel_requested_at is not None
-    if job.status == JobStatus.SUCCEEDED:
-        out.progress_percent = 100.0
-    elif job.bytes_total and job.status in RUNNING_STATUSES and job.bytes_processed:
-        out.progress_percent = round(min(job.bytes_processed / job.bytes_total, 1.0) * 100, 1)
+    out.progress_percent = _progress(job)
     return out
 
 
@@ -74,8 +91,11 @@ def list_jobs(
     page_size: int,
     status: str | None,
     dataset_id: uuid.UUID | None,
+    kind: str | None = None,
 ) -> Page[JobOut]:
     filters = [ProcessingJob.workspace_id == workspace_id]
+    if kind:
+        filters.append(ProcessingJob.kind == kind)
     if status == "active":
         filters.append(ProcessingJob.status.in_([JobStatus.QUEUED, *RUNNING_STATUSES]))
     elif status:

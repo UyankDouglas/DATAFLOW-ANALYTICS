@@ -14,6 +14,10 @@ class JobOut(APIModel):
     upload_id: uuid.UUID
     upload_filename: str | None = None
     kind: str
+    # Somente transformações: versão de entrada e conjunto de regras aplicado.
+    source_version_id: uuid.UUID | None = None
+    source_version_number: int | None = None
+    transformation_set_id: uuid.UUID | None = None
     status: str
     created_by_id: uuid.UUID | None
     created_by_name: str | None = None
@@ -27,6 +31,8 @@ class JobOut(APIModel):
     rows_total: int | None
     rows_valid: int | None
     rows_rejected: int | None
+    rows_filtered: int | None = None
+    rows_duplicates: int | None = None
     error_code: str | None
     error_message: str | None
     warnings: list[Any]

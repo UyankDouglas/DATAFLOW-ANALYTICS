@@ -108,6 +108,13 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: '/transformacoes',
+        lazy: page(
+          () => import('@/pages/transformations/transformations-page'),
+          (m) => m.TransformationsPage,
+        ),
+      },
+      {
         path: '/explorer',
         lazy: page(
           () => import('@/pages/datasets/explorer-page'),

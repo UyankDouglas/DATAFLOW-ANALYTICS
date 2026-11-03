@@ -2,19 +2,24 @@
 """Gerador reproduzível de datasets sintéticos para o DataFlow Analytics.
 
 Todos os dados são fictícios: nomes são combinações aleatórias de listas genéricas e não
-representam pessoas reais. Usa apenas a biblioteca padrão (roda sem instalar nada).
+representam pessoas reais. Os CSV usam apenas a biblioteca padrão (roda sem instalar nada);
+as planilhas XLSX (--xlsx) usam o openpyxl já instalado no backend.
 
 Exemplos:
     python scripts/generate_samples.py                       # 1.000, 10.000 e 100.000 linhas
     python scripts/generate_samples.py --rows 1000 --seed 7  # outro conjunto reproduzível
     python scripts/generate_samples.py --rows 1000000 --only vendas --out /tmp/perf
+    uv run --project backend python scripts/generate_samples.py --xlsx --rows 1000 --out samples
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import io
 import random
+import re
+import zipfile
 from collections.abc import Callable, Iterator
 from datetime import date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
@@ -186,13 +191,104 @@ def write_dataset(name: str, rows: int, seed: int, out_dir: Path) -> Path:
     return path
 
 
+XLSX_TITLE = "Relatório de vendas — dados fictícios gerados por scripts/generate_samples.py"
+FIXED_ZIP_TIME = (2025, 1, 1, 0, 0, 0)
+
+
+def _typed_sale(row: list[str]) -> list[object]:
+    """Linha de vendas com tipos de planilha: data, inteiro e decimal reais (não texto)."""
+    day, month, year = (int(part) for part in row[0].split("/"))
+    value = Decimal(row[6].replace(".", "").replace(",", "."))
+    return [date(year, month, day), *row[1:5], int(row[5]), value, *row[7:]]
+
+
+def _typed_call(row: list[str]) -> list[object]:
+    return [datetime.strptime(row[0], "%d/%m/%Y %H:%M:%S"), *row[1:5], int(row[5]), *row[6:]]
+
+
+def _normalize_zip(path: Path) -> None:
+    """Datas fixas nas entradas do ZIP: mesma seed e tamanho geram arquivos idênticos."""
+    entries: list[tuple[zipfile.ZipInfo, bytes]] = []
+    with zipfile.ZipFile(path) as source:
+        for info in source.infolist():
+            entries.append((info, source.read(info.filename)))
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as target:
+        for info, data in entries:
+            if info.filename == "docProps/core.xml":
+                # O openpyxl grava a hora do salvamento em "modified".
+                data = re.sub(
+                    rb"(<dcterms:modified[^>]*>)[^<]*(</dcterms:modified>)",
+                    rb"\g<1>2025-01-01T00:00:00Z\g<2>",
+                    data,
+                )
+            fixed = zipfile.ZipInfo(info.filename, date_time=FIXED_ZIP_TIME)
+            fixed.compress_type = zipfile.ZIP_DEFLATED
+            target.writestr(fixed, data)
+    path.write_bytes(buffer.getvalue())
+
+
+def write_workbook(rows: int, seed: int, out_dir: Path) -> Path:
+    """Planilha com as mesmas vendas do CSV equivalente, atendimentos e uma aba de fórmulas.
+
+    - "Vendas": título na linha 1, linha 2 vazia e cabeçalho na linha 3 (exercita a escolha
+      da linha do cabeçalho). Datas, quantidades e valores gravados como tipos reais.
+    - "Atendimentos": cabeçalho na linha 1, data e hora reais.
+    - "Totais": fórmulas SOMASE sem valor calculado salvo (o openpyxl não calcula). O DataFlow
+      não executa fórmulas, então essas linhas são rejeitadas com o motivo "fórmula sem valor".
+    """
+    try:
+        from openpyxl import Workbook
+    except ImportError as exc:  # pragma: no cover - depende do ambiente
+        raise SystemExit(
+            "XLSX requer openpyxl: uv run --project backend python scripts/generate_samples.py --xlsx"
+        ) from exc
+
+    workbook = Workbook(write_only=True)
+    sales_header, sales_factory, _ = DATASETS["vendas"]
+    calls_header, calls_factory, _ = DATASETS["atendimentos"]
+
+    sales = workbook.create_sheet("Vendas")
+    sales.append([XLSX_TITLE])
+    sales.append([])
+    sales.append(sales_header)
+    for row in sales_factory(random.Random(f"{seed}-vendas-{rows}"), rows):
+        sales.append(_typed_sale(row))
+
+    calls = workbook.create_sheet("Atendimentos")
+    calls.append(calls_header)
+    for row in calls_factory(random.Random(f"{seed}-atendimentos-{rows}"), rows):
+        calls.append(_typed_call(row))
+
+    totals = workbook.create_sheet("Totais")
+    totals.append(["equipe", "total_vendas"])
+    last = rows + 3
+    for index, team in enumerate(TEAMS, start=2):
+        totals.append([team, f"=SUMIF(Vendas!C4:C{last},A{index},Vendas!G4:G{last})"])
+
+    workbook.properties.creator = "scripts/generate_samples.py"
+    workbook.properties.created = datetime(2025, 1, 1)
+    workbook.properties.modified = datetime(2025, 1, 1)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"vendas_atendimentos_{rows}.xlsx"
+    workbook.save(path)
+    _normalize_zip(path)
+    return path
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--rows", type=int, nargs="+", default=[1_000, 10_000, 100_000])
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--only", choices=sorted(DATASETS), nargs="+")
     parser.add_argument("--out", type=Path, default=Path(__file__).resolve().parents[1] / "samples" / "generated")
+    parser.add_argument("--xlsx", action="store_true", help="gera planilhas XLSX em vez de CSV")
     args = parser.parse_args()
+    if args.xlsx:
+        for rows in args.rows:
+            path = write_workbook(rows, args.seed, args.out)
+            print(f"{path}  ({path.stat().st_size / 1024:,.0f} KB)")
+        return
     for name in args.only or sorted(DATASETS):
         for rows in args.rows:
             path = write_dataset(name, rows, args.seed, args.out)

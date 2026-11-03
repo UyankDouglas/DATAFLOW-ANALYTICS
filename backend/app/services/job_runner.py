@@ -1,4 +1,4 @@
-"""Execução de jobs de importação no worker.
+"""Execução de jobs no worker: importação (arquivo → versão) e transformação (versão → versão).
 
 Garantias:
 - Idempotência: o job só é executado após uma reivindicação condicional no PostgreSQL.
@@ -17,8 +17,10 @@ import time
 import uuid
 from dataclasses import dataclass
 from datetime import timedelta
+from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
 from sqlalchemy import or_, select, update
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
@@ -30,14 +32,25 @@ from app.models import (
     Dataset,
     DatasetStatus,
     DatasetVersion,
+    JobKind,
     JobStatus,
     ProcessingJob,
     Upload,
 )
 from app.models.base import utcnow
-from app.processing.pipeline import PipelineResult, Progress, file_sha256, run_csv_pipeline
+from app.processing.inspection import FileRejected
+from app.processing.pipeline import (
+    PipelineResult,
+    Progress,
+    file_sha256,
+    run_csv_pipeline,
+    run_transform_pipeline,
+    run_xlsx_pipeline,
+)
 from app.processing.reader import EncodingMismatch, HeaderMismatch
-from app.processing.types import ColumnConfig, ParseOptions
+from app.processing.transforms import RuleError, plan_rules, resolve_rules
+from app.processing.types import ColumnConfig, ColumnSpec, ParseOptions
+from app.processing.xlsx import check_container
 from app.services import audit, storage
 
 logger = logging.getLogger(__name__)
@@ -67,11 +80,24 @@ TRANSIENT_ERRORS: tuple[type[BaseException], ...] = (
 
 
 @dataclass
+class SourceVersion:
+    """Versão de entrada de uma transformação (imutável)."""
+
+    id: uuid.UUID
+    version_number: int
+    storage_key: str
+    checksum: str
+    row_count: int
+    column_schema: list[dict[str, Any]]
+
+
+@dataclass
 class JobSnapshot:
     id: uuid.UUID
     workspace_id: uuid.UUID
     dataset_id: uuid.UUID
     created_by_id: uuid.UUID | None
+    kind: str
     attempt: int
     max_attempts: int
     config: dict[str, Any]
@@ -80,6 +106,9 @@ class JobSnapshot:
     upload_key: str
     upload_sha256: str
     upload_ms: int | None
+    upload_format: str
+    transformation_set_id: uuid.UUID | None
+    source: SourceVersion | None
 
 
 def _peak_memory_mb() -> float | None:
@@ -129,11 +158,24 @@ def _snapshot(db: Session, job_id: uuid.UUID) -> JobSnapshot:
     assert job is not None
     upload = db.get(Upload, job.upload_id)
     assert upload is not None
+    source: SourceVersion | None = None
+    if job.kind == JobKind.TRANSFORM and job.source_version_id is not None:
+        version = db.get(DatasetVersion, job.source_version_id)
+        if version is not None and version.dataset_id == job.dataset_id:
+            source = SourceVersion(
+                id=version.id,
+                version_number=version.version_number,
+                storage_key=version.storage_key,
+                checksum=version.checksum_sha256,
+                row_count=version.row_count,
+                column_schema=list(version.column_schema),
+            )
     return JobSnapshot(
         id=job.id,
         workspace_id=job.workspace_id,
         dataset_id=job.dataset_id,
         created_by_id=job.created_by_id,
+        kind=job.kind,
         attempt=job.attempts,
         max_attempts=job.max_attempts,
         config=dict(job.config),
@@ -142,6 +184,9 @@ def _snapshot(db: Session, job_id: uuid.UUID) -> JobSnapshot:
         upload_key=upload.storage_key,
         upload_sha256=upload.sha256,
         upload_ms=upload.upload_ms,
+        upload_format=upload.file_format,
+        transformation_set_id=job.transformation_set_id,
+        source=source,
     )
 
 
@@ -161,16 +206,11 @@ def _set_status(job_id: uuid.UUID, status: JobStatus) -> None:
 
 
 def _report_progress(job_id: uuid.UUID, progress: Progress) -> None:
+    values: dict[str, Any] = {"rows_processed": progress.rows_processed, "heartbeat_at": utcnow()}
+    if progress.bytes_processed is not None:
+        values["bytes_processed"] = progress.bytes_processed
     with session_scope() as db:
-        db.execute(
-            update(ProcessingJob)
-            .where(ProcessingJob.id == job_id)
-            .values(
-                rows_processed=progress.rows_processed,
-                bytes_processed=progress.bytes_processed,
-                heartbeat_at=utcnow(),
-            )
-        )
+        db.execute(update(ProcessingJob).where(ProcessingJob.id == job_id).values(**values))
         cancel = db.scalar(
             select(ProcessingJob.cancel_requested_at).where(ProcessingJob.id == job_id)
         )
@@ -210,7 +250,7 @@ def _finish(
             _restore_dataset_status(db, job.dataset_id, failed=status == JobStatus.FAILED)
             audit.record(
                 db,
-                "import.failed" if status == JobStatus.FAILED else "import.cancelled",
+                f"{job.kind}.failed" if status == JobStatus.FAILED else f"{job.kind}.cancelled",
                 workspace_id=job.workspace_id,
                 entity_type="job",
                 entity_id=job.id,
@@ -218,12 +258,56 @@ def _finish(
             )
 
 
-def _publish(
-    snapshot: JobSnapshot,
-    result: PipelineResult,
-    columns: list[ColumnConfig],
-    timings: dict[str, int],
-) -> None:
+def _column_schema(snapshot: JobSnapshot, result: PipelineResult) -> list[dict[str, Any]]:
+    if snapshot.kind == JobKind.IMPORT:
+        columns = [ColumnConfig.model_validate(c) for c in snapshot.config["columns"]]
+        return [
+            {
+                "name": c.name,
+                "source_name": c.source_name,
+                "position": c.position,
+                "data_type": c.data_type.value,
+                "format": c.format,
+                "scale": c.scale,
+                "required": c.required,
+                "null_count": int(result.null_counts.get(c.name, 0)),
+            }
+            for c in columns
+        ]
+    return [
+        {
+            "name": spec.name,
+            "source_name": None,
+            "position": position,
+            "data_type": spec.data_type.value,
+            "format": spec.format,
+            "scale": spec.scale,
+            "null_count": int(result.null_counts.get(spec.name, 0)),
+        }
+        for position, spec in enumerate(result.output_schema)
+    ]
+
+
+def _lineage(snapshot: JobSnapshot) -> dict[str, Any]:
+    """O que gerou a versão: leitura do arquivo ou regras aplicadas sobre outra versão."""
+    if snapshot.kind == JobKind.IMPORT:
+        return {
+            "kind": JobKind.IMPORT.value,
+            "source_format": snapshot.upload_format,
+            "parse_options": snapshot.config["parse_options"],
+            "steps": snapshot.config.get("transformations", []),
+        }
+    assert snapshot.source is not None
+    return {
+        "kind": JobKind.TRANSFORM.value,
+        "source_version_id": str(snapshot.source.id),
+        "source_version_number": snapshot.source.version_number,
+        "transformation_set": snapshot.config.get("transformation_set"),
+        "steps": snapshot.config["rules"],
+    }
+
+
+def _publish(snapshot: JobSnapshot, result: PipelineResult, timings: dict[str, int]) -> None:
     assert result.data_path is not None
     prefix = storage.version_prefix(snapshot.workspace_id, snapshot.dataset_id, snapshot.id)
     data_key = prefix + "data.parquet"
@@ -262,26 +346,16 @@ def _publish(
             created_by_id=snapshot.created_by_id,
             storage_key=data_key,
             rejected_storage_key=rejected_key,
+            parent_version_id=snapshot.source.id if snapshot.source else None,
+            transformation_set_id=snapshot.transformation_set_id,
             row_count=result.rows_valid,
             rejected_count=result.rows_rejected,
+            filtered_count=result.rows_filtered,
+            duplicate_count=result.rows_duplicates,
             size_bytes=size,
             checksum_sha256=checksum,
-            column_schema=[
-                {
-                    "name": c.name,
-                    "source_name": c.source_name,
-                    "position": c.position,
-                    "data_type": c.data_type.value,
-                    "format": c.format,
-                    "scale": c.scale,
-                    "null_count": int(result.null_counts.get(c.name, 0)),
-                }
-                for c in columns
-            ],
-            transformations={
-                "parse_options": snapshot.config["parse_options"],
-                "steps": snapshot.config.get("transformations", []),
-            },
+            column_schema=_column_schema(snapshot, result),
+            transformations=_lineage(snapshot),
             reconciliation=result.reconciliation,
             rules_version=snapshot.rules_version,
         )
@@ -298,8 +372,13 @@ def _publish(
         job.rows_processed = result.rows_total
         job.rows_valid = result.rows_valid
         job.rows_rejected = result.rows_rejected
+        job.rows_filtered = result.rows_filtered
+        job.rows_duplicates = result.rows_duplicates
         job.bytes_processed = job.bytes_total or job.bytes_processed
         job.result_version_id = version.id
+        if result.warnings:
+            at = utcnow().isoformat()
+            job.warnings = [*job.warnings, *({"at": at, "message": w} for w in result.warnings)]
         job.rejection_summary = {
             "by_reason": dict(result.reasons),
             "by_column": dict(result.column_failures),
@@ -307,8 +386,9 @@ def _publish(
         }
         started = job.started_at or job.queued_at
         timings["total"] = int((job.finished_at - started).total_seconds() * 1000)
+        upload_timing = {"upload": snapshot.upload_ms} if snapshot.kind == JobKind.IMPORT else {}
         job.metrics = {
-            "timings_ms": {"upload": snapshot.upload_ms, **timings},
+            "timings_ms": {**upload_timing, **timings},
             "peak_memory_mb": _peak_memory_mb(),
             "rows_per_second": round(
                 result.rows_total / max(timings.get("total", 1) / 1000, 0.001), 1
@@ -325,6 +405,10 @@ def _publish(
                 "dataset_id": str(dataset.id),
                 "version_number": version.version_number,
                 "job_id": str(snapshot.id),
+                "kind": snapshot.kind,
+                "parent_version_id": str(version.parent_version_id)
+                if version.parent_version_id
+                else None,
             },
         )
 
@@ -344,7 +428,118 @@ def _discard_outputs(snapshot: JobSnapshot) -> None:
         logger.warning("discard_outputs_failed", extra={"job_id": str(snapshot.id)})
 
 
-def run_import_job(job_id: uuid.UUID) -> str:
+def _download_checked(key: str, target: Path, expected_sha256: str, what: str) -> None:
+    storage.download_file(key, target)
+    if file_sha256(target) != expected_sha256:
+        raise PermanentJobError("integridade", f"{what} não confere com o hash registrado.")
+
+
+def _run_import(snapshot: JobSnapshot, work: Path, timings: dict[str, int]) -> PipelineResult:
+    settings = get_settings()
+    options = ParseOptions.model_validate(snapshot.config["parse_options"])
+    columns = [ColumnConfig.model_validate(c) for c in snapshot.config["columns"]]
+
+    # Etapa: validação
+    t0 = time.perf_counter()
+    is_xlsx = snapshot.upload_format == "xlsx"
+    source = work / ("original.xlsx" if is_xlsx else "original")
+    _download_checked(snapshot.upload_key, source, snapshot.upload_sha256, "O arquivo original")
+    if is_xlsx:
+        try:
+            # Já validado no envio; a verificação se repete antes de abrir a planilha.
+            check_container(source, settings.xlsx_limits)
+        except FileRejected as exc:
+            raise PermanentJobError(exc.code, str(exc)) from exc
+    timings["download_validate"] = int((time.perf_counter() - t0) * 1000)
+
+    # Etapa: processamento
+    _set_status(snapshot.id, JobStatus.PROCESSING)
+    t1 = time.perf_counter()
+
+    def progress(value: Progress) -> None:
+        _report_progress(snapshot.id, value)
+
+    try:
+        if is_xlsx:
+            result = run_xlsx_pipeline(
+                source,
+                work / "out",
+                options,
+                columns,
+                snapshot.config.get("expected_header"),
+                first_column=int(snapshot.config.get("first_column") or 1),
+                batch_rows=settings.processing_batch_rows,
+                on_progress=progress,
+            )
+        else:
+            result = run_csv_pipeline(
+                source,
+                work / "out",
+                options,
+                columns,
+                snapshot.config.get("expected_header"),
+                batch_rows=settings.processing_batch_rows,
+                max_field_bytes=settings.max_field_bytes,
+                on_progress=progress,
+            )
+    except EncodingMismatch as exc:
+        raise PermanentJobError(
+            "encoding_invalido",
+            f"O arquivo contém bytes inválidos para o encoding {options.encoding} "
+            f"próximo à linha {exc.line}. Selecione outro encoding e processe novamente.",
+        ) from exc
+    except HeaderMismatch as exc:
+        raise PermanentJobError("cabecalho_divergente", str(exc)) from exc
+    except FileRejected as exc:
+        raise PermanentJobError(exc.code, str(exc)) from exc
+    timings["processing"] = int((time.perf_counter() - t1) * 1000)
+    return result
+
+
+def _run_transform(snapshot: JobSnapshot, work: Path, timings: dict[str, int]) -> PipelineResult:
+    settings = get_settings()
+    source = snapshot.source
+    if source is None:
+        raise PermanentJobError(
+            "versao_origem_indisponivel", "A versão de origem não existe mais neste dataset."
+        )
+    input_schema = [ColumnSpec.model_validate(c) for c in source.column_schema]
+    try:
+        plan = plan_rules(resolve_rules(snapshot.config["rules"]), input_schema)
+    except RuleError as exc:
+        raise PermanentJobError("regras_invalidas", str(exc)) from exc
+    except ValidationError as exc:
+        raise PermanentJobError(
+            "regras_invalidas", "A configuração das regras é inválida para esta versão."
+        ) from exc
+
+    t0 = time.perf_counter()
+    parquet = work / "source.parquet"
+    _download_checked(source.storage_key, parquet, source.checksum, "A versão de origem")
+    timings["download_validate"] = int((time.perf_counter() - t0) * 1000)
+
+    _set_status(snapshot.id, JobStatus.PROCESSING)
+    t1 = time.perf_counter()
+    result = run_transform_pipeline(
+        parquet,
+        work / "out",
+        input_schema,
+        plan,
+        batch_rows=settings.processing_batch_rows,
+        rows_total=source.row_count,
+        on_progress=lambda value: _report_progress(snapshot.id, value),
+    )
+    timings["processing"] = int((time.perf_counter() - t1) * 1000)
+    if result.rows_total != source.row_count:
+        raise PermanentJobError(
+            "reconciliacao",
+            f"A versão de origem registra {source.row_count} registros, "
+            f"mas {result.rows_total} foram lidos; nada foi publicado.",
+        )
+    return result
+
+
+def run_job(job_id: uuid.UUID) -> str:
     settings = get_settings()
     with session_scope() as db:
         job = db.get(ProcessingJob, job_id)
@@ -362,46 +557,14 @@ def run_import_job(job_id: uuid.UUID) -> str:
         return "cancelled"
 
     work = settings.temp_dir / f"job-{job_id}-{snapshot.attempt}"
-    log_extra = {"job_id": str(job_id), "attempt": snapshot.attempt}
+    log_extra = {"job_id": str(job_id), "attempt": snapshot.attempt, "kind": snapshot.kind}
     logger.info("job_started", extra=log_extra)
     try:
-        options = ParseOptions.model_validate(snapshot.config["parse_options"])
-        columns = [ColumnConfig.model_validate(c) for c in snapshot.config["columns"]]
         timings: dict[str, int] = {}
-
-        # Etapa: validação
-        t0 = time.perf_counter()
-        source = work / "original"
-        storage.download_file(snapshot.upload_key, source)
-        if file_sha256(source) != snapshot.upload_sha256:
-            raise PermanentJobError(
-                "integridade", "O arquivo original não confere com o hash registrado no envio."
-            )
-        timings["download_validate"] = int((time.perf_counter() - t0) * 1000)
-
-        # Etapa: processamento
-        _set_status(job_id, JobStatus.PROCESSING)
-        t1 = time.perf_counter()
-        try:
-            result = run_csv_pipeline(
-                source,
-                work / "out",
-                options,
-                columns,
-                snapshot.config.get("expected_header"),
-                batch_rows=settings.processing_batch_rows,
-                max_field_bytes=settings.max_field_bytes,
-                on_progress=lambda progress: _report_progress(job_id, progress),
-            )
-        except EncodingMismatch as exc:
-            raise PermanentJobError(
-                "encoding_invalido",
-                f"O arquivo contém bytes inválidos para o encoding {options.encoding} "
-                f"próximo à linha {exc.line}. Selecione outro encoding e processe novamente.",
-            ) from exc
-        except HeaderMismatch as exc:
-            raise PermanentJobError("cabecalho_divergente", str(exc)) from exc
-        timings["processing"] = int((time.perf_counter() - t1) * 1000)
+        if snapshot.kind == JobKind.TRANSFORM:
+            result = _run_transform(snapshot, work, timings)
+        else:
+            result = _run_import(snapshot, work, timings)
         timings.update({f"processing_{k}": v for k, v in result.timings_ms.items()})
         if not result.reconciliation["consistent"]:
             raise PermanentJobError(
@@ -410,7 +573,7 @@ def run_import_job(job_id: uuid.UUID) -> str:
 
         # Etapa: salvamento e publicação
         _set_status(job_id, JobStatus.SAVING)
-        _publish(snapshot, result, columns, timings)
+        _publish(snapshot, result, timings)
         logger.info("job_succeeded", extra={**log_extra, "rows": result.rows_total})
         return "succeeded"
     except JobCancelled:
@@ -454,7 +617,7 @@ def run_import_job(job_id: uuid.UUID) -> str:
 
 def recover_jobs() -> dict[str, int]:
     """Recupera jobs interrompidos e reenfileira jobs cuja publicação na fila se perdeu."""
-    from app.tasks.dispatch import enqueue_import
+    from app.tasks.dispatch import enqueue_job
 
     settings = get_settings()
     now = utcnow()
@@ -511,7 +674,7 @@ def recover_jobs() -> dict[str, int]:
         to_enqueue.extend(job_id for job_id in lost if job_id not in to_enqueue)
 
     for job_id in to_enqueue:
-        if enqueue_import(job_id):
+        if enqueue_job(job_id):
             with session_scope() as db:
                 db.execute(
                     update(ProcessingJob)

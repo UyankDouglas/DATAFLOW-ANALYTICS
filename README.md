@@ -1,16 +1,28 @@
 # DataFlow Analytics
 
-Plataforma de engenharia de dados e Business Intelligence: transforma planilhas CSV brutas em datasets tratados, versionados e consultáveis — com rastreabilidade de cada registro recebido.
+Plataforma de engenharia de dados e Business Intelligence: transforma planilhas CSV e XLSX brutas em datasets tratados, versionados e consultáveis — com rastreabilidade de cada registro recebido.
 
-> **Status:** Fase 1 de 6 concluída (fundação e primeiro dataset). Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
+> **Status:** Fases 1 e 2 de 6 implementadas. A Fase 1 (fundação e primeiro dataset) foi validada na CI com a infraestrutura real; a Fase 2 (motor ETL) foi validada localmente, sem Docker, e ainda não passou pela CI. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
 
 ![Visão geral](docs/screenshots/02-visao-geral.png)
 
 ## Problema resolvido
 
-Equipes de vendas, atendimento e operações vivem de planilhas exportadas de sistemas diferentes: delimitadores diferentes, `1.234,56` misturado com `1234.56`, datas em `dd/mm` e `mm/dd`, linhas incompletas. Ferramentas de BI costumam descartar ou converter esses dados em silêncio. O DataFlow trata a importação como um **pipeline auditável**: cada registro é contabilizado como válido ou rejeitado, com motivo, coluna, linha e valor original — e cada processamento gera uma **versão imutável** do dataset.
+Equipes de vendas, atendimento e operações vivem de planilhas exportadas de sistemas diferentes: delimitadores diferentes, `1.234,56` misturado com `1234.56`, datas em `dd/mm` e `mm/dd`, linhas incompletas. Ferramentas de BI costumam descartar ou converter esses dados em silêncio. O DataFlow trata a importação e o tratamento como um **pipeline auditável**: cada registro é contabilizado como válido, rejeitado, filtrado ou duplicado, com motivo, regra, coluna e valor original — e cada processamento gera uma **versão imutável** do dataset, com a origem e as regras que a produziram.
 
-## Funcionalidades (Fase 1)
+## Funcionalidades
+
+### Fase 2 — motor ETL
+
+- **XLSX**: até 25 MB; escolha da aba e da linha do cabeçalho (detectada automaticamente, pulando títulos acima da tabela); intervalo de dados visível; outras abas viram datasets independentes. Fórmulas e macros **nunca são executados**: fórmula sem valor salvo rejeita o registro com motivo. Planilhas criptografadas, XLS/XLSM, ZIP malformado e bombas de descompressão são recusados antes de abrir.
+- **Mapeamento**: coluna obrigatória e valor para vazios, além de nome, tipo, formato e casas decimais.
+- **Transformações configuráveis**: conjuntos de regras reutilizáveis, com revisão, montados na tela Transformações a partir de 12 operações conhecidas — remover espaços, normalizar texto, maiúsculas/minúsculas, converter tipos, padronizar datas, corrigir números (`R$ 1.234,56`), tratar nulos, remover linhas vazias, filtrar, renomear, criar colunas derivadas e remover duplicidades. Nada de fórmula livre ou código: tudo validado no backend contra o esquema da versão.
+- **Prévia** sobre os primeiros 200 registros, com o que seria excluído e por quê, antes de gravar qualquer coisa.
+- **Deduplicação** por todas as colunas ou pelas escolhidas, mantendo o primeiro ou o último; **análise de duplicidades na versão inteira** (DuckDB) sem alterar dados.
+- **Reprocessamento com linhagem**: cada aplicação gera uma nova versão a partir de uma versão existente (v1 → v2 → v3), registrando versão de origem, conjunto, revisão e regras congeladas no job.
+- **Reconciliação** `recebidos = válidos + rejeitados + filtrados + duplicados`, com categorias mutuamente exclusivas e política explícita para duplicados.
+
+### Fase 1 — fundação
 
 - **Contas e workspaces**: cadastro, login, logout, recuperação de senha por e-mail; Argon2id; sessões HttpOnly; CSRF; rate limiting; RBAC (Administrador, Analista, Visualizador); isolamento entre workspaces validado no servidor; auditoria.
 - **Importação de CSV**: drag-and-drop, progresso real de envio, streaming com limite aplicado durante o recebimento, validação de conteúdo real (não só extensão), armazenamento privado no MinIO com nome aleatório.
@@ -27,16 +39,17 @@ Geradas por `e2e/tests/screenshots.spec.ts` a partir de um fluxo real com os dad
 
 | | |
 | --- | --- |
+| ![Transformações](docs/screenshots/09-transformacoes.png) | ![Pré-visualização de XLSX](docs/screenshots/10-preview-xlsx.png) |
 | ![Login](docs/screenshots/01-login.png) | ![Importar](docs/screenshots/03-importar.png) |
 | ![Pré-visualização](docs/screenshots/04-preview.png) | ![Processamento concluído](docs/screenshots/05-job-concluido.png) |
-| ![Rejeições rastreáveis](docs/screenshots/06-rejeicoes.png) | ![Data Explorer](docs/screenshots/07-explorer.png) |
+| ![Exclusões rastreáveis](docs/screenshots/06-rejeicoes.png) | ![Data Explorer](docs/screenshots/07-explorer.png) |
 
 ## Stack
 
 | Camada | Tecnologias |
 | --- | --- |
 | Frontend | React 19, TypeScript 5.9, Vite 8, Tailwind CSS 4, shadcn/ui (Radix), React Router 7, TanStack Query 5, TanStack Table 8, React Hook Form, Zod 4, Recharts 3, Lucide |
-| Backend | Python 3.13, FastAPI, Pydantic 2, SQLAlchemy 2.1, Alembic, Celery 5.6, Polars 2.1, PyArrow, DuckDB 1.5, boto3, Argon2 |
+| Backend | Python 3.13, FastAPI, Pydantic 2, SQLAlchemy 2.1, Alembic, Celery 5.6, Polars 2.1, PyArrow, DuckDB 1.5, openpyxl 3.1 (somente leitura) + defusedxml, boto3, Argon2 |
 | Dados | PostgreSQL 17 (metadados), MinIO/S3 (arquivos e Parquet), Redis 8 (fila e rate limit), DuckDB (consultas) |
 | Infra | Docker Compose, Caddy (proxy, HTTPS, CSP), Mailpit (e-mail em dev), GitHub Actions |
 | Qualidade | Pytest, Vitest + Testing Library, Playwright, Ruff, mypy (strict), ESLint, Prettier |
@@ -55,7 +68,7 @@ flowchart LR
     A --> D[DuckDB]
     R --> W[Celery worker] --> P
     W --> M
-    W --> PL[csv + Polars + PyArrow]
+    W --> PL[csv / openpyxl + Polars + PyArrow]
 ```
 
 API e worker compartilham o mesmo pacote de domínio (`backend/app`). Detalhes em [docs/architecture.md](docs/architecture.md); pipeline e regras em [docs/data-pipeline.md](docs/data-pipeline.md); segurança em [docs/security.md](docs/security.md).
@@ -109,10 +122,20 @@ pnpm dev        # http://localhost:5173 (proxy de /api para :8000)
 
 Para ver rejeições rastreáveis, importe `samples/qualidade_1000.csv` e defina `data_venda` como Data, `quantidade` como Inteiro e `valor` como Decimal.
 
+**Planilha:** importe `samples/vendas_atendimentos_1000.xlsx`. A aba "Vendas" tem um título acima da tabela; a pré-visualização detecta o cabeçalho na linha 3. Marque colunas como obrigatórias ou defina um valor para vazios no mapeamento. Use os botões de "Outras abas desta planilha" para importar "Atendimentos" ou "Totais" como datasets próprios — a aba "Totais" tem fórmulas sem valor salvo e mostra a rejeição explícita.
+
+## Como transformar um dataset
+
+1. No detalhe de um dataset processado, clique em **Transformar** (ou abra **Transformações** no menu).
+2. Escolha a versão de origem, dê um nome ao conjunto e adicione regras; as colunas oferecidas acompanham as regras anteriores (renomeações, colunas derivadas, conversões).
+3. **Gerar prévia** mostra os primeiros 200 registros transformados, as contagens e cada exclusão com motivo e regra.
+4. No painel **Duplicidades na versão inteira**, escolha a chave e veja quantos registros seriam removidos, sem alterar nada.
+5. **Salvar conjunto** e **Aplicar e gerar nova versão**: o job mostra a reconciliação, as regras aplicadas e os registros excluídos; o detalhe do dataset passa a listar a nova versão com a origem (`v1 + nome do conjunto`).
+
 ## Testes
 
 ```bash
-cd backend && uv run pytest                   # 64 testes (SQLite + S3/Redis simulados)
+cd backend && uv run pytest                   # 120 testes (SQLite + S3/Redis simulados)
 TEST_DATABASE_URL=postgresql+psycopg://dataflow:dataflow@localhost:5432/dataflow_test uv run pytest
 cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app
 
@@ -130,9 +153,10 @@ A CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) roda lint, formataç
 ```bash
 python scripts/generate_samples.py                 # 1.000, 10.000 e 100.000 linhas em samples/generated/
 python scripts/generate_samples.py --rows 1000000 --only vendas --seed 7
+uv run --project backend python scripts/generate_samples.py --xlsx --rows 100000  # planilha com 3 abas
 ```
 
-Vendas, atendimentos e um dataset com problemas propositais de qualidade. Todos fictícios e reproduzíveis — ver [samples/README.md](samples/README.md).
+Vendas, atendimentos, um dataset com problemas propositais de qualidade e uma planilha XLSX com as mesmas vendas e atendimentos. Todos fictícios e reproduzíveis — ver [samples/README.md](samples/README.md).
 
 ## API
 
@@ -146,15 +170,21 @@ Base `/api/v1`, documentação interativa em `/api/docs`. Erros sempre no format
 | POST | `/auth/password/forgot` · `/auth/password/reset` | Recuperação de senha |
 | GET | `/workspaces` · `/workspaces/current` · `/workspaces/current/members` | Workspaces e membros |
 | POST | `/workspaces/switch` | Troca de workspace (valida pertencimento) |
-| POST | `/datasets/upload` | Upload em streaming (`application/octet-stream`, cabeçalho `X-File-Name`) |
+| POST | `/datasets/upload` | Upload em streaming de CSV ou XLSX (`application/octet-stream`, cabeçalho `X-File-Name`) |
+| POST | `/datasets/{id}/sheets` | Outra aba da mesma planilha como novo dataset |
 | GET | `/datasets` | Lista paginada com busca e filtro de status |
 | GET | `/datasets/{id}` · `/columns` · `/versions` | Detalhe, mapeamento, versões |
 | GET / POST | `/datasets/{id}/preview` | Pré-visualização (opções salvas / opções de teste) |
 | PUT | `/datasets/{id}/parse-options` | Salva configuração de leitura |
 | POST | `/datasets/{id}/imports` | Inicia processamento (`Idempotency-Key` opcional) |
 | GET | `/datasets/{id}/rows` | Registros paginados (`version_id`, `page`, `page_size ≤ 200`, `sort`, `direction`, `columns`) |
-| GET | `/datasets/{id}/versions/{vid}/rejected` | Registros rejeitados com motivo |
-| GET | `/jobs` · `/jobs/{id}` | Histórico e detalhe de processamentos |
+| GET | `/datasets/{id}/versions/{vid}/rejected` | Registros excluídos (rejeitados, filtrados, duplicados) com motivo e valor original |
+| GET / POST | `/datasets/{id}/transformation-sets` | Lista e cria conjuntos de regras |
+| GET / PUT / DELETE | `/datasets/{id}/transformation-sets/{sid}` | Detalhe, nova revisão, exclusão |
+| POST | `/datasets/{id}/transformations/preview` | Aplica regras a uma amostra, sem gravar |
+| POST | `/datasets/{id}/versions/{vid}/duplicates` | Análise de duplicidades na versão inteira |
+| POST | `/datasets/{id}/transform-jobs` | Aplica um conjunto a uma versão (`Idempotency-Key` opcional) |
+| GET | `/jobs` · `/jobs/{id}` | Histórico e detalhe de processamentos (`kind=import\|transform`) |
 | POST | `/jobs/{id}/cancel` | Cancelamento cooperativo |
 | GET | `/overview` | Indicadores reais do workspace |
 | GET | `/health/live` · `/health/ready` | Saúde do processo e das dependências |
@@ -167,10 +197,14 @@ Base `/api/v1`, documentação interativa em `/api/docs`. Erros sempre no format
 
 Fluxo completo com Caddy, PostgreSQL, Redis, MinIO e Celery reais, medido na CI (GitHub Actions, worker limitado a 2 CPUs e 2 GB): **job de 100 mil linhas (8 MB) entre 0,74 s e 1,05 s** em três execuções, de 95 a 135 mil registros/s, pico de 313 MB de RSS no worker e consulta ordenada no fim do dataset em 60 a 100 ms. Os runners são compartilhados, então trate como ordem de grandeza; método, ressalvas e reprodução em [docs/benchmark.md](docs/benchmark.md).
 
+Fase 2, medido localmente (Windows, sem infraestrutura): planilha XLSX de 100 mil linhas importada em cerca de 40 s (≈ 2.470 registros/s — cerca de 40 vezes mais lento que o CSV, porque fórmulas e valores são lidos em duas passadas); transformação com quatro regras e deduplicação sobre 100 mil registros em 0,9 a 1,1 s, com a análise de duplicidades do DuckDB conferindo a contagem do pipeline.
+
 ## Limitações conhecidas
 
-- Somente CSV na Fase 1 (XLSX chega na Fase 2, com seleção de abas e proteções contra arquivos compactados maliciosos).
-- Sem transformações configuráveis nem deduplicação ainda (Fase 2); duplicados aparecem como "não avaliado".
+- XLSX é lido em Python pelo openpyxl, em duas passadas: ~2,5 mil registros/s na medição local; o progresso mostra só a contagem de registros. A tabela de textos compartilhados da planilha fica inteira em memória.
+- A deduplicação carrega a chave de toda a versão em memória; não foi medida acima de 100 mil registros.
+- A prévia de transformações usa os primeiros 200 registros; a análise de duplicidades da versão inteira é separada.
+- Arredondamento de colunas derivadas é meio-para-par (1,005 → 1,00), diferente do "meio para cima" das planilhas.
 - Data Explorer sem filtros, busca e seleção de colunas na interface (Fase 3; a API já aceita seleção de colunas).
 - Gestão de membros, exportações, auditoria na interface e retenção de arquivos: Fase 5.
 - Gráfico da visão geral agrupa por dia em UTC (fuso por workspace chega com as configurações).
@@ -182,7 +216,7 @@ Fluxo completo com Caddy, PostgreSQL, Redis, MinIO e Celery reais, medido na CI 
 | Fase | Escopo |
 | --- | --- |
 | 1 ✅ | Fundação, autenticação, workspaces, upload CSV, preview, worker, versão Parquet, explorer paginado |
-| 2 | XLSX e abas, transformações configuráveis, deduplicação, reprocessamento a partir de versões |
+| 2 ✅ | XLSX e abas, transformações configuráveis, deduplicação, reprocessamento a partir de versões (validação na CI pendente) |
 | 3 | Qualidade dos dados (pontuação documentada), Data Explorer com filtros, busca e seleção de colunas |
 | 4 | Dashboards, KPIs, gráficos, filtros dinâmicos, comparação temporal, construtor de dashboards |
 | 5 | Relatórios, exportações CSV/XLSX em segundo plano, gestão de usuários, auditoria, retenção |

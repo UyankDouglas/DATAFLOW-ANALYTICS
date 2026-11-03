@@ -1,7 +1,7 @@
-"""Cache local de arquivos Parquet de versões publicadas.
+"""Cache local de objetos imutáveis: Parquet de versões publicadas e planilhas enviadas.
 
-Versões publicadas são imutáveis, então o cache nunca fica inconsistente: a chave é o id da
-versão e o arquivo é validado pelo SHA-256 registrado na publicação.
+Versões e arquivos enviados nunca mudam, então o cache nunca fica inconsistente: a chave é o id
+do objeto e o arquivo é validado pelo SHA-256 registrado na publicação ou no envio.
 """
 
 import logging
@@ -26,8 +26,15 @@ def _lock_for(key: str) -> threading.Lock:
 
 
 def local_parquet(cache_key: str, storage_key: str, checksum: str | None = None) -> Path:
+    return local_file(cache_key, storage_key, checksum, suffix=".parquet")
+
+
+def local_file(
+    cache_key: str, storage_key: str, checksum: str | None = None, *, suffix: str
+) -> Path:
     settings = get_settings()
-    target = settings.cache_dir / f"{cache_key}.parquet"
+    settings.cache_dir.mkdir(parents=True, exist_ok=True)
+    target = settings.cache_dir / f"{cache_key}{suffix}"
     if target.exists():
         os.utime(target)
         return target
@@ -49,7 +56,10 @@ def local_parquet(cache_key: str, storage_key: str, checksum: str | None = None)
 
 
 def _evict_if_needed(directory: Path, max_bytes: int) -> None:
-    files = sorted(directory.glob("*.parquet"), key=lambda p: p.stat().st_mtime)
+    files = sorted(
+        (f for f in directory.iterdir() if f.is_file() and f.suffix != ".part"),
+        key=lambda p: p.stat().st_mtime,
+    )
     total = sum(f.stat().st_size for f in files)
     now = time.time()
     for file in files:

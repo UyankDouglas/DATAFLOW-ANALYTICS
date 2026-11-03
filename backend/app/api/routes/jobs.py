@@ -21,11 +21,18 @@ def list_jobs(
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
     status: Annotated[str | None, Query(pattern=STATUS_PATTERN)] = None,
     dataset_id: uuid.UUID | None = None,
+    kind: Annotated[str | None, Query(pattern="^(import|transform)$")] = None,
     ctx: RequestContext = Depends(require(Permission.JOBS_VIEW)),
     db: Session = Depends(get_db),
 ) -> Page[JobOut]:
     return jobs_service.list_jobs(
-        db, ctx.workspace_id, page=page, page_size=page_size, status=status, dataset_id=dataset_id
+        db,
+        ctx.workspace_id,
+        page=page,
+        page_size=page_size,
+        status=status,
+        dataset_id=dataset_id,
+        kind=kind,
     )
 
 

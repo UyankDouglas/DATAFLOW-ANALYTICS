@@ -52,7 +52,7 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
       </nav>
       {!collapsed && (
         <div className="border-t border-sidebar-border px-4 py-3 text-[11px] text-muted-foreground">
-          Fase 1 · Fundação e primeiro dataset
+          Fase 2 · Motor ETL e transformações
         </div>
       )}
     </div>

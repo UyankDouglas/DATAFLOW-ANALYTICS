@@ -2,6 +2,7 @@ import uuid
 from typing import Literal
 
 import duckdb
+import pyarrow.parquet as pq
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -74,10 +75,23 @@ def list_datasets(
     return Page[DatasetListItem](items=items, total=total, page=page, page_size=page_size)
 
 
-def _version_out(version: DatasetVersion, user_name: str | None) -> DatasetVersionOut:
+def _version_out(
+    version: DatasetVersion, user_name: str | None, numbers: dict[uuid.UUID, int] | None = None
+) -> DatasetVersionOut:
     out = DatasetVersionOut.model_validate(version)
     out.created_by_name = user_name
+    if version.parent_version_id and numbers is not None:
+        out.parent_version_number = numbers.get(version.parent_version_id)
     return out
+
+
+def _version_numbers(db: Session, dataset_id: uuid.UUID) -> dict[uuid.UUID, int]:
+    rows = db.execute(
+        select(DatasetVersion.id, DatasetVersion.version_number).where(
+            DatasetVersion.dataset_id == dataset_id
+        )
+    ).all()
+    return {row[0]: row[1] for row in rows}
 
 
 def get_detail(db: Session, workspace_id: uuid.UUID, dataset_id: uuid.UUID) -> DatasetDetail:
@@ -91,7 +105,7 @@ def get_detail(db: Session, workspace_id: uuid.UUID, dataset_id: uuid.UUID) -> D
             .where(DatasetVersion.id == dataset.current_version_id)
         ).first()
         if row:
-            current = _version_out(*row)
+            current = _version_out(*row, _version_numbers(db, dataset.id))
     return DatasetDetail(
         id=dataset.id,
         name=dataset.name,
@@ -119,7 +133,8 @@ def list_versions(
         .where(DatasetVersion.dataset_id == dataset_id, DatasetVersion.workspace_id == workspace_id)
         .order_by(DatasetVersion.version_number.desc())
     ).all()
-    return [_version_out(*row) for row in rows]
+    numbers = {version.id: version.version_number for version, _ in rows}
+    return [_version_out(version, name, numbers) for version, name in rows]
 
 
 def _resolve_version(
@@ -190,12 +205,16 @@ def get_rejected_rows(
     page_size: int,
 ) -> RejectedRowsResponse:
     version = repo.get_version(db, workspace_id, dataset_id, version_id)
-    names = [*META_COLUMNS, *[c["name"] for c in version.column_schema]]
-    if not version.rejected_storage_key or version.rejected_count == 0:
+    excluded = version.rejected_count + version.filtered_count + (version.duplicate_count or 0)
+    if not version.rejected_storage_key or excluded == 0:
+        names = [*META_COLUMNS, *[c["name"] for c in version.column_schema]]
         return RejectedRowsResponse(
             version_id=version.id, columns=names, rows=[], total=0, page=page, page_size=page_size
         )
     path = local_parquet(f"r-{version.id}", version.rejected_storage_key)
+    # Colunas do próprio arquivo: versões antigas têm menos metadados, e nas transformações
+    # os valores originais são os da versão de entrada.
+    names = pq.read_schema(path).names
     try:
         result = fetch_page(
             path,
@@ -214,7 +233,7 @@ def get_rejected_rows(
         version_id=version.id,
         columns=result.columns,
         rows=result.rows,
-        total=version.rejected_count,
+        total=excluded,
         page=page,
         page_size=page_size,
     )

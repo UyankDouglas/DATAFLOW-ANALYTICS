@@ -2,10 +2,13 @@
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+if TYPE_CHECKING:
+    from app.processing.xlsx import XlsxLimits
 
 MB = 1024 * 1024
 
@@ -44,6 +47,10 @@ class Settings(BaseSettings):
     # Limites de upload e processamento (ajustáveis por ambiente)
     max_csv_mb: int = 100
     max_xlsx_mb: int = 25
+    # Proteção contra bombas de descompressão: o XLSX é um ZIP e é verificado antes de abrir.
+    max_xlsx_uncompressed_mb: int = 400
+    max_xlsx_entries: int = 2000
+    max_xlsx_ratio: int = 200
     upload_chunk_bytes: int = 1 * MB
     preview_sample_bytes: int = 2 * MB
     preview_rows: int = 20
@@ -53,6 +60,7 @@ class Settings(BaseSettings):
     processing_batch_rows: int = 50_000
     max_rejection_samples: int = 200
     rows_page_size_max: int = 200
+    transform_preview_rows: int = 200
 
     # Celery / jobs
     job_max_attempts: int = 3
@@ -100,6 +108,16 @@ class Settings(BaseSettings):
     @property
     def max_xlsx_bytes(self) -> int:
         return self.max_xlsx_mb * MB
+
+    @property
+    def xlsx_limits(self) -> "XlsxLimits":
+        from app.processing.xlsx import XlsxLimits
+
+        return XlsxLimits(
+            max_uncompressed_bytes=self.max_xlsx_uncompressed_mb * MB,
+            max_entries=self.max_xlsx_entries,
+            max_ratio=self.max_xlsx_ratio,
+        )
 
     @property
     def is_production(self) -> bool:

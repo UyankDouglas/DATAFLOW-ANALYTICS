@@ -37,7 +37,7 @@ flowchart TD
 apps/web/            SPA (React, Vite, Tailwind, shadcn/ui)
   src/app            providers, router (code splitting por rota), QueryClient
   src/components     componentes compartilhados + ui/ (shadcn)
-  src/features       auth, datasets, jobs: API, hooks, componentes de domínio
+  src/features       auth, datasets, jobs, transformations: API, hooks, componentes de domínio
   src/layouts        layout autenticado (sidebar/topbar) e de autenticação
   src/pages          telas
   src/services       cliente HTTP (CSRF, erros padronizados) e upload com progresso
@@ -47,15 +47,15 @@ backend/
   app/models         ORM SQLAlchemy 2
   app/schemas        contratos Pydantic da API
   app/repositories   consultas sempre filtradas por workspace
-  app/services       casos de uso (auth, upload, preview, importação, jobs, armazenamento)
-  app/processing     pipeline puro (sem banco): inspeção, inferência, leitura, conversão
+  app/services       casos de uso (auth, upload, preview, importação, transformações, jobs, armazenamento)
+  app/processing     pipeline puro (sem banco): inspeção, inferência, leitura CSV/XLSX, conversão, regras
   app/analytics      DuckDB e cache de Parquet
   app/tasks          Celery (app, tarefas, publicação)
   migrations/        Alembic
   tests/             Pytest
 e2e/                 Playwright
 docker/              Dockerfiles e Caddyfile
-scripts/             gerador de dados sintéticos
+scripts/             gerador de dados sintéticos (CSV e XLSX)
 samples/             amostras de 1.000 linhas (as maiores são geradas)
 docs/                documentação técnica
 ```
@@ -92,6 +92,40 @@ sequenceDiagram
     U->>API: GET /jobs/{id} (polling enquanto ativo)
     U->>API: GET /datasets/{id}/rows?page=…&sort=…
     API->>API: DuckDB sobre Parquet em cache local
+```
+
+Para XLSX, o upload verifica o contêiner e lista as abas; a pré-visualização lê a aba escolhida de uma cópia local em cache (conferida pelo SHA-256), e o worker repete a verificação do contêiner antes de ler. O progresso de XLSX é a contagem de registros (sem percentual).
+
+## Fluxo de uma transformação
+
+```mermaid
+sequenceDiagram
+    participant U as Usuário
+    participant API
+    participant S3 as MinIO
+    participant DB as PostgreSQL
+    participant Q as Redis
+    participant W as Worker
+
+    U->>API: POST /datasets/{id}/transformation-sets (regras JSON)
+    API->>API: valida cada regra contra o esquema da versão atual (plan_rules)
+    API->>DB: conjunto + regras (revisão 1)
+    U->>API: POST /datasets/{id}/transformations/preview
+    API->>S3: Parquet da versão (cache local, SHA-256)
+    API-->>U: 200 primeiros registros transformados, excluídos e contagens
+    U->>API: POST /datasets/{id}/versions/{vid}/duplicates
+    API-->>U: duplicidades da versão inteira (DuckDB GROUP BY)
+    U->>API: POST /datasets/{id}/transform-jobs (versão + conjunto + Idempotency-Key)
+    API->>DB: job kind=transform, cópia congelada das regras, rows_total da versão
+    API->>Q: publica imports.run(job_id)
+    W->>S3: baixa o Parquet da versão de origem e confere SHA-256
+    loop a cada lote de 50 mil registros
+        W->>W: aplica as regras (Polars), separa rejeitados e filtrados
+        W->>DB: progresso (registros), heartbeat, checa cancelamento
+    end
+    W->>W: deduplicação sobre o resultado inteiro (se houver)
+    W->>S3: data.parquet + rejected.parquet da nova versão
+    W->>DB: transação única: versão com parent_version_id + dataset.current_version + job succeeded
 ```
 
 ## Isolamento entre workspaces

@@ -5,7 +5,7 @@ import uuid
 from fastapi.testclient import TestClient
 
 from app.models import Role
-from app.services.job_runner import run_import_job
+from app.services.job_runner import run_job
 from tests.conftest import SALES_CSV, csrf, new_client, register, upload_csv
 from tests.test_import_flow import import_payload
 
@@ -19,7 +19,7 @@ def _setup_owner_with_processed_dataset(client: TestClient) -> dict:
         json=import_payload(preview),
         headers=csrf(client),
     ).json()
-    assert run_import_job(uuid.UUID(job["id"])) == "succeeded"
+    assert run_job(uuid.UUID(job["id"])) == "succeeded"
     detail = client.get(f"/api/v1/datasets/{dataset['id']}").json()
     return {"dataset": dataset, "job": job, "version_id": detail["current_version_id"]}
 

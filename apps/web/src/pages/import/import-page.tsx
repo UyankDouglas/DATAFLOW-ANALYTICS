@@ -56,7 +56,7 @@ export function ImportPage() {
           key,
           name: file.name,
           size: file.size,
-          type: 'CSV',
+          type: file.name.split('.').pop()?.toUpperCase() ?? '—',
           startedAt: new Date().toISOString(),
           state: 'uploading',
           loaded: 0,
@@ -97,7 +97,7 @@ export function ImportPage() {
     <>
       <PageHeader
         title="Importar dados"
-        description="Envie arquivos CSV. Depois do envio, você confere a pré-visualização, ajusta tipos e inicia o processamento."
+        description="Envie arquivos CSV ou planilhas XLSX. Depois do envio, você confere a pré-visualização, escolhe a aba (XLSX), ajusta tipos e inicia o processamento."
         breadcrumbs={[{ label: 'Datasets', to: '/datasets' }, { label: 'Importar' }]}
       />
       <div className="grid gap-6 xl:grid-cols-5">

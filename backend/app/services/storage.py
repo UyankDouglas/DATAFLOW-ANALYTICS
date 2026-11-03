@@ -78,6 +78,12 @@ def download_file(key: str, local_path: Path) -> None:
     get_s3().download_file(bucket(), key, str(local_path), Config=_TRANSFER)
 
 
+def copy_object(source_key: str, target_key: str) -> None:
+    get_s3().copy_object(
+        Bucket=bucket(), Key=target_key, CopySource={"Bucket": bucket(), "Key": source_key}
+    )
+
+
 def read_range(key: str, length: int) -> bytes:
     """Lê apenas os primeiros `length` bytes do objeto (pré-visualização)."""
     response = get_s3().get_object(Bucket=bucket(), Key=key, Range=f"bytes=0-{length - 1}")

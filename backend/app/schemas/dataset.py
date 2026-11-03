@@ -26,6 +26,9 @@ class DatasetColumnOut(APIModel):
     data_type: DataType
     inferred_type: DataType | None
     format: str | None
+    scale: int | None = None
+    required: bool = False
+    fill_value: str | None = None
 
 
 class DatasetVersionOut(APIModel):
@@ -36,10 +39,17 @@ class DatasetVersionOut(APIModel):
     upload_id: uuid.UUID
     created_by_id: uuid.UUID | None
     created_by_name: str | None = None
+    # Linhagem: versão de origem e conjunto de regras (somente versões transformadas).
+    parent_version_id: uuid.UUID | None
+    parent_version_number: int | None = None
+    transformation_set_id: uuid.UUID | None
     row_count: int
     rejected_count: int
+    filtered_count: int
+    duplicate_count: int | None
     size_bytes: int
     column_schema: list[dict[str, Any]]
+    transformations: dict[str, Any]
     reconciliation: dict[str, Any]
     rules_version: str
     created_at: datetime
@@ -91,6 +101,13 @@ class ColumnPreview(BaseModel):
     warnings: list[str]
 
 
+class SheetInfo(BaseModel):
+    name: str
+    hidden: bool
+    declared_rows: int | None
+    declared_columns: int | None
+
+
 class RowCountInfo(BaseModel):
     value: int
     exact: bool
@@ -115,6 +132,17 @@ class PreviewResponse(BaseModel):
     duplicate_header_names: list[str]
     warnings: list[str]
     saved_columns: list[DatasetColumnOut]
+    source_format: str = "csv"
+    # Somente XLSX: abas da planilha, intervalo de dados e células sem valor utilizável.
+    sheets: list[SheetInfo] = Field(default_factory=list)
+    data_range: str | None = None
+    first_column: int | None = None
+    cell_issues_in_sample: int = 0
+
+
+class SheetImportRequest(BaseModel):
+    sheet: str = Field(min_length=1, max_length=31)
+    name: str | None = Field(default=None, max_length=160)
 
 
 class ImportRequest(BaseModel):
