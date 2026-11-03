@@ -11,6 +11,8 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    false,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -81,6 +83,9 @@ class DatasetColumn(UUIDPrimaryKey, Timestamps, Base):
     data_type: Mapped[str] = mapped_column(String(20))
     inferred_type: Mapped[str | None] = mapped_column(String(20))
     format: Mapped[str | None] = mapped_column(String(40))
+    scale: Mapped[int | None]
+    required: Mapped[bool] = mapped_column(default=False, server_default=false())
+    fill_value: Mapped[str | None] = mapped_column(String(200))
 
     dataset: Mapped[Dataset] = relationship(back_populates="columns")
 
@@ -93,6 +98,10 @@ class DatasetVersion(UUIDPrimaryKey, Base):
         UniqueConstraint("dataset_id", "version_number"),
         CheckConstraint("status IN ('published')", name="status_valid"),
         CheckConstraint("row_count >= 0 AND rejected_count >= 0", name="counts_non_negative"),
+        CheckConstraint(
+            "filtered_count >= 0 AND (duplicate_count IS NULL OR duplicate_count >= 0)",
+            name="exclusions_non_negative",
+        ),
     )
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(
@@ -112,8 +121,17 @@ class DatasetVersion(UUIDPrimaryKey, Base):
     )
     storage_key: Mapped[str] = mapped_column(String(512))
     rejected_storage_key: Mapped[str | None] = mapped_column(String(512))
+    # Linhagem: versão de origem (transformação) e conjunto de regras aplicado.
+    parent_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("dataset_versions.id", ondelete="SET NULL"), index=True
+    )
+    transformation_set_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("transformation_sets.id", ondelete="SET NULL")
+    )
     row_count: Mapped[int] = mapped_column(BigInteger)
     rejected_count: Mapped[int] = mapped_column(BigInteger)
+    filtered_count: Mapped[int] = mapped_column(BigInteger, default=0, server_default=text("0"))
+    duplicate_count: Mapped[int | None] = mapped_column(BigInteger)  # None = não avaliado
     size_bytes: Mapped[int] = mapped_column(BigInteger)
     checksum_sha256: Mapped[str] = mapped_column(String(64))
     column_schema: Mapped[list[Any]] = mapped_column(default=list)

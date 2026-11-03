@@ -57,6 +57,13 @@ const columnSchema = z
     data_type: z.enum(['text', 'integer', 'decimal', 'date', 'datetime', 'boolean']),
     format: z.string().nullable(),
     scale: z.number().int().min(0, 'Mínimo 0.').max(18, 'Máximo 18.').nullable(),
+    required: z.boolean(),
+    // Vazio no formulário = sem valor padrão. A conversão para o tipo é validada no servidor.
+    fill_value: z
+      .string()
+      .max(200, 'Máximo de 200 caracteres.')
+      .nullable()
+      .transform((value) => (value === null || value.trim() === '' ? null : value.trim())),
   })
   .superRefine((column, ctx) => {
     if (column.data_type === 'date' && !(column.format && column.format in DATE_FORMATS)) {
@@ -108,6 +115,8 @@ function fromInference(column: ColumnPreview, header: string): ColumnConfig {
     data_type: column.inferred_type,
     format: column.format,
     scale: column.scale,
+    required: false,
+    fill_value: null,
   }
 }
 
@@ -126,7 +135,9 @@ export function initialColumns(preview: Preview): ColumnConfig[] {
         name: column.name,
         data_type: column.data_type,
         format: column.format,
-        scale: column.data_type === 'decimal' ? (inferred?.scale ?? 2) : null,
+        scale: column.data_type === 'decimal' ? (column.scale ?? inferred?.scale ?? 2) : null,
+        required: column.required,
+        fill_value: column.fill_value,
       }
     })
   }

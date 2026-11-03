@@ -6,6 +6,7 @@ export interface JobListParams {
   pageSize: number
   status?: string
   datasetId?: string
+  kind?: 'import' | 'transform'
 }
 
 export const jobsApi = {
@@ -13,6 +14,7 @@ export const jobsApi = {
     const search = new URLSearchParams({ page: String(p.page), page_size: String(p.pageSize) })
     if (p.status) search.set('status', p.status)
     if (p.datasetId) search.set('dataset_id', p.datasetId)
+    if (p.kind) search.set('kind', p.kind)
     return api<Page<Job>>(`/jobs?${search.toString()}`)
   },
   get: (id: string) => api<Job>(`/jobs/${id}`),

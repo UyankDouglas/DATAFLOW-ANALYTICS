@@ -50,12 +50,38 @@ test('capturas de tela', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Iniciar processamento' }).last().click()
   await expect(page.getByText('Concluído').first()).toBeVisible({ timeout: 60_000 })
-  await page.getByText('Rejeições por motivo').scrollIntoViewIfNeeded()
+  await page.getByText('Exclusões por motivo').scrollIntoViewIfNeeded()
   await shot(page, '06-rejeicoes')
 
   await page.goto(`/datasets/${salesId}/explorar`)
   await expect(page.getByText(/de 1.000 registros/)).toBeVisible()
   await shot(page, '07-explorer')
+
+  // Fase 2: prévia de planilha (aba, cabeçalho abaixo do título) e tela de transformações.
+  const workbookId = await uploadSample(page, 'vendas_atendimentos_1000.xlsx')
+  await page.goto(`/datasets/${workbookId}/preview`)
+  await expect(page.getByText('Leitura da planilha')).toBeVisible()
+  await shot(page, '10-preview-xlsx')
+
+  // Largura em que regras e prévia ficam lado a lado.
+  await page.setViewportSize({ width: 1720, height: 1000 })
+  await page.goto(`/transformacoes?dataset=${salesId}`)
+  await page.getByLabel('Nome do conjunto').fill('Limpeza de vendas')
+  for (const operation of ['Remover espaços excedentes', 'Filtrar registros', 'Remover duplicidades']) {
+    await page.getByRole('combobox', { name: 'Adicionar regra' }).click()
+    await page.getByRole('option', { name: operation }).click()
+  }
+  const dedup = page.getByRole('listitem', { name: /Remover duplicidades/ })
+  await dedup.getByRole('checkbox', { name: 'vendedor' }).check()
+  await dedup.getByRole('checkbox', { name: 'produto' }).check()
+  await page.getByRole('button', { name: 'Gerar prévia' }).click()
+  await expect(page.getByRole('region', { name: 'Prévia' }).getByText(/Recebidos = válidos/)).toBeVisible()
+  await page
+    .getByText('Regras', { exact: true })
+    .first()
+    .evaluate((element) => element.scrollIntoView({ block: 'start' }))
+  await shot(page, '09-transformacoes')
+  await page.setViewportSize({ width: 1440, height: 900 })
 
   await page.evaluate(() => localStorage.setItem('df-theme', 'light'))
   await page.goto('/processamentos')

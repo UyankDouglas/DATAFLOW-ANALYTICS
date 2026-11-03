@@ -68,14 +68,20 @@ def _clean_db() -> Iterator[None]:
     yield
     engine = get_engine()
     tables = [t.name for t in reversed(Base.metadata.sorted_tables)]
-    with engine.begin() as conn:
-        if IS_POSTGRES:
+    if IS_POSTGRES:
+        with engine.begin() as conn:
             conn.execute(text("TRUNCATE " + ", ".join(tables) + " CASCADE"))
-        else:
-            conn.execute(text("PRAGMA foreign_keys=OFF"))
-            for table in tables:
-                conn.execute(text(f"DELETE FROM {table}"))  # noqa: S608 - nomes vêm do metadata
-            conn.execute(text("PRAGMA foreign_keys=ON"))
+        return
+    with engine.connect() as conn:
+        # No SQLite, PRAGMA foreign_keys é ignorado dentro de transação: religar só depois do
+        # commit, senão a conexão volta ao pool com as chaves estrangeiras desligadas.
+        conn.execute(text("PRAGMA foreign_keys=OFF"))
+        for table in tables:
+            conn.execute(text(f"DELETE FROM {table}"))  # noqa: S608 - nomes vêm do metadata
+        conn.commit()
+        conn.execute(text("PRAGMA foreign_keys=ON"))
+        conn.commit()
+        assert conn.execute(text("PRAGMA foreign_keys")).scalar() == 1
 
 
 @pytest.fixture(autouse=True)

@@ -43,17 +43,25 @@ import { datasetsApi } from '@/features/datasets/api'
 import { jobsApi } from '@/features/jobs/api'
 import { JobProgress, JobStatusBadge } from '@/features/jobs/job-components'
 import {
+  JOB_KIND_LABEL,
   JOB_STAGES,
   JOB_STATUS_LABEL,
   REJECTION_LABEL,
   TIMING_LABEL,
   isActive,
 } from '@/features/jobs/status'
+import { StatusBadge } from '@/components/status-badge'
+import {
+  CATEGORY_LABEL,
+  CATEGORY_TONE,
+  OPERATION_LABEL,
+  describeRule,
+} from '@/features/transformations/rules'
 import { useElapsed } from '@/features/jobs/use-elapsed'
 import { formatBytes, formatDuration, formatInteger, formatTimestamp } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { describeError } from '@/services/api-client'
-import type { Job } from '@/types/api'
+import type { ExclusionCategory, Job } from '@/types/api'
 
 export function JobDetailPage() {
   const { jobId = '' } = useParams()
@@ -83,6 +91,10 @@ export function JobDetailPage() {
 function JobDetail({ job }: { job: Job }) {
   const elapsed = useElapsed(job.started_at ?? null, job.finished_at)
   const active = isActive(job.status)
+  const isTransform = job.kind === 'transform'
+  const origin = isTransform
+    ? `v${job.source_version_number ?? '?'} · ${job.config.transformation_set?.name ?? 'conjunto excluído'} (revisão ${job.config.transformation_set?.revision ?? '?'})`
+    : job.upload_filename
 
   return (
     <>
@@ -91,8 +103,9 @@ function JobDetail({ job }: { job: Job }) {
         description={
           <span className="flex flex-wrap items-center gap-2">
             <JobStatusBadge status={job.status} cancelRequested={job.cancel_requested} />
+            <StatusBadge tone="neutral">{JOB_KIND_LABEL[job.kind]}</StatusBadge>
             <span>
-              {job.upload_filename} · iniciado por {job.created_by_name ?? '—'} em{' '}
+              {origin} · iniciado por {job.created_by_name ?? '—'} em{' '}
               {formatTimestamp(job.created_at)}
             </span>
           </span>
@@ -121,11 +134,23 @@ function JobDetail({ job }: { job: Job }) {
               value={`${formatInteger(job.rows_processed)}${job.rows_total !== null ? ` de ${formatInteger(job.rows_total)}` : ''}`}
               icon={Database}
             />
-            <Stat
-              label="Arquivo lido"
-              value={`${formatBytes(job.bytes_processed)} de ${formatBytes(job.bytes_total)}`}
-              icon={Table2}
-            />
+            {job.bytes_total !== null ? (
+              <Stat
+                label="Arquivo lido"
+                value={`${formatBytes(job.bytes_processed)} de ${formatBytes(job.bytes_total)}`}
+                icon={Table2}
+              />
+            ) : (
+              <Stat
+                label={isTransform ? 'Versão de origem' : 'Planilha'}
+                value={
+                  isTransform
+                    ? `v${job.source_version_number ?? '?'}`
+                    : `aba ${job.config.parse_options?.sheet ?? '—'}`
+                }
+                icon={Table2}
+              />
+            )}
             <Stat
               label="Tentativas"
               value={`${job.attempts} de ${job.max_attempts}`}
@@ -143,7 +168,15 @@ function JobDetail({ job }: { job: Job }) {
             {job.error_message ?? 'Erro não informado.'} Nenhuma versão foi publicada; os dados
             anteriores continuam intactos.
             <Button asChild variant="outline" size="sm" className="mt-3 w-fit">
-              <Link to={`/datasets/${job.dataset_id}/preview`}>Revisar configuração</Link>
+              <Link
+                to={
+                  isTransform
+                    ? `/transformacoes?dataset=${job.dataset_id}${job.transformation_set_id ? `&conjunto=${job.transformation_set_id}` : ''}`
+                    : `/datasets/${job.dataset_id}/preview`
+                }
+              >
+                Revisar configuração
+              </Link>
             </Button>
           </AlertDescription>
         </Alert>
@@ -177,6 +210,31 @@ function JobDetail({ job }: { job: Job }) {
                 </li>
               ))}
             </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {isTransform && job.config.rules && job.config.rules.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Regras aplicadas</CardTitle>
+            <CardDescription>
+              Cópia congelada no momento da solicitação: editar o conjunto depois não altera este
+              processamento nem a versão gerada.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ol className="space-y-1.5 text-sm">
+              {job.config.rules.map((rule, index) => (
+                <li key={index} className={cn('flex gap-2', !rule.enabled && 'opacity-50')}>
+                  <span className="tabular w-6 text-muted-foreground">{index + 1}.</span>
+                  <span>
+                    <strong className="font-medium">{OPERATION_LABEL[rule.operation]}</strong>
+                    {rule.enabled ? '' : ' (desativada)'} — {describeRule(rule)}
+                  </span>
+                </li>
+              ))}
+            </ol>
           </CardContent>
         </Card>
       )}
@@ -301,6 +359,9 @@ function JobResult({ job }: { job: Job }) {
   const received = job.rows_total ?? 0
   const valid = job.rows_valid ?? 0
   const rejected = job.rows_rejected ?? 0
+  const filtered = job.rows_filtered ?? 0
+  const duplicates = job.rows_duplicates
+  const excluded = rejected + filtered + (duplicates ?? 0)
   const byReason = Object.entries(job.rejection_summary.by_reason ?? {})
   const byColumn = Object.entries(job.rejection_summary.by_column ?? {})
   const timings = Object.entries(job.metrics.timings_ms ?? {}).filter(
@@ -310,7 +371,7 @@ function JobResult({ job }: { job: Job }) {
   const rejectedRows = useQuery({
     queryKey: ['datasets', job.dataset_id, 'rejected', job.result_version_id],
     queryFn: () => datasetsApi.rejected(job.dataset_id, job.result_version_id ?? '', 1, 20),
-    enabled: Boolean(job.result_version_id) && rejected > 0,
+    enabled: Boolean(job.result_version_id) && excluded > 0,
   })
 
   return (
@@ -319,12 +380,12 @@ function JobResult({ job }: { job: Job }) {
         <CardHeader>
           <CardTitle>Reconciliação — versão {job.result_version_number}</CardTitle>
           <CardDescription>
-            Recebidos = válidos + rejeitados. Duplicidades ainda não são avaliadas nesta fase
-            (deduplicação chega na Fase 2).
+            Recebidos = válidos + rejeitados + filtrados + duplicados. Cada registro está em uma só
+            categoria: duplicados removidos não contam como válidos.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 sm:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-5">
             <Recon label="Recebidos" value={received} tone="text-foreground" />
             <Recon
               label="Válidos (publicados)"
@@ -338,11 +399,28 @@ function JobResult({ job }: { job: Job }) {
               tone={rejected ? 'text-warning' : 'text-foreground'}
               ratio={received ? rejected / received : 0}
             />
-            <div className="rounded-lg border border-dashed p-4">
-              <p className="text-xs text-muted-foreground">Duplicados</p>
-              <p className="mt-1 text-sm font-medium">Não avaliado</p>
-              <p className="text-xs text-muted-foreground">regra aplicada a partir da Fase 2</p>
-            </div>
+            <Recon
+              label="Filtrados"
+              value={filtered}
+              tone="text-foreground"
+              ratio={received ? filtered / received : 0}
+            />
+            {duplicates === null ? (
+              <div className="rounded-lg border border-dashed p-4">
+                <p className="text-xs text-muted-foreground">Duplicados</p>
+                <p className="mt-1 text-sm font-medium">Não aplicada</p>
+                <p className="text-xs text-muted-foreground">
+                  nenhuma regra de deduplicação neste processamento
+                </p>
+              </div>
+            ) : (
+              <Recon
+                label="Duplicados (removidos)"
+                value={duplicates}
+                tone="text-foreground"
+                ratio={received ? duplicates / received : 0}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
@@ -350,13 +428,13 @@ function JobResult({ job }: { job: Job }) {
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Rejeições por motivo</CardTitle>
+            <CardTitle>Exclusões por motivo</CardTitle>
             <CardDescription>Nenhum registro é descartado em silêncio.</CardDescription>
           </CardHeader>
           <CardContent>
             {byReason.length === 0 ? (
               <p className="flex items-center gap-2 text-sm text-success">
-                <CheckCircle2 className="size-4" /> Nenhum registro rejeitado.
+                <CheckCircle2 className="size-4" /> Nenhum registro excluído.
               </p>
             ) : (
               <ul className="space-y-2 text-sm">
@@ -412,12 +490,12 @@ function JobResult({ job }: { job: Job }) {
         </Card>
       </div>
 
-      {rejected > 0 && (
+      {excluded > 0 && (
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Registros rejeitados</CardTitle>
+            <CardTitle>Registros excluídos</CardTitle>
             <CardDescription>
-              Primeiros {formatInteger(Math.min(20, rejected))} de {formatInteger(rejected)}, com
+              Primeiros {formatInteger(Math.min(20, excluded))} de {formatInteger(excluded)}, com
               valor original preservado.
             </CardDescription>
           </CardHeader>
@@ -433,6 +511,7 @@ function JobResult({ job }: { job: Job }) {
                     <TableRow className="hover:bg-transparent">
                       <TableHead>Registro</TableHead>
                       <TableHead>Linha</TableHead>
+                      <TableHead>Categoria</TableHead>
                       <TableHead>Motivo</TableHead>
                       <TableHead>Coluna</TableHead>
                       <TableHead>Valor original</TableHead>
@@ -443,17 +522,30 @@ function JobResult({ job }: { job: Job }) {
                     {rejectedRows.data?.rows.map((row) => {
                       const [record, line, reason, column, detail] = row as [
                         number,
-                        number,
+                        number | null,
                         string,
                         string | null,
                         string,
                       ]
-                      const columnIndex = column ? rejectedRows.data.columns.indexOf(column) : -1
+                      const columns = rejectedRows.data.columns
+                      const columnIndex = column ? columns.indexOf(column) : -1
                       const original = columnIndex >= 0 ? row[columnIndex] : null
+                      // Versões da Fase 1 não têm categoria: tudo era rejeição.
+                      const categoryIndex = columns.indexOf('__df_category')
+                      const category = (
+                        categoryIndex >= 0 ? row[categoryIndex] : 'rejeitado'
+                      ) as ExclusionCategory
                       return (
-                        <TableRow key={record}>
+                        <TableRow key={`${record}-${reason}`}>
                           <TableCell className="tabular">{formatInteger(record)}</TableCell>
-                          <TableCell className="tabular">{formatInteger(line)}</TableCell>
+                          <TableCell className="tabular">
+                            {line === null ? '—' : formatInteger(line)}
+                          </TableCell>
+                          <TableCell>
+                            <StatusBadge tone={CATEGORY_TONE[category]}>
+                              {CATEGORY_LABEL[category]}
+                            </StatusBadge>
+                          </TableCell>
                           <TableCell>{REJECTION_LABEL[reason] ?? reason}</TableCell>
                           <TableCell className="font-mono text-xs">{column ?? '—'}</TableCell>
                           <TableCell className="max-w-48 truncate font-mono text-xs">

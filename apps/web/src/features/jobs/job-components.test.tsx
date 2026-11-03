@@ -21,6 +21,11 @@ describe('acompanhamento de jobs', () => {
     expect(screen.getByText(/12\.500 registros processados/)).toBeInTheDocument()
   })
 
+  it('em transformações, o percentual é sobre os registros da versão de origem', () => {
+    render(<JobProgress job={{ ...baseJob, kind: 'transform', progress_percent: 50 }} />)
+    expect(screen.getByText(/50% dos registros/)).toBeInTheDocument()
+  })
+
   it('usa indicador indeterminado quando não há estimativa confiável', () => {
     render(
       <JobProgress

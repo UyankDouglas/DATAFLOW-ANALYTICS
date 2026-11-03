@@ -1,14 +1,14 @@
 # PROGRESS — DataFlow Analytics
 
-Documento de retomada. Atualizado em **30/10/2026**.
+Documento de retomada. Atualizado em **03/11/2026**.
 
 ## Fases
 
 | Fase | Status |
 | --- | --- |
 | 1 — Fundação e primeiro dataset | ✅ Concluída e validada na CI com a infraestrutura real, nos Compose de desenvolvimento e de produção |
-| 2 — Motor ETL (XLSX, transformações, deduplicação, reprocessamento) | ⏳ Próxima |
-| 3 — Qualidade e Data Explorer completo | Pendente |
+| 2 — Motor ETL (XLSX, transformações, deduplicação, reprocessamento) | ✅ Implementada e validada localmente (sem Docker), na branch `fase-2-motor-etl`, ainda **sem commit**. Falta a validação na CI com PostgreSQL, MinIO, Redis e Celery reais |
+| 3 — Qualidade e Data Explorer completo | ⏳ Próxima |
 | 4 — Business Intelligence (dashboards) | Pendente |
 | 5 — Relatórios, exportações e administração | Pendente |
 | 6 — Qualidade e produção | Pendente |
@@ -29,6 +29,23 @@ Documento de retomada. Atualizado em **30/10/2026**.
 - [x] Testes: backend (Pytest), frontend (Vitest), E2E (Playwright); CI no GitHub Actions.
 - [x] Documentação: README, `docs/architecture.md`, `decisions.md`, `security.md`, `data-pipeline.md`, `deploy.md`, `benchmark.md`.
 
+## Fase 2 — concluído
+
+- [x] **XLSX** (`processing/xlsx.py`): upload até 25 MB com verificação do contêiner antes de abrir — criptografia, XLS legado, ZIP inválido, entradas demais, limite de descompressão e taxa de compressão (bomba), macros — repetida no worker. openpyxl somente leitura com `defusedxml`; fórmulas nunca calculadas (sem valor salvo → `formula_sem_valor`), células de erro → `erro_na_celula`. Seleção de aba, linha do cabeçalho detectada (pula títulos) ou escolhida, intervalo de dados, linhas vazias finais ignoradas com aviso, outra aba como dataset independente (cópia própria no S3). Dimensionamento de abas sem `<dimension>` corrigido (o openpyxl lia a planilha inteira para abrir).
+- [x] **Mapeamento:** coluna obrigatória (`campo_obrigatorio`) e valor para vazios (formato canônico, validado contra o tipo antes de processar).
+- [x] **Transformações** (`processing/transforms.py`): 12 operações de lista fechada, validadas por Pydantic (`extra="forbid"`) e planejadas contra o esquema (`plan_rules`), sem `eval` nem código do usuário; colunas derivadas aritméticas em decimal com arredondamento meio-para-par e divisão por zero rejeitada.
+- [x] **Conjuntos de regras** (`transformation_sets`, `transformation_rules`) com revisão; CRUD na API com RBAC (`transformations:manage`) e auditoria.
+- [x] **Prévia** sobre 200 registros (sem gravar), **análise de duplicidades** na versão inteira (DuckDB) e **deduplicação** por todas ou algumas colunas, mantendo primeiro ou último, como segunda passada.
+- [x] **Jobs de transformação** (versão → versão) com a mesma máquina de estados, idempotência, cancelamento, retentativas e publicação atômica; regras congeladas no job; progresso por registros.
+- [x] **Reconciliação** `recebidos = válidos + rejeitados + filtrados + duplicados`, categorias mutuamente exclusivas, `rejected.parquet` com categoria, regra e registro mantido (`__df_duplicate_of`).
+- [x] **Linhagem:** `parent_version_id`, `transformation_set_id`, origem, conjunto, revisão e regras em `transformations`; contagens de filtrados e duplicados por versão e por job.
+- [x] **Migration 0002** aditiva (tabelas novas, colunas anuláveis ou com padrão); upgrade/downgrade verificados no SQLite e SQL renderizado para PostgreSQL.
+- [x] **Interface:** importação aceita XLSX; pré-visualização com aba, linha do cabeçalho e outras abas; mapeamento com "Obrigatória" e "Se vazio"; tela **Transformações** (saiu de "Em desenvolvimento") com editor de regras, simulação do esquema no cliente, prévia, duplicidades, salvar e aplicar; job e dataset mostram tipo, origem, filtrados, duplicados, regras aplicadas e categoria de cada exclusão.
+- [x] **Amostras:** `scripts/generate_samples.py --xlsx` (determinístico; mesmas vendas e atendimentos dos CSV, aba de fórmulas sem valor); `samples/vendas_atendimentos_1000.xlsx` versionado.
+- [x] **Benchmark** `app/scripts/benchmark_etl.py` (XLSX + transformação + conferência DuckDB × pipeline).
+- [x] **Documentação:** README, `docs/data-pipeline.md` (reescrito), ADR-014 a ADR-018, `security.md`, `architecture.md`, `benchmark.md`, `samples/README.md`; capturas 09 e 10 e as demais regeneradas.
+- [x] **Correções encontradas no caminho:** a limpeza dos testes deixava as chaves estrangeiras do SQLite desligadas depois do primeiro teste (PRAGMA ignorado dentro de transação); a conversão de tipos recalculava expressões e ficou ~2× mais lenta na Fase 2 até ser reestruturada em etapas (medido contra o código da Fase 1 na mesma máquina); a estimativa de registros da prévia de XLSX ignorava a dimensão da aba.
+
 ## Testes executados na CI (30/10/2026, commit `a11e2fd`, [execução 41126313886](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41126313886))
 
 | Verificação | Resultado |
@@ -44,7 +61,27 @@ Documento de retomada. Atualizado em **30/10/2026**.
 | E2E em produção | **5 passed**, 2 ignorados (e-mail, pois produção não tem Mailpit, e capturas de tela) |
 | Fluxo completo medido | job de 100 mil linhas entre 741 ms e 1.046 ms em 3 execuções; detalhes em `docs/benchmark.md` |
 
-## Testes executados localmente (29/10/2026, Windows 10, sem Docker)
+## Testes executados localmente — Fase 2 (03/11/2026, Windows 10, sem Docker)
+
+| Comando | Resultado |
+| --- | --- |
+| `cd backend && uv run pytest` | **120 passed** (SQLite + moto/S3 + fakeredis), com chaves estrangeiras realmente ativas no SQLite |
+| `uv run ruff format --check . && uv run ruff check .` | sem problemas |
+| `uv run mypy app` (strict, com `types-openpyxl`) | sem problemas em 74 arquivos |
+| Alembic `upgrade head` + `check` no SQLite | OK; o `check` aponta só as FKs adicionadas por `ALTER`, que o SQLite não suporta (a migration as pula no SQLite) |
+| Alembic `upgrade 0001:0002 --sql` (PostgreSQL offline) | `CREATE TABLE`, `ADD COLUMN`, FKs e troca do CHECK de `kind` conferidos |
+| `cd apps/web && pnpm test` | **40 passed** (10 arquivos) |
+| `pnpm lint`, `pnpm typecheck`, `pnpm format:check`, `pnpm build` | OK |
+| `cd e2e && E2E_BASE_URL=http://localhost:5173 pnpm test` | **7 passed** (`etl.spec.ts` ×3, `full-flow.spec.ts` ×2, `isolation.spec.ts`, `large-file.spec.ts`); recuperação de senha não roda sem o Mailpit |
+| `CAPTURE_SCREENSHOTS=1 … pnpm test screenshots` | 10 capturas em `docs/screenshots/` |
+| Verificação manual no navegador (Vite + API local) | upload XLSX, aba/cabeçalho, obrigatória/se vazio, importação, conjunto de regras, prévia, duplicidades, aplicação (v2 com 1.000 = 415 + 0 + 73 + 512), linhagem no dataset, outra aba como dataset, layout em 375 px sem rolagem horizontal |
+| `uv run python -m app.scripts.benchmark_etl …100000.xlsx` | ver `docs/benchmark.md` |
+
+O E2E e a verificação manual usaram o mesmo harness da Fase 1, **fora do repositório**: frontend e API reais, com SQLite, moto, fakeredis e o `run_job` do worker numa thread no lugar de PostgreSQL, MinIO, Redis e Celery. O harness tem rate limit de cadastro real (10 por hora), então foi reiniciado entre execuções longas.
+
+**Ainda não validado (depende da CI ou de Docker):** suíte do backend contra PostgreSQL 17 e `alembic check` no PostgreSQL; migration 0002 aplicada sobre um banco com dados da Fase 1; os E2E da Fase 2 com Celery, MinIO e Redis reais, em desenvolvimento e em produção; XLSX e transformação medidos no fluxo completo.
+
+## Testes executados localmente — Fase 1 (29/10/2026, Windows 10, sem Docker)
 
 | Comando | Resultado |
 | --- | --- |
@@ -63,7 +100,7 @@ Documento de retomada. Atualizado em **30/10/2026**.
 
 ## Fora do alcance da CI
 
-Não bloqueiam a Fase 2, mas ainda não foram exercitados em nenhum ambiente, porque dependem de uma implantação real:
+Não bloqueiam a Fase 3, mas ainda não foram exercitados em nenhum ambiente, porque dependem de uma implantação real:
 
 - Certificado público (Let's Encrypt) com domínio real; a CI usa a CA interna do Caddy.
 - SMTP real com TLS e autenticação; a CI usa o Mailpit, sem TLS.
@@ -76,13 +113,14 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 | Área | Arquivos |
 | --- | --- |
 | Configuração | `backend/app/core/config.py`, `.env.example` |
-| Modelos / migrations | `backend/app/models/*`, `backend/migrations/versions/20261029_0001_initial_schema.py` |
+| Modelos / migrations | `backend/app/models/*`, `backend/migrations/versions/20261029_0001_initial_schema.py`, `20261103_0002_transformacoes_e_xlsx.py` |
 | Autenticação | `backend/app/services/auth_service.py`, `backend/app/api/routes/auth.py`, `backend/app/api/deps.py`, `backend/app/api/middleware.py` |
 | Upload / preview / importação | `backend/app/services/{upload,preview,import}_service.py` |
-| Pipeline | `backend/app/processing/{inspection,inference,reader,convert,pipeline,types}.py` |
+| Transformações | `backend/app/services/transformation_service.py`, `backend/app/api/routes/transformations.py`, `backend/app/schemas/transformation.py` |
+| Pipeline | `backend/app/processing/{inspection,inference,reader,xlsx,convert,transforms,pipeline,types}.py` |
 | Worker | `backend/app/services/job_runner.py`, `backend/app/tasks/*` |
 | Consultas | `backend/app/analytics/{query,cache}.py` |
-| Frontend | `apps/web/src/app/router.tsx`, `apps/web/src/pages/**`, `apps/web/src/features/**`, `apps/web/src/services/api-client.ts` |
+| Frontend | `apps/web/src/app/router.tsx`, `apps/web/src/pages/**`, `apps/web/src/features/**` (inclui `transformations/`), `apps/web/src/services/api-client.ts` |
 | Infra | `docker-compose.yml`, `docker-compose.prod.yml`, `docker/**`, `.github/workflows/ci.yml` |
 | Dados | `scripts/generate_samples.py`, `samples/` |
 
@@ -90,10 +128,13 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 
 - MinIO via `cgr.dev/chainguard/minio` (imagem oficial indisponível; ADR-006).
 - Tokenização com `csv` + conversão com Polars (Polars preenche campos ausentes em silêncio; ADR-004).
-- Decimais como `Decimal(38, escala)`, trafegando como texto na API; escala excedida rejeita (ADR-005).
-- Estado de job no PostgreSQL; Celery só transporte; reivindicação condicional (ADR-001).
+- Decimais como `Decimal(38, escala)`, trafegando como texto na API; escala excedida rejeita (ADR-005); colunas derivadas arredondam meio-para-par (ADR-018).
+- Estado de job no PostgreSQL; Celery só transporte; reivindicação condicional (ADR-001). A tarefa continua `imports.run` também para transformações (ADR-017).
 - Upload por corpo binário em streaming, não multipart (ADR-008).
 - TypeScript 5.9, React Router 7, TanStack Table 8, DuckDB 1.5 por compatibilidade (ADR-011).
+- XLSX lido duas vezes (valores e fórmulas), sem calcular nada (ADR-014); o dimensionamento das abas do openpyxl é substituído em `processing/xlsx.py`.
+- Regras de transformação só de lista fechada, validadas contra o esquema da versão (ADR-015).
+- Categorias de exclusão mutuamente exclusivas; deduplicação como última regra e segunda passada (ADR-016).
 
 ## Erros conhecidos / limitações
 
@@ -101,16 +142,12 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 - Objetos órfãos no S3 se o commit do upload falhar após o envio (limpeza prevista na Fase 5).
 - `peak_memory_mb` só é medido em Linux.
 - Worker Celery em Windows exige `--pool solo` (o Compose usa Linux).
+- XLSX ~40× mais lento que CSV (duas passadas do openpyxl em Python; ≈ 2.470 registros/s); tabela de textos compartilhados inteira em memória; não medido perto de 25 MB.
+- Deduplicação mantém chave e número do registro da versão inteira em memória; não medida acima de 100 mil registros.
+- A prévia de transformações vê só os primeiros 200 registros (a análise de duplicidades da versão inteira é separada).
+- Excluir um dataset ainda não existe na interface; conjuntos de regras e versões seguem o dataset por `ON DELETE CASCADE`.
 
 ## Próxima tarefa
 
-**Fase 2 — Motor ETL.** Escopo definido no prompt mestre, registrado aqui para retomar sem depender da conversa:
-
-- **XLSX:** limite de 25 MB configurável; selecionar a aba; visualizar colunas e identificar o intervalo de dados; processar abas diferentes em importações independentes. Não executar macros nem fórmulas; fórmula sem valor calculado é dado ausente ou inválido, de forma explícita. Validar conteúdo real, recusar XLSX malformado, limitar a descompressão interna (zip bomb) e tratar planilhas criptografadas. Reconhecer as limitações de memória da biblioteca de leitura.
-- **Mapeamento:** além de nome, tipo e formato (já prontos), coluna obrigatória e regra para valores nulos.
-- **Transformações configuráveis** (`TransformationSet` e `TransformationRule`), só com operações conhecidas e validadas no backend, sem `eval` nem código enviado pelo usuário: remover espaços excedentes, normalizar texto, padronizar maiúsculas e minúsculas, converter tipos, tratar nulos, remover linhas totalmente vazias, padronizar datas, corrigir formatos numéricos, filtrar registros, identificar e remover duplicidades, renomear colunas e criar colunas derivadas com operações permitidas.
-- **Deduplicação:** comparar por todas as colunas ou por colunas selecionadas; manter o primeiro ou o último registro; prévia dos duplicados e contagem de afetados. Registrar claramente se duplicados entram ou não nos válidos, com categorias da reconciliação mutuamente consistentes (hoje `duplicates` é `null`, com `duplicates_policy: "nao_aplicada"`).
-- **Reprocessamento e versionamento:** novas versões a partir de versões existentes (ex.: v2 trata nulos, v3 remove duplicidades), cada uma identificando origem, transformações, data e responsável. Versões publicadas seguem imutáveis e os dados originais nunca são sobrescritos.
-- **Histórico:** cada execução registra quem iniciou, início e fim, arquivo de origem, configuração, versão das regras, totais recebido, preservado, rejeitado e duplicado, e erros encontrados.
-- **Interface:** a tela Transformações sai de "Em desenvolvimento"; a importação passa a aceitar XLSX, hoje recusado com aviso.
-- **Critério de conclusão:** implementado e integrado de ponta a ponta, utilizável na interface, com dados persistidos, testes executados, compilando, erros conhecidos documentados e README atualizado.
+1. **Validar a Fase 2 na CI** quando o usuário pedir commit e push: suíte contra PostgreSQL, `alembic check`, E2E em desenvolvimento e produção. Registrar a execução aqui, como na Fase 1.
+2. **Fase 3 — Qualidade e Data Explorer completo**, conforme o prompt mestre: pontuação de qualidade com fórmula documentada, completude por coluna, distribuição de nulos, duplicidades e tabela de inconsistências por versão; Data Explorer com filtros, busca e seleção de colunas na interface (a API já aceita seleção de colunas). Reaproveitar as contagens da reconciliação, o `rejected.parquet` (categorias e motivos) e a análise de duplicidades da Fase 2.

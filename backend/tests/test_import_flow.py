@@ -13,7 +13,7 @@ from app.core.db import session_scope
 from app.models import DatasetVersion, JobStatus, ProcessingJob
 from app.models.base import utcnow
 from app.services import job_runner
-from app.services.job_runner import TransientJobError, recover_jobs, run_import_job
+from app.services.job_runner import TransientJobError, recover_jobs, run_job
 from tests.conftest import SALES_CSV, csrf, register, upload_csv
 
 
@@ -55,7 +55,7 @@ def test_full_import_publishes_version_and_serves_rows(
     assert job["status"] == "queued"
     assert ("imports.run", [job["id"]]) in dispatched
 
-    assert run_import_job(uuid.UUID(job["id"])) == "succeeded"
+    assert run_job(uuid.UUID(job["id"])) == "succeeded"
 
     done = client.get(f"/api/v1/jobs/{job['id']}").json()
     assert done["status"] == "succeeded"
@@ -67,9 +67,13 @@ def test_full_import_publishes_version_and_serves_rows(
         "campos_a_menos": 1,
     }
     assert done["rejection_summary"]["by_column"] == {"quantidade": 1}
-    assert {"row", "line", "reason", "column", "detail"} == set(
-        done["rejection_summary"]["samples"][0]
-    )
+    sample = done["rejection_summary"]["samples"][0]
+    assert set(sample) == {
+        "row", "line", "reason", "column", "detail", "category", "rule", "duplicate_of"
+    }  # fmt: skip
+    assert sample["category"] == "rejeitado"
+    assert done["rows_filtered"] == 0
+    assert done["rows_duplicates"] is None  # deduplicação não aplicada na importação
     assert done["result_version_number"] == 1
     assert "processing" in done["metrics"]["timings_ms"]
 
@@ -105,7 +109,7 @@ def test_full_import_publishes_version_and_serves_rows(
 def test_rows_query_rejects_unknown_columns(client: TestClient) -> None:
     register(client)
     dataset, job = _start(client)
-    run_import_job(uuid.UUID(job["id"]))
+    run_job(uuid.UUID(job["id"]))
     bad_sort = client.get(f"/api/v1/datasets/{dataset['id']}/rows?sort=valor%22%3B%20DROP")
     assert bad_sort.status_code == 422
     bad_column = client.get(f"/api/v1/datasets/{dataset['id']}/rows?columns=nao_existe")
@@ -183,8 +187,8 @@ def test_duplicate_delivery_is_noop_and_reprocessing_creates_new_version(
     register(client)
     dataset, job = _start(client)
     job_id = uuid.UUID(job["id"])
-    assert run_import_job(job_id) == "succeeded"
-    assert run_import_job(job_id) == "skipped"  # reentrega da mesma mensagem
+    assert run_job(job_id) == "succeeded"
+    assert run_job(job_id) == "skipped"  # reentrega da mesma mensagem
 
     preview = client.get(f"/api/v1/datasets/{dataset['id']}/preview").json()
     payload = import_payload(preview)
@@ -194,7 +198,7 @@ def test_duplicate_delivery_is_noop_and_reprocessing_creates_new_version(
     second = client.post(
         f"/api/v1/datasets/{dataset['id']}/imports", json=payload, headers=csrf(client)
     ).json()
-    assert run_import_job(uuid.UUID(second["id"])) == "succeeded"
+    assert run_job(uuid.UUID(second["id"])) == "succeeded"
 
     versions = client.get(f"/api/v1/datasets/{dataset['id']}/versions").json()
     assert [v["version_number"] for v in versions] == [2, 1]
@@ -210,7 +214,7 @@ def test_cancel_queued_job(client: TestClient) -> None:
     response = client.post(f"/api/v1/jobs/{job['id']}/cancel", headers=csrf(client))
     assert response.status_code == 200
     assert response.json()["status"] == "cancelled"
-    assert run_import_job(uuid.UUID(job["id"])) == "skipped"
+    assert run_job(uuid.UUID(job["id"])) == "skipped"
     assert client.get(f"/api/v1/datasets/{dataset['id']}").json()["status"] == "draft"
     again = client.post(f"/api/v1/jobs/{job['id']}/cancel", headers=csrf(client))
     assert again.status_code == 409
@@ -234,7 +238,7 @@ def test_cooperative_cancel_stops_running_job_without_publishing(
         original(jid, progress)
 
     monkeypatch.setattr(job_runner, "_report_progress", cancel_during_processing)
-    assert run_import_job(job_id) == "cancelled"
+    assert run_job(job_id) == "cancelled"
     final = client.get(f"/api/v1/jobs/{job['id']}").json()
     assert final["status"] == "cancelled"
     assert final["result_version_id"] is None
@@ -255,12 +259,12 @@ def test_transient_failure_requeues_then_fails_after_max_attempts(
     monkeypatch.setattr(job_runner.storage, "download_file", broken_download)
     for attempt in (1, 2):
         with pytest.raises(TransientJobError):
-            run_import_job(job_id)
+            run_job(job_id)
         state = client.get(f"/api/v1/jobs/{job['id']}").json()
         assert state["status"] == "queued"
         assert state["attempts"] == attempt
         assert len(state["warnings"]) == attempt
-    assert run_import_job(job_id) == "failed"
+    assert run_job(job_id) == "failed"
     final = client.get(f"/api/v1/jobs/{job['id']}").json()
     assert final["status"] == "failed"
     assert final["error_code"] == "indisponibilidade"
@@ -277,7 +281,7 @@ def test_permanent_failure_is_reported_with_clear_message(client: TestClient) ->
     job = client.post(
         f"/api/v1/datasets/{dataset['id']}/imports", json=payload, headers=csrf(client)
     ).json()
-    assert run_import_job(uuid.UUID(job["id"])) == "succeeded"
+    assert run_job(uuid.UUID(job["id"])) == "succeeded"
 
 
 def test_recover_jobs_requeues_stale_execution(client: TestClient, dispatched: list) -> None:
@@ -296,7 +300,7 @@ def test_recover_jobs_requeues_stale_execution(client: TestClient, dispatched: l
     stats = recover_jobs()
     assert stats["requeued"] == 1
     assert ("imports.run", [str(job_id)]) in dispatched
-    assert run_import_job(job_id) == "succeeded"
+    assert run_job(job_id) == "succeeded"
     final = client.get(f"/api/v1/jobs/{job['id']}").json()
     assert final["attempts"] == 2
     assert any("reenfileirado" in w["message"] for w in final["warnings"])
@@ -308,7 +312,7 @@ def test_overview_reports_real_counts(client: TestClient) -> None:
     assert empty["datasets_total"] == 0
     assert empty["recent_jobs"] == []
     _, job = _start(client)
-    run_import_job(uuid.UUID(job["id"]))
+    run_job(uuid.UUID(job["id"]))
     overview = client.get("/api/v1/overview").json()
     assert overview["datasets_total"] == 1
     assert overview["datasets_ready"] == 1

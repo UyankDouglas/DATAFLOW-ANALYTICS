@@ -8,14 +8,18 @@ Regras (versão em types.RULES_VERSION):
   com motivo, coluna e linha rastreáveis. Nada é descartado silenciosamente.
 - Decimais usam Decimal(38, escala) — nunca ponto flutuante. Valores com mais casas que a
   escala configurada são rejeitados em vez de arredondados.
+- Nulos recebem o `fill_value` da coluna, quando configurado; depois disso, coluna
+  obrigatória sem valor rejeita o registro (`campo_obrigatorio`).
+- Problemas de célula do XLSX (fórmula sem valor salvo, erro do Excel) rejeitam o registro.
 """
 
 from collections import Counter
 from dataclasses import dataclass, field
+from typing import Any
 
 import polars as pl
 
-from app.processing.reader import StructuralError, raw_column
+from app.processing.reader import CellIssue, StructuralError, raw_column
 from app.processing.types import (
     BOOLEAN_FALSE,
     BOOLEAN_TRUE,
@@ -29,8 +33,33 @@ from app.processing.types import (
 
 TYPE_ERROR = "tipo_invalido"
 SCALE_ERROR = "casas_decimais_excedidas"
+REQUIRED_ERROR = "campo_obrigatorio"
 
-META_COLUMNS = ("__df_row", "__df_line", "__df_reason", "__df_column", "__df_detail")
+CATEGORY_REJECTED = "rejeitado"
+CATEGORY_FILTERED = "filtrado"
+CATEGORY_DUPLICATE = "duplicado"
+
+# Ordem fixa: as cinco primeiras existem desde a Fase 1 (Parquets antigos só têm essas).
+META_COLUMNS = (
+    "__df_row",
+    "__df_line",
+    "__df_reason",
+    "__df_column",
+    "__df_detail",
+    "__df_category",
+    "__df_rule",
+    "__df_duplicate_of",
+)
+META_SCHEMA: dict[str, pl.DataType] = {
+    "__df_row": pl.Int64(),
+    "__df_line": pl.Int64(),
+    "__df_reason": pl.String(),
+    "__df_column": pl.String(),
+    "__df_detail": pl.String(),
+    "__df_category": pl.String(),
+    "__df_rule": pl.Int32(),
+    "__df_duplicate_of": pl.Int64(),
+}
 
 _BOOL_MAP = {**dict.fromkeys(BOOLEAN_TRUE, True), **dict.fromkeys(BOOLEAN_FALSE, False)}
 
@@ -43,15 +72,24 @@ TYPE_LABELS = {
     DataType.BOOLEAN: "booleano",
 }
 
+CELL_DETAIL = {
+    CellIssue.FORMULA_WITHOUT_VALUE: "Fórmula sem valor calculado salvo no arquivo; o DataFlow não calcula fórmulas.",
+    CellIssue.CELL_ERROR: "A célula contém um erro do Excel (ex.: #DIV/0!, #N/D).",
+}
 
-def polars_dtype(column: ColumnConfig) -> pl.DataType:
-    match column.data_type:
+# Formatos canônicos para valores digitados na configuração (preenchimento, filtros).
+CANONICAL_FORMATS = {DataType.DATE: "%Y-%m-%d", DataType.DATETIME: "%Y-%m-%d %H:%M:%S"}
+CANONICAL_OPTIONS = ParseOptions(decimal_separator=".", thousands_separator="")
+
+
+def polars_dtype(data_type: DataType, scale: int | None) -> pl.DataType:
+    match data_type:
         case DataType.TEXT:
             return pl.String()
         case DataType.INTEGER:
             return pl.Int64()
         case DataType.DECIMAL:
-            return pl.Decimal(DECIMAL_PRECISION, column.scale or 0)
+            return pl.Decimal(DECIMAL_PRECISION, scale or 0)
         case DataType.DATE:
             return pl.Date()
         case DataType.DATETIME:
@@ -60,50 +98,86 @@ def polars_dtype(column: ColumnConfig) -> pl.DataType:
             return pl.Boolean()
 
 
-def _numeric_text(expr: pl.Expr, options: ParseOptions) -> pl.Expr:
+def format_label(fmt: str | None) -> str:
+    if not fmt:
+        return ""
+    return DATE_FORMATS.get(fmt) or DATETIME_FORMATS.get(fmt, fmt)
+
+
+def type_label(data_type: DataType, fmt: str | None = None) -> str:
+    label = TYPE_LABELS[data_type]
+    return f"{label} (formato {format_label(fmt)})" if fmt else label
+
+
+def numeric_text(expr: pl.Expr, decimal_separator: str, thousands_separator: str) -> pl.Expr:
     expr = expr.str.strip_chars()
-    if options.thousands_separator:
-        expr = expr.str.replace_all(options.thousands_separator, "", literal=True)
-    if options.decimal_separator == ",":
+    if thousands_separator:
+        expr = expr.str.replace_all(thousands_separator, "", literal=True)
+    if decimal_separator == ",":
         expr = expr.str.replace_all(",", ".", literal=True)
     return expr
 
 
-def _convert(
-    column: ColumnConfig, source: pl.Expr, options: ParseOptions
+def text_to_type(
+    source: pl.Expr,
+    data_type: DataType,
+    *,
+    fmt: str | None,
+    scale: int | None,
+    decimal_separator: str = ".",
+    thousands_separator: str = "",
 ) -> tuple[pl.Expr, pl.Expr | None]:
-    """Retorna (valor convertido, flag de escala excedida opcional)."""
-    match column.data_type:
+    """Converte texto no tipo pedido. Retorna (valor, flag de escala excedida)."""
+    match data_type:
         case DataType.TEXT:
             return source, None
         case DataType.INTEGER:
-            text = _numeric_text(source, options)
+            text = numeric_text(source, decimal_separator, thousands_separator)
             valid = text.str.contains(r"^[+-]?\d+$")
             return pl.when(valid).then(text).otherwise(None).cast(pl.Int64, strict=False), None
         case DataType.DECIMAL:
-            text = _numeric_text(source, options)
+            text = numeric_text(source, decimal_separator, thousands_separator)
             valid = text.str.contains(r"^[+-]?(\d+(\.\d*)?|\.\d+)$")
             fraction = text.str.split(".").list.get(1, null_on_oob=True).str.len_chars()
-            too_many = valid & fraction.is_not_null() & (fraction > (column.scale or 0))
+            too_many = valid & fraction.is_not_null() & (fraction > (scale or 0))
             value = (
                 pl.when(valid & ~too_many)
                 .then(text)
                 .otherwise(None)
-                .cast(polars_dtype(column), strict=False)
+                .cast(polars_dtype(DataType.DECIMAL, scale), strict=False)
             )
             return value, too_many
         case DataType.DATE:
-            return source.str.strip_chars().str.to_date(column.format, strict=False), None
+            return source.str.strip_chars().str.to_date(fmt, strict=False), None
         case DataType.DATETIME:
             return (
-                source.str.strip_chars().str.to_datetime(
-                    column.format, strict=False, time_unit="us"
-                ),
+                source.str.strip_chars().str.to_datetime(fmt, strict=False, time_unit="us"),
                 None,
             )
         case DataType.BOOLEAN:
             lowered = source.str.strip_chars().str.to_lowercase()
             return lowered.replace_strict(_BOOL_MAP, default=None, return_dtype=pl.Boolean), None
+
+
+def canonical_value(data_type: DataType, scale: int | None, text: str) -> Any:
+    """Converte um valor digitado na configuração (formato canônico) ou lança ValueError."""
+    expr, too_many = text_to_type(
+        pl.lit(text), data_type, fmt=CANONICAL_FORMATS.get(data_type), scale=scale
+    )
+    frame = pl.select(
+        expr.alias("v"), (too_many if too_many is not None else pl.lit(False)).alias("s")
+    )
+    value = frame["v"][0]
+    if value is None or bool(frame["s"][0]):
+        hint = {
+            DataType.DATE: "use aaaa-mm-dd",
+            DataType.DATETIME: "use aaaa-mm-dd hh:mm:ss",
+            DataType.DECIMAL: f"use ponto como separador decimal e até {scale} casas",
+            DataType.INTEGER: "use apenas dígitos",
+            DataType.BOOLEAN: "use true ou false",
+        }.get(data_type, "")
+        raise ValueError(f"'{text}' não é um valor {TYPE_LABELS[data_type]} válido ({hint})")
+    return value
 
 
 @dataclass
@@ -124,28 +198,55 @@ def convert_batch(
     stripped_nulls = [n.strip() for n in nulls]
     originals: list[pl.Expr] = []
     converted: list[pl.Expr] = []
-    failures: list[pl.Expr] = []
-    scale_flags: list[pl.Expr] = []
+    codes: list[pl.Expr] = []
 
+    # Três etapas, cada uma sobre colunas já calculadas (o, depois v/s, depois e): a conversão
+    # de cada coluna roda uma única vez, sem depender da eliminação de subexpressões do Polars.
     for column in columns:
-        src = pl.col(raw_column(column.position))
+        position = column.position
+        src = pl.col(raw_column(position))
         if column.data_type == DataType.TEXT:
             is_null = src.is_in(nulls)
         else:
             is_null = src.is_in(nulls) | src.str.strip_chars().is_in(stripped_nulls)
-        original = pl.when(is_null).then(None).otherwise(src)
-        value, too_many = _convert(column, original, options)
-        originals.append(original.alias(f"o{column.position}"))
-        converted.append(value.alias(f"v{column.position}"))
-        failures.append((original.is_not_null() & value.is_null()).alias(f"f{column.position}"))
-        scale_flags.append(
-            (too_many if too_many is not None else pl.lit(False)).alias(f"s{column.position}")
+        originals.append(pl.when(is_null).then(None).otherwise(src).alias(f"o{position}"))
+
+        original = pl.col(f"o{position}")
+        value, too_many = text_to_type(
+            original,
+            column.data_type,
+            fmt=column.format,
+            scale=column.scale,
+            decimal_separator=options.decimal_separator,
+            thousands_separator=options.thousands_separator,
+        )
+        if column.fill_value is not None:
+            fill = canonical_value(column.data_type, column.scale, column.fill_value)
+            dtype = polars_dtype(column.data_type, column.scale)
+            value = pl.when(original.is_null()).then(pl.lit(fill, dtype=dtype)).otherwise(value)
+        converted.append(value.alias(f"v{position}"))
+        converted.append(
+            (too_many if too_many is not None else pl.lit(False)).alias(f"s{position}")
         )
 
-    frame = raw.with_columns(*originals).with_columns(*converted, *failures, *scale_flags)
-    struct_ok = pl.col("__df_struct").is_null()
+        # Com valor para vazios, só valores presentes chegam aqui: falha de tipo é presente → nulo.
+        converted_value = pl.col(f"v{position}")
+        type_failed = original.is_not_null() & converted_value.is_null()
+        code = (
+            pl.when(type_failed & pl.col(f"s{position}"))
+            .then(pl.lit(SCALE_ERROR))
+            .when(type_failed)
+            .then(pl.lit(TYPE_ERROR))
+        )
+        if column.required:
+            code = code.when(converted_value.is_null()).then(pl.lit(REQUIRED_ERROR))
+        codes.append(code.otherwise(None).alias(f"e{position}"))
+
+    frame = raw.with_columns(*originals).with_columns(*converted).with_columns(*codes)
+    struct_ok = pl.col("__df_struct").is_null() & pl.col("__df_cell_reason").is_null()
     failure_candidates: list[pl.Expr] = [
-        pl.when(pl.col(f"f{c.position}")).then(pl.lit(i)) for i, c in enumerate(columns)
+        pl.when(pl.col(f"e{c.position}").is_not_null()).then(pl.lit(i))
+        for i, c in enumerate(columns)
     ]
     first_failure = pl.coalesce(failure_candidates or [pl.lit(None)]).cast(pl.Int32)
     frame = frame.with_columns(first_failure.alias("__df_fail_idx"))
@@ -164,7 +265,7 @@ def convert_batch(
         result.reasons.update(result.rejected["__df_reason"].to_list())
         typed = rejected_raw.filter(struct_ok)
         for column in columns:
-            failed = int(typed[f"f{column.position}"].sum())
+            failed = int(typed[f"e{column.position}"].is_not_null().sum())
             if failed:
                 result.column_failures[column.name] += failed
     return result
@@ -174,64 +275,70 @@ def _build_rejections(
     frame: pl.DataFrame, columns: list[ColumnConfig], extra_fields: dict[int, int]
 ) -> pl.DataFrame:
     names = [c.name for c in columns]
-    schema: dict[str, pl.DataType] = {
-        "__df_row": pl.Int64(),
-        "__df_line": pl.Int64(),
-        "__df_reason": pl.String(),
-        "__df_column": pl.String(),
-        "__df_detail": pl.String(),
-        **{name: pl.String() for name in names},
-    }
+    schema: dict[str, pl.DataType] = {**META_SCHEMA, **{name: pl.String() for name in names}}
     if frame.height == 0:
         return pl.DataFrame(schema=schema)
 
     index_to_name = {i: c.name for i, c in enumerate(columns)}
-    index_to_detail = {}
-    index_to_scale_detail = {}
+    position_to_name = {c.position: c.name for c in columns}
+    details: dict[str, dict[int, str]] = {TYPE_ERROR: {}, SCALE_ERROR: {}, REQUIRED_ERROR: {}}
     for i, c in enumerate(columns):
-        label = TYPE_LABELS[c.data_type]
-        if c.format:
-            label += f" (formato {DATE_FORMATS.get(c.format) or DATETIME_FORMATS.get(c.format, c.format)})"
-        index_to_detail[i] = f"Valor não corresponde ao tipo {label}."
-        index_to_scale_detail[i] = (
-            f"Valor possui mais de {c.scale} casas decimais; não foi arredondado."
-            if c.data_type == DataType.DECIMAL
-            else index_to_detail[i]
+        details[TYPE_ERROR][i] = (
+            f"Valor não corresponde ao tipo {type_label(c.data_type, c.format)}."
         )
+        details[SCALE_ERROR][i] = (
+            f"Valor possui mais de {c.scale} casas decimais; não foi arredondado."
+        )
+        details[REQUIRED_ERROR][i] = "Coluna obrigatória sem valor."
 
     idx = pl.col("__df_fail_idx")
-    scale_candidates: list[pl.Expr] = [
-        pl.when(idx == i).then(pl.col(f"s{c.position}")) for i, c in enumerate(columns)
+    code_candidates: list[pl.Expr] = [
+        pl.when(idx == i).then(pl.col(f"e{c.position}")) for i, c in enumerate(columns)
     ]
-    scale_hit = pl.coalesce(scale_candidates or [pl.lit(False)]).fill_null(False)
+    column_code = pl.coalesce(code_candidates or [pl.lit(None, dtype=pl.String)])
     struct_detail = {
         StructuralError.EMPTY_ROW: "Registro sem nenhum valor preenchido.",
         StructuralError.TOO_FEW_FIELDS: f"Registro com menos campos que as {len(columns)} colunas.",
         StructuralError.TOO_MANY_FIELDS: f"Registro com mais campos que as {len(columns)} colunas.",
         StructuralError.MALFORMED: "Aspas malformadas ou campo acima do limite permitido.",
     }
-    out = frame.select(
+    detail_by_code = pl.coalesce(
+        pl.when(column_code == code).then(
+            idx.replace_strict(details[code], default=None, return_dtype=pl.String)
+        )
+        for code in (TYPE_ERROR, SCALE_ERROR, REQUIRED_ERROR)
+    )
+
+    struct = pl.col("__df_struct")
+    cell = pl.col("__df_cell_reason")
+    out = frame.with_columns(column_code.alias("__df_code")).select(
         pl.col("__df_row"),
         pl.col("__df_line"),
-        pl.when(pl.col("__df_struct").is_not_null())
-        .then(pl.col("__df_struct"))
-        .when(scale_hit)
-        .then(pl.lit(SCALE_ERROR))
-        .otherwise(pl.lit(TYPE_ERROR))
+        pl.when(struct.is_not_null())
+        .then(struct)
+        .when(cell.is_not_null())
+        .then(cell)
+        .otherwise(pl.col("__df_code"))
         .alias("__df_reason"),
-        pl.when(pl.col("__df_struct").is_null())
-        .then(idx.replace_strict(index_to_name, default=None, return_dtype=pl.String))
-        .alias("__df_column"),
-        pl.when(pl.col("__df_struct").is_not_null())
+        pl.when(struct.is_not_null())
+        .then(pl.lit(None, dtype=pl.String))
+        .when(cell.is_not_null())
         .then(
-            pl.col("__df_struct").replace_strict(
-                struct_detail, default=None, return_dtype=pl.String
+            pl.col("__df_cell_col").replace_strict(
+                position_to_name, default=None, return_dtype=pl.String
             )
         )
-        .when(scale_hit)
-        .then(idx.replace_strict(index_to_scale_detail, default=None, return_dtype=pl.String))
-        .otherwise(idx.replace_strict(index_to_detail, default=None, return_dtype=pl.String))
+        .otherwise(idx.replace_strict(index_to_name, default=None, return_dtype=pl.String))
+        .alias("__df_column"),
+        pl.when(struct.is_not_null())
+        .then(struct.replace_strict(struct_detail, default=None, return_dtype=pl.String))
+        .when(cell.is_not_null())
+        .then(cell.replace_strict(CELL_DETAIL, default=None, return_dtype=pl.String))
+        .otherwise(detail_by_code)
         .alias("__df_detail"),
+        pl.lit(CATEGORY_REJECTED).alias("__df_category"),
+        pl.lit(None, dtype=pl.Int32).alias("__df_rule"),
+        pl.lit(None, dtype=pl.Int64).alias("__df_duplicate_of"),
         *[pl.col(raw_column(c.position)).alias(c.name) for c in columns],
     )
     if extra_fields:

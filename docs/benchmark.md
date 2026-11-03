@@ -15,6 +15,16 @@ uv run python -m app.scripts.benchmark_pipeline \
 
 O script executa as mesmas funções do worker: inspeção do upload, amostra + inferência, pipeline completo (tokenização, validação, conversão de tipos com Polars, escrita Parquet) e uma consulta DuckDB ordenada com `OFFSET 5000`. Tempo e memória são medidos em **execuções separadas** (o `tracemalloc` distorce o tempo).
 
+Para XLSX e transformações (Fase 2):
+
+```bash
+uv run --project backend python scripts/generate_samples.py --xlsx --rows 100000
+cd backend
+uv run python -m app.scripts.benchmark_etl ../samples/generated/vendas_atendimentos_100000.xlsx
+```
+
+O `benchmark_etl` inspeciona a planilha, gera a prévia da aba "Vendas", importa a aba inteira, transforma a versão resultante (remover espaços em 6 colunas, filtro `status ≠ cancelado`, coluna derivada `valor ÷ quantidade` e deduplicação por vendedor + produto) e confere a análise de duplicidades do DuckDB contra a deduplicação do pipeline.
+
 ## Resultados — Fase 1 (29/10/2026)
 
 **Ambiente:** Windows 10 Pro, CPU Intel Family 6 Model 79 (Broadwell-EP, 28 threads lógicas), 12 GB RAM, Python 3.13.12, Polars 2.1.0, DuckDB 1.5.6, PyArrow 26, lote de 50.000 registros. Pipeline executado em processo (sem rede, banco ou S3).
@@ -57,7 +67,32 @@ Medido pelo E2E `e2e/tests/large-file.spec.ts`, que envia `vendas_100000.csv` pe
 
 **Memória:** o pico foi estável, em torno de 313 MB, mas é o pico do processo desde que ele iniciou: inclui o interpretador e as bibliotecas nativas (Polars, Arrow) e pode incluir jobs anteriores do mesmo processo, pois outros testes E2E rodaram antes. Não é o custo isolado deste job. Os ~40 MB da tabela anterior são outra medida: só o heap Python (`tracemalloc`), sem a memória nativa.
 
+## Resultados — Fase 2: XLSX e transformações (03/11/2026)
+
+**Ambiente:** o mesmo da Fase 1 (Windows 10 Pro, Intel Family 6 Model 79, Python 3.13.12, Polars 2.1.0, DuckDB 1.5.6), openpyxl 3.1.5, lote de 50.000 registros, em processo (sem rede, banco ou S3). Duas execuções depois das correções abaixo; a tabela mostra a faixa.
+
+**Arquivo:** `vendas_atendimentos_100000.xlsx`, 8,79 MB, 3 abas; aba "Vendas" com 100.000 registros (os mesmos de `vendas_100000.csv`) e cabeçalho detectado na linha 3.
+
+| Etapa | Tempo | Resultado |
+| --- | --- | --- |
+| Inspeção do upload (contêiner + abas + cabeçalho) | 0,02–0,05 s | 3 abas listadas |
+| Prévia (1.000 registros + inferência) | 0,94–0,97 s | estimativa de 100.000 registros, intervalo `A3:I100003` |
+| Importação da aba inteira → Parquet | 40,4–40,5 s (≈ 2.470 registros/s) | 100.000 válidos, reconciliação consistente |
+| Transformação com 4 regras | 0,90–1,11 s (90–111 mil registros/s) | 100.000 = 480 válidos + 0 rejeitados + 8.033 filtrados + 91.487 duplicados |
+| — dos quais deduplicação | 0,53–0,60 s | segunda passada sobre o resultado inteiro |
+| Análise de duplicidades (DuckDB) | 0,08–0,11 s | 99.520 duplicados por vendedor + produto, **igual** ao pipeline só com a deduplicação |
+
+Observações:
+
+- **Otimização registrada:** a primeira medição deu inspeção em 13,3 s, prévia em 27,5 s e importação em 72,4 s. O openpyxl, quando a aba não declara `<dimension>` (comum em planilhas geradas por bibliotecas; o Excel sempre declara), só percebe a ausência no fim dos dados — ou seja, lia todas as abas inteiras só para abrir o arquivo. O leitor passou a parar no início dos dados (`_declared_size` em `processing/xlsx.py`), com o mesmo resultado quando a tag existe.
+- **Regressão encontrada e corrigida no CSV:** com a obrigatoriedade e o valor para vazios, a conversão de tipos de `vendas_100000.csv` passou de 0,22 s (código da Fase 1, medido de novo na mesma máquina) para 0,40 s, porque o código de erro de cada coluna embutia de novo a conversão. Reestruturada em etapas sobre colunas já calculadas, ficou em 0,14–0,21 s; o pipeline completo voltou a 0,8–1,0 s (≈ 100 mil registros/s).
+- **XLSX é cerca de 40 vezes mais lento que CSV** (≈ 2.470 contra ≈ 100 mil registros/s nas mesmas vendas). A planilha é lida duas vezes em paralelo — valores salvos e fórmulas — para distinguir fórmula sem valor (ADR-014), e o openpyxl interpreta cada célula em Python. É a razão do limite de 25 MB e do progresso de XLSX ser só a contagem de registros. Não foi medido um arquivo perto de 25 MB.
+- A transformação lê Parquet tipado e roda em Polars, então custa o mesmo que a importação de CSV; a deduplicação domina o tempo porque precisa do resultado inteiro.
+- Os números de duplicados são altos porque a chave vendedor + produto tem só ~480 combinações nos dados sintéticos; servem para medir custo e conferir contagens, não como cenário realista.
+
 ## Pendente
 
 - Medições com 1 milhão de linhas e com arquivos próximos do limite de 100 MB. Até lá, não há evidência de como a memória e o tempo escalam acima de 100 mil linhas.
 - Mais repetições em um ambiente dedicado, para obter média e variação confiáveis.
+- XLSX perto do limite de 25 MB e transformações com 1 milhão de linhas, inclusive o pico de memória da deduplicação (ADR-016).
+- XLSX e transformação no fluxo completo com infraestrutura real (CI), como foi feito para o CSV.

@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-import { MAX_CSV_MB, validateFile, type RejectedFile } from './upload-validation'
+import { MAX_CSV_MB, MAX_XLSX_MB, validateFile, type RejectedFile } from './upload-validation'
 
 interface UploadDropzoneProps {
   onFiles: (files: File[]) => void
@@ -51,10 +51,10 @@ export function UploadDropzone({ onFiles, onReject, disabled }: UploadDropzonePr
       <div className="mb-4 rounded-2xl bg-primary/10 p-4 text-primary ring-1 ring-primary/20">
         <UploadCloud className="size-8" aria-hidden />
       </div>
-      <p className="text-base font-semibold">Arraste e solte seus arquivos CSV aqui</p>
+      <p className="text-base font-semibold">Arraste e solte seus arquivos CSV ou XLSX aqui</p>
       <p className="mt-1 text-sm text-muted-foreground">
-        CSV até {MAX_CSV_MB} MB · encoding, delimitador e separador decimal são detectados
-        automaticamente
+        CSV até {MAX_CSV_MB} MB (encoding, delimitador e separador decimal detectados) · XLSX até{' '}
+        {MAX_XLSX_MB} MB, com escolha da aba
       </p>
       <Button className="mt-5" onClick={() => inputRef.current?.click()} disabled={disabled}>
         <FileUp /> Selecionar arquivo
@@ -62,10 +62,10 @@ export function UploadDropzone({ onFiles, onReject, disabled }: UploadDropzonePr
       <input
         ref={inputRef}
         type="file"
-        accept=".csv,text/csv"
+        accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         multiple
         className="sr-only"
-        aria-label="Selecionar arquivos CSV"
+        aria-label="Selecionar arquivos CSV ou XLSX"
         tabIndex={-1}
         onChange={(event) => {
           handle(event.target.files)
@@ -73,7 +73,8 @@ export function UploadDropzone({ onFiles, onReject, disabled }: UploadDropzonePr
         }}
       />
       <p className="mt-4 text-xs text-muted-foreground">
-        XLSX chega na Fase 2. Formatos legados (XLS) não são oferecidos.
+        Planilhas são lidas sem executar fórmulas ou macros. XLS, XLSM e arquivos protegidos por
+        senha não são aceitos.
       </p>
     </div>
   )

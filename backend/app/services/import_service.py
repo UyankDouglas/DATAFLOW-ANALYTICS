@@ -17,12 +17,13 @@ from app.models import (
     ProcessingJob,
 )
 from app.models.base import utcnow
+from app.processing.convert import canonical_value
 from app.processing.types import RULES_VERSION, DataType, normalize_column_name
 from app.repositories import datasets as repo
 from app.schemas.dataset import ImportRequest
 from app.services import audit
 from app.services.preview_service import read_sample
-from app.tasks.dispatch import enqueue_import
+from app.tasks.dispatch import enqueue_job
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,17 @@ def _validate_columns(request: ImportRequest, header: list[str], column_count: i
             code="duplicate_column_names",
             details={"columns": duplicates},
         )
+    for column in columns:
+        if column.fill_value is None:
+            continue
+        try:
+            canonical_value(column.data_type, column.scale, column.fill_value)
+        except ValueError as exc:
+            raise ValidationFailed(
+                f"Valor para vazios da coluna '{column.name}': {exc}",
+                code="invalid_fill_value",
+                details={"column": column.name},
+            ) from exc
 
 
 def start_import(
@@ -93,13 +105,19 @@ def start_import(
     if upload is None:
         raise NotFound("Nenhum arquivo enviado para este dataset.")
 
-    options = request.parse_options
-    if options.encoding == "utf-8" and not upload.detection.get("utf8_valid", True):
+    is_xlsx = upload.file_format == "xlsx"
+    if (
+        not is_xlsx
+        and request.parse_options.encoding == "utf-8"
+        and not upload.detection.get("utf8_valid", True)
+    ):
         raise ValidationFailed(
             "O arquivo não é UTF-8 válido. Selecione o encoding correto antes de processar.",
             code="encoding_not_confirmed",
         )
-    analysis = read_sample(upload, options)
+    analysis = read_sample(upload, request.parse_options)
+    # No XLSX, a aba e a linha do cabeçalho ficam resolvidas (nunca "detectar" no worker).
+    options = analysis.options
     _validate_columns(request, analysis.sample.header, analysis.sample.column_count)
 
     inferred = {i.position: i for i in analysis.inferences}
@@ -129,6 +147,9 @@ def start_import(
                 data_type=column.data_type,
                 inferred_type=inferred[column.position].inferred_type,
                 format=column.format,
+                scale=column.scale,
+                required=column.required,
+                fill_value=column.fill_value,
             )
         )
 
@@ -142,15 +163,19 @@ def start_import(
         status=JobStatus.QUEUED,
         idempotency_key=idempotency_key,
         config={
+            "source_format": upload.file_format,
             "parse_options": options.model_dump(),
             "columns": [c.model_dump(mode="json") for c in request.columns],
             "expected_header": analysis.sample.header if options.has_header else None,
+            "first_column": analysis.xlsx.layout.first_column if analysis.xlsx else None,
             "confirm_ambiguous_formats": request.confirm_ambiguous_formats,
-            "transformations": [],  # motor de transformações chega na Fase 2
+            # Regras configuráveis rodam em jobs de transformação sobre versões publicadas.
+            "transformations": [],
         },
         rules_version=RULES_VERSION,
         max_attempts=settings.job_max_attempts,
-        bytes_total=upload.size_bytes,
+        # Progresso por bytes só no CSV; no XLSX o worker reporta registros processados.
+        bytes_total=None if is_xlsx else upload.size_bytes,
         queued_at=now,
     )
     db.add(job)
@@ -171,12 +196,16 @@ def start_import(
         actor_id=ctx.user.id,
         entity_type="job",
         entity_id=job.id,
-        details={"dataset_id": str(dataset.id), "upload_id": str(upload.id)},
+        details={
+            "dataset_id": str(dataset.id),
+            "upload_id": str(upload.id),
+            "format": upload.file_format,
+        },
         ip=ctx.ip,
     )
     db.commit()
 
-    if enqueue_import(job.id):
+    if enqueue_job(job.id):
         job.enqueued_at = utcnow()
         job.celery_task_id = str(job.id)
         db.commit()

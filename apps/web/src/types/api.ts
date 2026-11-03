@@ -58,6 +58,16 @@ export interface ParseOptions {
   decimal_separator: '.' | ','
   thousands_separator: '' | '.' | ',' | ' '
   null_values: string[]
+  /** Somente XLSX: aba lida e linha do cabeçalho (null = detectar automaticamente). */
+  sheet?: string | null
+  header_row?: number | null
+}
+
+export interface SheetInfo {
+  name: string
+  hidden: boolean
+  declared_rows: number | null
+  declared_columns: number | null
 }
 
 export interface UploadInfo {
@@ -73,6 +83,10 @@ export interface UploadInfo {
     suggested_encoding?: string
     delimiter?: string
     line_count?: number
+    format?: 'xlsx'
+    sheets?: SheetInfo[]
+    default_sheet?: string
+    header_row?: number
   }
   upload_ms: number | null
   created_at: string
@@ -105,15 +119,20 @@ export interface DatasetColumn {
   data_type: DataType
   inferred_type: DataType | null
   format: string | null
+  scale: number | null
+  required: boolean
+  fill_value: string | null
 }
 
 export interface ColumnSchema {
   name: string
-  source_name: string
+  /** Nulo em versões transformadas (a coluna pode ter sido renomeada ou derivada). */
+  source_name: string | null
   position: number
   data_type: DataType
   format: string | null
   scale: number | null
+  required?: boolean
   null_count: number
 }
 
@@ -121,9 +140,21 @@ export interface Reconciliation {
   received: number
   valid: number
   rejected: number
+  /** Ausente em versões da Fase 1 (sem filtros). */
+  filtered?: number
   duplicates: number | null
-  duplicates_policy: string
+  duplicates_policy: 'nao_aplicada' | 'removidos_dos_validos' | string
   consistent: boolean
+}
+
+export interface VersionLineage {
+  kind?: 'import' | 'transform'
+  source_format?: string
+  parse_options?: ParseOptions
+  source_version_id?: Uuid
+  source_version_number?: number
+  transformation_set?: { id: Uuid; name: string; revision: number } | null
+  steps?: Rule[]
 }
 
 export interface DatasetVersion {
@@ -134,10 +165,16 @@ export interface DatasetVersion {
   upload_id: Uuid
   created_by_id: Uuid | null
   created_by_name: string | null
+  parent_version_id: Uuid | null
+  parent_version_number: number | null
+  transformation_set_id: Uuid | null
   row_count: number
   rejected_count: number
+  filtered_count: number
+  duplicate_count: number | null
   size_bytes: number
   column_schema: ColumnSchema[]
+  transformations: VersionLineage
   reconciliation: Reconciliation
   rules_version: string
   created_at: string
@@ -187,6 +224,11 @@ export interface Preview {
   duplicate_header_names: string[]
   warnings: string[]
   saved_columns: DatasetColumn[]
+  source_format: 'csv' | 'xlsx'
+  sheets: SheetInfo[]
+  data_range: string | null
+  first_column: number | null
+  cell_issues_in_sample: number
 }
 
 export interface ColumnConfig {
@@ -196,6 +238,9 @@ export interface ColumnConfig {
   data_type: DataType
   format: string | null
   scale: number | null
+  required: boolean
+  /** Valor usado quando a célula vier vazia (texto canônico: 2025-01-31, 10.5, true). */
+  fill_value: string | null
 }
 
 export interface ImportRequest {
@@ -204,13 +249,20 @@ export interface ImportRequest {
   confirm_ambiguous_formats: boolean
 }
 
+export type ExclusionCategory = 'rejeitado' | 'filtrado' | 'duplicado'
+
 export interface RejectionSample {
   row: number
-  line: number
+  line: number | null
   reason: string
   column: string | null
   detail: string
+  category?: ExclusionCategory
+  rule?: number | null
+  duplicate_of?: number | null
 }
+
+export type JobKind = 'import' | 'transform'
 
 export interface Job {
   id: Uuid
@@ -218,7 +270,10 @@ export interface Job {
   dataset_name: string | null
   upload_id: Uuid
   upload_filename: string | null
-  kind: string
+  kind: JobKind
+  source_version_id: Uuid | null
+  source_version_number: number | null
+  transformation_set_id: Uuid | null
   status: JobStatus
   created_by_id: Uuid | null
   created_by_name: string | null
@@ -232,6 +287,9 @@ export interface Job {
   rows_total: number | null
   rows_valid: number | null
   rows_rejected: number | null
+  rows_filtered: number | null
+  /** null = deduplicação não aplicada neste job. */
+  rows_duplicates: number | null
   error_code: string | null
   error_message: string | null
   warnings: { at: string; message: string }[]
@@ -245,7 +303,14 @@ export interface Job {
     peak_memory_mb?: number | null
     rows_per_second?: number
   }
-  config: { parse_options?: ParseOptions; columns?: ColumnConfig[] }
+  config: {
+    parse_options?: ParseOptions
+    columns?: ColumnConfig[]
+    source_format?: string
+    source_version_number?: number
+    transformation_set?: { id: Uuid; name: string; revision: number }
+    rules?: Rule[]
+  }
   rules_version: string
   result_version_id: Uuid | null
   result_version_number: number | null
@@ -294,4 +359,188 @@ export interface WorkspaceSummary {
   name: string
   slug: string
   role: Role
+}
+
+// ---------------------------------------------------------------- transformações
+
+export type RuleOperation =
+  | 'trim'
+  | 'normalize_text'
+  | 'change_case'
+  | 'convert_type'
+  | 'standardize_dates'
+  | 'fix_numbers'
+  | 'handle_nulls'
+  | 'remove_empty_rows'
+  | 'filter_rows'
+  | 'rename_columns'
+  | 'derived_column'
+  | 'deduplicate'
+
+export type FilterOperator =
+  | 'eq'
+  | 'ne'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'between'
+  | 'contains'
+  | 'not_contains'
+  | 'starts_with'
+  | 'ends_with'
+  | 'in'
+  | 'not_in'
+  | 'is_null'
+  | 'not_null'
+  | 'is_true'
+  | 'is_false'
+
+export interface Condition {
+  column: string
+  operator: FilterOperator
+  value?: string | null
+  value_to?: string | null
+  values?: string[] | null
+  case_insensitive?: boolean
+}
+
+export interface Operand {
+  column?: string | null
+  value?: string | null
+}
+
+export type Expression =
+  | {
+      kind: 'arithmetic'
+      operator: 'add' | 'subtract' | 'multiply' | 'divide'
+      left: Operand
+      right: Operand
+      scale: number
+    }
+  | { kind: 'concat'; parts: Operand[]; separator: string }
+  | {
+      kind: 'date_part'
+      column: string
+      part: 'year' | 'month' | 'day' | 'quarter' | 'weekday' | 'year_month'
+    }
+  | { kind: 'date_diff_days'; start: string; end: string }
+
+interface RuleBase {
+  enabled: boolean
+}
+
+export type Rule = RuleBase &
+  (
+    | { operation: 'trim'; columns: string[]; collapse_internal?: boolean }
+    | {
+        operation: 'normalize_text'
+        columns: string[]
+        remove_accents?: boolean
+        form?: 'NFC' | 'NFKC'
+      }
+    | { operation: 'change_case'; columns: string[]; mode: 'upper' | 'lower' | 'title' }
+    | {
+        operation: 'convert_type'
+        column: string
+        target: DataType
+        format?: string | null
+        scale?: number | null
+        decimal_separator?: '.' | ','
+        thousands_separator?: '' | '.' | ',' | ' '
+      }
+    | {
+        operation: 'standardize_dates'
+        column: string
+        target: 'date' | 'datetime'
+        formats: string[]
+      }
+    | {
+        operation: 'fix_numbers'
+        column: string
+        target: 'integer' | 'decimal'
+        scale?: number | null
+        decimal_separator: '.' | ','
+        thousands_separator: '' | '.' | ',' | ' '
+        strip_currency?: boolean
+        parentheses_negative?: boolean
+      }
+    | {
+        operation: 'handle_nulls'
+        columns: string[]
+        strategy: 'fill' | 'reject'
+        fill_value?: string | null
+      }
+    | { operation: 'remove_empty_rows' }
+    | { operation: 'filter_rows'; conditions: Condition[]; match: 'all' | 'any' }
+    | { operation: 'rename_columns'; mapping: Record<string, string> }
+    | { operation: 'derived_column'; name: string; expression: Expression }
+    | { operation: 'deduplicate'; columns: string[]; keep: 'first' | 'last' }
+  )
+
+export interface TransformationSet {
+  id: Uuid
+  dataset_id: Uuid
+  name: string
+  description: string | null
+  revision: number
+  rules: Rule[]
+  created_by_name: string | null
+  updated_by_name: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface TransformationSetInput {
+  name: string
+  description: string | null
+  rules: Rule[]
+}
+
+export interface ColumnSpec {
+  name: string
+  data_type: DataType
+  format?: string | null
+  scale?: number | null
+}
+
+export interface TransformPreview {
+  source_version_id: Uuid
+  source_version_number: number
+  source_row_count: number
+  sample_size: number
+  sample_is_complete: boolean
+  input_columns: ColumnSpec[]
+  output_columns: ColumnSpec[]
+  rows: { row: number; values: unknown[] }[]
+  excluded: {
+    row: number
+    reason: string
+    category: ExclusionCategory
+    column: string | null
+    detail: string | null
+    rule: number | null
+    duplicate_of: number | null
+  }[]
+  counts: {
+    received: number
+    valid: number
+    rejected: number
+    filtered: number
+    duplicates: number | null
+  }
+  reasons: Record<string, number>
+}
+
+export interface DuplicateAnalysis {
+  version_id: Uuid
+  version_number: number
+  columns: string[]
+  keep: 'first' | 'last'
+  total_rows: number
+  distinct_keys: number
+  duplicate_rows: number
+  rows_after: number
+  groups_with_duplicates: number
+  top_groups: { key: unknown[]; count: number; kept_row: number; sample_rows: number[] }[]
 }

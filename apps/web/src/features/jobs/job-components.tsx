@@ -30,8 +30,9 @@ export function JobStatusBadge({
 }
 
 /**
- * Progresso real: percentual de bytes do arquivo efetivamente lidos pelo worker.
- * Sem medida confiável (fila, validação, salvamento), o indicador é indeterminado.
+ * Progresso real: bytes do CSV efetivamente lidos ou registros da versão de origem já
+ * transformados. Sem medida confiável (fila, validação, salvamento, leitura de XLSX), o
+ * indicador é indeterminado e mostra só a contagem de registros.
  */
 export function JobProgress({ job, compact = false }: { job: Job; compact?: boolean }) {
   const active = isActive(job.status)
@@ -58,7 +59,9 @@ export function JobProgress({ job, compact = false }: { job: Job; compact?: bool
         </div>
       )}
       <p className="tabular text-xs text-muted-foreground">
-        {determinate ? `${job.progress_percent?.toLocaleString('pt-BR')}% do arquivo · ` : ''}
+        {determinate
+          ? `${job.progress_percent?.toLocaleString('pt-BR')}% ${job.kind === 'transform' ? 'dos registros' : 'do arquivo'} · `
+          : ''}
         {formatInteger(job.rows_processed)} registros processados
       </p>
     </div>

@@ -17,11 +17,16 @@ import {
 } from '@/components/ui/select'
 import { jobsApi } from '@/features/jobs/api'
 import { JobProgress, JobStatusBadge } from '@/features/jobs/job-components'
-import { JOB_STATUS_LABEL, isActive } from '@/features/jobs/status'
+import { JOB_KIND_LABEL, JOB_STATUS_LABEL, isActive } from '@/features/jobs/status'
 import { formatDuration, formatInteger, formatTimestamp } from '@/lib/format'
 import type { Job, JobStatus } from '@/types/api'
 
 const ALL = 'all'
+
+/** Rejeitados + filtrados + duplicados: tudo que não entrou na versão. */
+function excludedOf(job: Job): number {
+  return (job.rows_rejected ?? 0) + (job.rows_filtered ?? 0) + (job.rows_duplicates ?? 0)
+}
 
 export function JobsPage() {
   const [page, setPage] = useState(1)
@@ -49,7 +54,12 @@ export function JobsPage() {
             >
               {row.original.dataset_name}
             </Link>
-            <p className="truncate text-xs text-muted-foreground">{row.original.upload_filename}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {JOB_KIND_LABEL[row.original.kind]} ·{' '}
+              {row.original.kind === 'transform'
+                ? `a partir da v${row.original.source_version_number ?? '?'}`
+                : row.original.upload_filename}
+            </p>
           </div>
         ),
       },
@@ -67,17 +77,15 @@ export function JobsPage() {
         ),
       },
       {
-        header: 'Válidos / rejeitados',
+        header: 'Válidos / excluídos',
         id: 'rows',
         cell: ({ row }) =>
           row.original.rows_valid !== null ? (
             <span className="tabular whitespace-nowrap">
               <span className="text-success">{formatInteger(row.original.rows_valid)}</span>
               {' / '}
-              <span
-                className={row.original.rows_rejected ? 'text-warning' : 'text-muted-foreground'}
-              >
-                {formatInteger(row.original.rows_rejected)}
+              <span className={excludedOf(row.original) ? 'text-warning' : 'text-muted-foreground'}>
+                {formatInteger(excludedOf(row.original))}
               </span>
             </span>
           ) : (

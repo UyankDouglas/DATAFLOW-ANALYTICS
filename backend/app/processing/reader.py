@@ -25,6 +25,13 @@ class StructuralError:
     MALFORMED = "csv_malformado"
 
 
+class CellIssue:
+    """Problemas de uma célula do XLSX, rejeitados com a coluna de origem."""
+
+    FORMULA_WITHOUT_VALUE = "formula_sem_valor"
+    CELL_ERROR = "erro_na_celula"
+
+
 class EncodingMismatch(Exception):
     def __init__(self, line: int) -> None:
         self.line = line
@@ -55,13 +62,52 @@ class _CountingReader(io.RawIOBase):
 
 @dataclass
 class RawBatch:
-    frame: pl.DataFrame  # colunas c0..cN (texto), __df_row, __df_line, __df_struct
-    bytes_read: int
+    # Colunas c0..cN (texto), __df_row, __df_line, __df_struct (problema do registro) e
+    # __df_cell_reason/__df_cell_col (problema de uma célula, como fórmula sem valor no XLSX).
+    frame: pl.DataFrame
+    bytes_read: int | None  # None quando o formato não permite medir bytes lidos (XLSX)
     extra_fields: dict[int, int]  # registro -> quantidade de campos encontrada
 
 
 def raw_column(position: int) -> str:
     return f"c{position}"
+
+
+def build_raw_frame(
+    column_count: int,
+    values: list[list[str]],
+    rows: list[int],
+    lines: list[int],
+    structs: list[str | None],
+    cell_reasons: list[str | None] | None = None,
+    cell_columns: list[int | None] | None = None,
+) -> pl.DataFrame:
+    """Monta o lote cru; a transposição em C (zip) evita laço Python por célula."""
+    schema: dict[str, pl.DataType | type[pl.DataType]] = {
+        raw_column(i): pl.String for i in range(column_count)
+    }
+    schema.update(
+        {
+            "__df_row": pl.Int64,
+            "__df_line": pl.Int64,
+            "__df_struct": pl.String,
+            "__df_cell_reason": pl.String,
+            "__df_cell_col": pl.Int32,
+        }
+    )
+    transposed = list(zip(*values, strict=True)) if values else [()] * column_count
+    data: dict[str, object] = {raw_column(i): col for i, col in enumerate(transposed)}
+    size = len(rows)
+    data.update(
+        {
+            "__df_row": rows,
+            "__df_line": lines,
+            "__df_struct": structs,
+            "__df_cell_reason": cell_reasons if cell_reasons is not None else [None] * size,
+            "__df_cell_col": cell_columns if cell_columns is not None else [None] * size,
+        }
+    )
+    return pl.DataFrame(data, schema=schema)
 
 
 def read_batches(
@@ -96,10 +142,6 @@ def read_batches(
                     "O cabeçalho do arquivo não corresponde às colunas configuradas."
                 )
 
-        schema: dict[str, pl.DataType | type[pl.DataType]] = {
-            raw_column(i): pl.String for i in range(column_count)
-        }
-        schema.update({"__df_row": pl.Int64, "__df_line": pl.Int64, "__df_struct": pl.String})
         padding = [""] * column_count
         empty_row = StructuralError.EMPTY_ROW
         too_few = StructuralError.TOO_FEW_FIELDS
@@ -112,11 +154,7 @@ def read_batches(
             structs: list[str | None],
             extra: dict[int, int],
         ) -> RawBatch:
-            # Transposição em C (zip) em vez de append por célula: o laço Python fica só por linha.
-            transposed = list(zip(*values, strict=True)) if values else [()] * column_count
-            data: dict[str, object] = {raw_column(i): col for i, col in enumerate(transposed)}
-            data.update({"__df_row": rows, "__df_line": lines, "__df_struct": structs})
-            frame = pl.DataFrame(data, schema=schema)
+            frame = build_raw_frame(column_count, values, rows, lines, structs)
             return RawBatch(frame=frame, bytes_read=counter.bytes_read, extra_fields=extra)
 
         values: list[list[str]] = []

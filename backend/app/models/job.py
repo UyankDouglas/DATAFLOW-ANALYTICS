@@ -30,6 +30,11 @@ class JobStatus(StrEnum):
     CANCELLED = "cancelled"
 
 
+class JobKind(StrEnum):
+    IMPORT = "import"  # arquivo → versão
+    TRANSFORM = "transform"  # versão → nova versão
+
+
 RUNNING_STATUSES = (JobStatus.VALIDATING, JobStatus.PROCESSING, JobStatus.SAVING)
 TERMINAL_STATUSES = (JobStatus.SUCCEEDED, JobStatus.FAILED, JobStatus.CANCELLED)
 
@@ -44,7 +49,7 @@ class ProcessingJob(UUIDPrimaryKey, Timestamps, Base):
             "'succeeded', 'failed', 'cancelled')",
             name="status_valid",
         ),
-        CheckConstraint("kind IN ('import')", name="kind_valid"),
+        CheckConstraint("kind IN ('import', 'transform')", name="kind_valid"),
         UniqueConstraint("workspace_id", "idempotency_key"),
         Index("ix_processing_jobs_workspace_created", "workspace_id", "created_at"),
         Index("ix_processing_jobs_status_heartbeat", "status", "heartbeat_at"),
@@ -62,11 +67,24 @@ class ProcessingJob(UUIDPrimaryKey, Timestamps, Base):
     dataset_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("datasets.id", ondelete="CASCADE"), index=True
     )
+    # Arquivo de origem; em transformações, o arquivo que originou a versão de entrada.
     upload_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("uploads.id", ondelete="RESTRICT"))
     created_by_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL")
     )
-    kind: Mapped[str] = mapped_column(String(20), default="import")
+    kind: Mapped[str] = mapped_column(String(20), default=JobKind.IMPORT)
+    # Somente transformações: versão de entrada e conjunto de regras usado.
+    source_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey(
+            "dataset_versions.id",
+            ondelete="SET NULL",
+            use_alter=True,
+            name="fk_processing_jobs_source_version_id_dataset_versions",
+        )
+    )
+    transformation_set_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("transformation_sets.id", ondelete="SET NULL")
+    )
     status: Mapped[str] = mapped_column(String(20), default=JobStatus.QUEUED)
     idempotency_key: Mapped[str | None] = mapped_column(String(100))
     celery_task_id: Mapped[str | None] = mapped_column(String(100))
@@ -86,6 +104,8 @@ class ProcessingJob(UUIDPrimaryKey, Timestamps, Base):
     rows_total: Mapped[int | None] = mapped_column(BigInteger)  # exato só ao final
     rows_valid: Mapped[int | None] = mapped_column(BigInteger)
     rows_rejected: Mapped[int | None] = mapped_column(BigInteger)
+    rows_filtered: Mapped[int | None] = mapped_column(BigInteger)
+    rows_duplicates: Mapped[int | None] = mapped_column(BigInteger)  # None = não avaliado
 
     error_code: Mapped[str | None] = mapped_column(String(60))
     error_message: Mapped[str | None] = mapped_column(Text)

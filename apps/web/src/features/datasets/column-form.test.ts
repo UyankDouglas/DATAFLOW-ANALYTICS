@@ -11,6 +11,8 @@ const column = (overrides: Partial<ColumnConfig>): ColumnConfig => ({
   data_type: 'text',
   format: null,
   scale: null,
+  required: false,
+  fill_value: null,
   ...overrides,
 })
 
@@ -40,6 +42,21 @@ describe('validação do mapeamento de colunas', () => {
     expect(result.error?.issues.map((issue) => issue.message)).toEqual(
       expect.arrayContaining(['Escolha o formato da data.', 'Informe as casas decimais.']),
     )
+  })
+
+  it('normaliza o valor para vazios: em branco vira ausência de valor padrão', () => {
+    const result = importFormSchema.safeParse({
+      columns: [
+        column({ fill_value: '  ' }),
+        column({ position: 1, name: 'b', fill_value: ' 0 ', required: true }),
+      ],
+      confirm_ambiguous: false,
+    })
+    expect(result.success).toBe(true)
+    expect(result.data?.columns.map((c) => [c.fill_value, c.required])).toEqual([
+      [null, false],
+      ['0', true],
+    ])
   })
 
   it('bloqueia prefixo reservado e caracteres de controle', () => {
@@ -91,6 +108,9 @@ describe('estado inicial e ambiguidades', () => {
           data_type: 'date',
           inferred_type: 'date',
           format: '%m/%d/%Y',
+          scale: null,
+          required: true,
+          fill_value: null,
         },
         {
           position: 1,
@@ -99,10 +119,18 @@ describe('estado inicial e ambiguidades', () => {
           data_type: 'text',
           inferred_type: 'decimal',
           format: null,
+          scale: null,
+          required: false,
+          fill_value: 'sem valor',
         },
       ],
     } as Preview
-    expect(initialColumns(saved).map((c) => c.name)).toEqual(['data_venda', 'valor_total'])
+    const initial = initialColumns(saved)
+    expect(initial.map((c) => c.name)).toEqual(['data_venda', 'valor_total'])
+    expect(initial.map((c) => [c.required, c.fill_value])).toEqual([
+      [true, null],
+      [false, 'sem valor'],
+    ])
   })
 
   it('detecta colunas com formato de data ambíguo', () => {

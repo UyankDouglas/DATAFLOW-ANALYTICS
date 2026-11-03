@@ -22,7 +22,7 @@ def _send(name: str, args: list[Any], task_id: str | None = None) -> bool:
         return False
 
 
-def enqueue_import(job_id: uuid.UUID) -> bool:
+def enqueue_job(job_id: uuid.UUID) -> bool:
     return _send("imports.run", [str(job_id)])
 
 

@@ -8,7 +8,8 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 # Versão das regras do pipeline. Muda sempre que a semântica de conversão mudar,
 # para que cada versão de dataset registre com quais regras foi produzida.
-RULES_VERSION = "1.0.0"
+# 2.0.0: XLSX, coluna obrigatória, valor para nulos, transformações e deduplicação.
+RULES_VERSION = "2.0.0"
 
 RESERVED_PREFIX = "__df_"
 
@@ -65,6 +66,9 @@ class ParseOptions(BaseModel):
     decimal_separator: Literal[".", ","] = "."
     thousands_separator: Literal["", ".", ",", " "] = ""
     null_values: list[str] = Field(default_factory=lambda: list(DEFAULT_NULL_VALUES), max_length=20)
+    # Somente XLSX: aba lida e linha do cabeçalho (1 = primeira linha da aba; None = detectar).
+    sheet: str | None = Field(default=None, max_length=31)
+    header_row: int | None = Field(default=None, ge=1, le=1000)
 
     @field_validator("null_values")
     @classmethod
@@ -92,6 +96,28 @@ def normalize_column_name(name: str) -> str:
     return unicodedata.normalize("NFC", name).strip()
 
 
+def validate_column_name(value: str) -> str:
+    value = normalize_column_name(value)
+    if not value:
+        raise ValueError("o nome da coluna não pode ser vazio")
+    if len(value) > 63:
+        raise ValueError("o nome da coluna pode ter no máximo 63 caracteres")
+    if value.lower().startswith(RESERVED_PREFIX):
+        raise ValueError(f"nomes iniciados por '{RESERVED_PREFIX}' são reservados")
+    if any(ord(ch) < 32 or ch == '"' for ch in value):
+        raise ValueError("o nome contém caracteres não permitidos")
+    return value
+
+
+class ColumnSpec(BaseModel):
+    """Coluna tipada de uma versão publicada (entrada e saída das transformações)."""
+
+    name: str
+    data_type: DataType
+    format: str | None = None
+    scale: int | None = None
+
+
 class ColumnConfig(BaseModel):
     position: int = Field(ge=0)
     source_name: str = Field(max_length=255)
@@ -99,18 +125,16 @@ class ColumnConfig(BaseModel):
     data_type: DataType
     format: str | None = None
     scale: int | None = Field(default=None, ge=0, le=MAX_DECIMAL_SCALE)
+    # Coluna obrigatória: registro sem valor (após o preenchimento) é rejeitado com motivo.
+    required: bool = False
+    # Valor usado quando a célula é nula, escrito no formato canônico do tipo
+    # (aaaa-mm-dd, 1234.56, true/false). None mantém o nulo.
+    fill_value: str | None = Field(default=None, max_length=200)
 
     @field_validator("name")
     @classmethod
     def _check_name(cls, value: str) -> str:
-        value = normalize_column_name(value)
-        if not value:
-            raise ValueError("o nome da coluna não pode ser vazio")
-        if value.lower().startswith(RESERVED_PREFIX):
-            raise ValueError(f"nomes iniciados por '{RESERVED_PREFIX}' são reservados")
-        if any(ord(ch) < 32 or ch == '"' for ch in value):
-            raise ValueError("o nome contém caracteres não permitidos")
-        return value
+        return validate_column_name(value)
 
     @model_validator(mode="after")
     def _check_format(self) -> "ColumnConfig":

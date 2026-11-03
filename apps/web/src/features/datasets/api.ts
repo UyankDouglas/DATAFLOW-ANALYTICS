@@ -10,6 +10,7 @@ import type {
   Preview,
   RejectedRowsResponse,
   RowsResponse,
+  UploadResponse,
 } from '@/types/api'
 
 export interface DatasetListParams {
@@ -46,6 +47,9 @@ export const datasetsApi = {
   tryPreview: (id: string, options: ParseOptions) =>
     api<Preview>(`/datasets/${id}/preview`, { method: 'POST', body: options }),
   versions: (id: string) => api<DatasetVersion[]>(`/datasets/${id}/versions`),
+  /** Outra aba da mesma planilha vira um dataset independente. */
+  importSheet: (id: string, sheet: string) =>
+    api<UploadResponse>(`/datasets/${id}/sheets`, { method: 'POST', body: { sheet } }),
   startImport: (id: string, body: ImportRequest, idempotencyKey: string) =>
     api<Job>(`/datasets/${id}/imports`, {
       method: 'POST',

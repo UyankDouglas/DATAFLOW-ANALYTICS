@@ -44,7 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Tratamento',
     items: [
-      { label: 'Transformações', to: '/transformacoes', icon: Wand2, phase: 2 },
+      { label: 'Transformações', to: '/transformacoes', icon: Wand2 },
       { label: 'Qualidade', to: '/qualidade', icon: ShieldCheck, phase: 3 },
       { label: 'Data Explorer', to: '/explorer', icon: Table2 },
     ],
@@ -77,13 +77,6 @@ export const COMING_SOON: Record<
   string,
   { title: string; phase: number; description: string; icon: LucideIcon }
 > = {
-  '/transformacoes': {
-    title: 'Transformações',
-    phase: 2,
-    icon: Wand2,
-    description:
-      'Motor de transformações configuráveis: limpeza de espaços, normalização de texto, tratamento de nulos, filtros, colunas derivadas e deduplicação com prévia.',
-  },
   '/qualidade': {
     title: 'Qualidade dos Dados',
     phase: 3,

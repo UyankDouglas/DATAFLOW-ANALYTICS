@@ -23,6 +23,7 @@ from app.schemas.dataset import (
     PreviewResponse,
     RejectedRowsResponse,
     RowsResponse,
+    SheetImportRequest,
     UploadOut,
     UploadResponse,
 )
@@ -45,10 +46,11 @@ PageParam = Annotated[int, Query(ge=1, le=100_000)]
     "/upload",
     response_model=UploadResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Envia um CSV (corpo binário em streaming)",
+    summary="Envia um CSV ou XLSX (corpo binário em streaming)",
     description=(
         "Envie o arquivo como corpo bruto da requisição (`application/octet-stream`) e o nome no "
-        "cabeçalho `X-File-Name` (URL-encoded). O limite de tamanho é aplicado durante o recebimento."
+        "cabeçalho `X-File-Name` (URL-encoded). O formato vem da extensão (.csv ou .xlsx) e é "
+        "confirmado pelo conteúdo. O limite de tamanho é aplicado durante o recebimento."
     ),
 )
 async def upload_dataset(
@@ -61,17 +63,20 @@ async def upload_dataset(
     filename = unquote(x_file_name)
     raw_length = request.headers.get("content-length")
     content_length = int(raw_length) if raw_length and raw_length.isdigit() else None
-    safe_name = await anyio.to_thread.run_sync(
+    safe_name, file_format = await anyio.to_thread.run_sync(
         upload_service.check_upload_request, ctx, filename, content_length
     )
 
     settings = get_settings()
     settings.temp_dir.mkdir(parents=True, exist_ok=True)
     upload_id = uuid.uuid4()
-    temp_path = settings.temp_dir / f"upload-{upload_id}"
+    # A extensão importa: o leitor de XLSX recusa arquivos sem ".xlsx" no nome.
+    temp_path = settings.temp_dir / f"upload-{upload_id}.{file_format}"
     try:
         try:
-            detection, upload_ms = await upload_service.spool_to_disk(request.stream(), temp_path)
+            detection, upload_ms = await upload_service.spool_to_disk(
+                request.stream(), temp_path, file_format
+            )
         except FileRejected as exc:
             raise await anyio.to_thread.run_sync(
                 upload_service.record_rejection, db, ctx, exc, safe_name
@@ -90,6 +95,24 @@ async def upload_dataset(
         )
     finally:
         temp_path.unlink(missing_ok=True)
+    return UploadResponse(
+        dataset=DatasetOut.model_validate(dataset), upload=UploadOut.model_validate(upload)
+    )
+
+
+@router.post(
+    "/{dataset_id}/sheets",
+    response_model=UploadResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Importa outra aba da mesma planilha como um novo dataset",
+)
+def import_sheet(
+    dataset_id: uuid.UUID,
+    data: SheetImportRequest,
+    ctx: RequestContext = Depends(require(Permission.DATASETS_UPLOAD)),
+    db: Session = Depends(get_db),
+) -> UploadResponse:
+    dataset, upload = upload_service.import_sheet(db, ctx, dataset_id, data)
     return UploadResponse(
         dataset=DatasetOut.model_validate(dataset), upload=UploadOut.model_validate(upload)
     )

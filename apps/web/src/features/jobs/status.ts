@@ -1,4 +1,9 @@
-import type { DatasetStatus, JobStatus } from '@/types/api'
+import type { DatasetStatus, JobKind, JobStatus } from '@/types/api'
+
+export const JOB_KIND_LABEL: Record<JobKind, string> = {
+  import: 'Importação',
+  transform: 'Transformação',
+}
 
 /** Códigos estáveis da API → rótulos em português. */
 export const JOB_STATUS_LABEL: Record<JobStatus, string> = {
@@ -52,6 +57,13 @@ export const REJECTION_LABEL: Record<string, string> = {
   campos_a_menos: 'Campos a menos',
   campos_a_mais: 'Campos a mais',
   csv_malformado: 'CSV malformado',
+  formula_sem_valor: 'Fórmula sem valor salvo',
+  erro_na_celula: 'Erro na célula (#DIV/0!, #N/D...)',
+  campo_obrigatorio: 'Campo obrigatório vazio',
+  valor_nulo: 'Valor nulo',
+  removido_por_filtro: 'Removido pelo filtro',
+  divisao_por_zero: 'Divisão por zero',
+  registro_duplicado: 'Registro duplicado',
 }
 
 export const TIMING_LABEL: Record<string, string> = {
@@ -61,6 +73,7 @@ export const TIMING_LABEL: Record<string, string> = {
   processing_read: 'Leitura (tokenização)',
   processing_transform: 'Conversão de tipos',
   processing_write: 'Escrita Parquet',
+  processing_deduplicate: 'Deduplicação',
   persist_upload: 'Persistência',
   total: 'Tempo total do job',
 }

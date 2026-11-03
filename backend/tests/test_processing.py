@@ -153,6 +153,7 @@ def test_pipeline_rejects_with_traceable_reasons_and_reconciles(tmp_path: Path) 
         "received": 7,
         "valid": 2,
         "rejected": 5,
+        "filtered": 0,
         "duplicates": None,
         "duplicates_policy": "nao_aplicada",
         "consistent": True,

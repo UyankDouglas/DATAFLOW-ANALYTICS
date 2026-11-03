@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
+  FileSpreadsheet,
   FileText,
   Info,
   Loader2,
@@ -53,6 +54,7 @@ import {
   type ImportFormValues,
 } from '@/features/datasets/column-form'
 import { ParseOptionsForm } from '@/features/datasets/parse-options-form'
+import { XlsxOptionsForm } from '@/features/datasets/xlsx-options-form'
 import { formatBytes, formatInteger, formatPercent, formatTimestamp } from '@/lib/format'
 import { ApiError, describeError } from '@/services/api-client'
 import type { DataType, ParseOptions, Preview } from '@/types/api'
@@ -68,8 +70,9 @@ export function PreviewPage() {
   })
   const trial = useMutation({
     mutationFn: (next: ParseOptions) => datasetsApi.tryPreview(datasetId, next),
-    onSuccess: (data, next) => {
-      setOptions(next)
+    onSuccess: (data) => {
+      // Opções efetivas devolvidas pelo servidor (no XLSX, com a linha do cabeçalho resolvida).
+      setOptions(data.parse_options)
       queryClient.setQueryData(['datasets', datasetId, 'preview', 'trial'], data)
     },
     onError: (error) => toast.error(describeError(error)),
@@ -166,8 +169,19 @@ function PreviewContent({ preview, options, onApplyOptions, applying }: PreviewC
     start.mutate(values)
   })
 
+  const importSheet = useMutation({
+    mutationFn: (sheet: string) => datasetsApi.importSheet(preview.dataset_id, sheet),
+    onSuccess: (result) => {
+      toast.success(`Aba importada como "${result.dataset.name}".`)
+      void queryClient.invalidateQueries({ queryKey: ['datasets'] })
+      navigate(`/datasets/${result.dataset.id}/preview`)
+    },
+    onError: (error) => toast.error(describeError(error)),
+  })
+
   const errorCount = Object.keys(form.formState.errors.columns ?? {}).length
   const upload = preview.upload
+  const isXlsx = preview.source_format === 'xlsx'
 
   return (
     <>
@@ -210,17 +224,27 @@ function PreviewContent({ preview, options, onApplyOptions, applying }: PreviewC
           value={formatInteger(preview.column_count)}
           hint={`${formatInteger(preview.sample_rows_analyzed)} registros analisados na amostra`}
         />
-        <KpiCard
-          label="Encoding detectado"
-          icon={Type}
-          accent={upload.detection.utf8_valid === false ? 'amber' : 'green'}
-          value={upload.detection.utf8_valid === false ? 'Não UTF-8' : 'UTF-8'}
-          hint={
-            upload.detection.utf8_valid === false
-              ? 'Confirme o encoding na leitura'
-              : 'Conteúdo válido em UTF-8'
-          }
-        />
+        {isXlsx ? (
+          <KpiCard
+            label="Aba"
+            icon={FileSpreadsheet}
+            accent={preview.cell_issues_in_sample > 0 ? 'amber' : 'green'}
+            value={options.sheet ?? '—'}
+            hint={`Intervalo ${preview.data_range ?? '—'} · ${formatInteger(preview.sheets.length)} aba(s)`}
+          />
+        ) : (
+          <KpiCard
+            label="Encoding detectado"
+            icon={Type}
+            accent={upload.detection.utf8_valid === false ? 'amber' : 'green'}
+            value={upload.detection.utf8_valid === false ? 'Não UTF-8' : 'UTF-8'}
+            hint={
+              upload.detection.utf8_valid === false
+                ? 'Confirme o encoding na leitura'
+                : 'Conteúdo válido em UTF-8'
+            }
+          />
+        )}
       </section>
 
       {preview.warnings.length > 0 && (
@@ -239,18 +263,33 @@ function PreviewContent({ preview, options, onApplyOptions, applying }: PreviewC
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Leitura do arquivo</CardTitle>
+          <CardTitle>{isXlsx ? 'Leitura da planilha' : 'Leitura do arquivo'}</CardTitle>
           <CardDescription>
-            Valores detectados automaticamente. Ajuste se a prévia não estiver correta.
+            {isXlsx
+              ? 'Escolha a aba e a linha do cabeçalho. Fórmulas entram pelo valor salvo na planilha; sem valor salvo, o registro é rejeitado com motivo.'
+              : 'Valores detectados automaticamente. Ajuste se a prévia não estiver correta.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ParseOptionsForm
-            value={options}
-            onApply={onApplyOptions}
-            pending={applying}
-            disabled={!canProcess}
-          />
+          {isXlsx ? (
+            <XlsxOptionsForm
+              value={options}
+              sheets={preview.sheets}
+              dataRange={preview.data_range}
+              onApply={onApplyOptions}
+              onImportSheet={canProcess ? (sheet) => importSheet.mutate(sheet) : undefined}
+              importingSheet={importSheet.isPending ? importSheet.variables : null}
+              pending={applying}
+              disabled={!canProcess}
+            />
+          ) : (
+            <ParseOptionsForm
+              value={options}
+              onApply={onApplyOptions}
+              pending={applying}
+              disabled={!canProcess}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -260,7 +299,8 @@ function PreviewContent({ preview, options, onApplyOptions, applying }: PreviewC
             <CardTitle>Mapeamento de colunas</CardTitle>
             <CardDescription>
               Tipos inferidos sobre a amostra. Valores que não converterem para o tipo escolhido
-              rejeitam o registro, com motivo registrado.
+              rejeitam o registro, com motivo registrado. Coluna obrigatória vazia também rejeita, a
+              menos que haja um valor para vazios.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -273,6 +313,8 @@ function PreviewContent({ preview, options, onApplyOptions, applying }: PreviewC
                       'Nome no dataset',
                       'Tipo',
                       'Formato / casas',
+                      'Obrigatória',
+                      'Se vazio',
                       'Inferido',
                       'Nulos (amostra)',
                       'Distintos',
@@ -413,6 +455,37 @@ function PreviewContent({ preview, options, onApplyOptions, applying }: PreviewC
                             </p>
                           )}
                         </TableCell>
+                        <TableCell className="text-center">
+                          <Controller
+                            control={form.control}
+                            name={`columns.${index}.required`}
+                            render={({ field: requiredField }) => (
+                              <Checkbox
+                                checked={requiredField.value}
+                                onCheckedChange={(checked) =>
+                                  requiredField.onChange(checked === true)
+                                }
+                                disabled={!canProcess}
+                                aria-label={`Coluna ${field.source_name} obrigatória`}
+                              />
+                            )}
+                          />
+                        </TableCell>
+                        <TableCell className="min-w-36">
+                          <Input
+                            {...form.register(`columns.${index}.fill_value`)}
+                            placeholder={fillPlaceholder(current?.data_type)}
+                            aria-label={`Valor para vazios da coluna ${field.source_name}`}
+                            aria-invalid={Boolean(errors?.fill_value)}
+                            className="h-8"
+                            disabled={!canProcess}
+                          />
+                          {errors?.fill_value && (
+                            <p className="mt-1 text-xs text-destructive">
+                              {errors.fill_value.message}
+                            </p>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <StatusBadge tone="neutral">
                             {stats ? DATA_TYPE_LABEL[stats.inferred_type] : '—'}
@@ -512,7 +585,9 @@ function PreviewContent({ preview, options, onApplyOptions, applying }: PreviewC
         <CardHeader>
           <CardTitle>Primeiras {formatInteger(preview.rows.length)} linhas</CardTitle>
           <CardDescription>
-            Valores exatamente como estão no arquivo, antes da conversão de tipos.
+            {isXlsx
+              ? 'Valores como lidos da planilha, antes da conversão de tipos: datas em aaaa-mm-dd e números com ponto decimal.'
+              : 'Valores exatamente como estão no arquivo, antes da conversão de tipos.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -575,4 +650,22 @@ function PreviewContent({ preview, options, onApplyOptions, applying }: PreviewC
       </Card>
     </>
   )
+}
+
+/** Exemplo do formato canônico aceito como valor para vazios. */
+function fillPlaceholder(dataType: DataType | undefined): string {
+  switch (dataType) {
+    case 'date':
+      return 'ex.: 2025-01-31'
+    case 'datetime':
+      return 'ex.: 2025-01-31 08:00:00'
+    case 'decimal':
+      return 'ex.: 0.00'
+    case 'integer':
+      return 'ex.: 0'
+    case 'boolean':
+      return 'true ou false'
+    default:
+      return 'manter vazio'
+  }
 }

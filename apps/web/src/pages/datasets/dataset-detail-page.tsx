@@ -1,5 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
-import { FileText, GitBranch, Play, Rows3, Settings2, Table2, TableProperties } from 'lucide-react'
+import {
+  FileText,
+  GitBranch,
+  Play,
+  Rows3,
+  Settings2,
+  Table2,
+  TableProperties,
+  Wand2,
+} from 'lucide-react'
 import { Link, useParams } from 'react-router'
 
 import { KpiCard } from '@/components/kpi-card'
@@ -27,6 +36,7 @@ import { formatBytes, formatInteger, formatTimestamp } from '@/lib/format'
 export function DatasetDetailPage() {
   const { datasetId = '' } = useParams()
   const canProcess = usePermission('datasets:process')
+  const canTransform = usePermission('transformations:manage')
   const dataset = useQuery({
     queryKey: ['datasets', datasetId],
     queryFn: () => datasetsApi.get(datasetId),
@@ -82,6 +92,13 @@ export function DatasetDetailPage() {
                 </Link>
               </Button>
             )}
+            {current && canTransform && (
+              <Button asChild variant="outline">
+                <Link to={`/transformacoes?dataset=${data.id}`}>
+                  <Wand2 /> Transformar
+                </Link>
+              </Button>
+            )}
             {canProcess && (
               <Button asChild variant="outline">
                 <Link to={`/datasets/${data.id}/preview`}>
@@ -106,7 +123,11 @@ export function DatasetDetailPage() {
           icon={Rows3}
           accent="green"
           value={formatInteger(current?.row_count)}
-          hint={current ? `${formatInteger(current.rejected_count)} rejeitados` : undefined}
+          hint={
+            current
+              ? `${formatInteger(current.rejected_count + current.filtered_count + (current.duplicate_count ?? 0))} excluídos (rejeitados, filtrados ou duplicados)`
+              : undefined
+          }
         />
         <KpiCard
           label="Colunas"
@@ -129,7 +150,8 @@ export function DatasetDetailPage() {
           <CardHeader>
             <CardTitle>Versões</CardTitle>
             <CardDescription>
-              Versões publicadas são imutáveis; cada uma registra origem, regras e responsável.
+              Versões publicadas são imutáveis; cada uma registra origem (arquivo ou versão
+              anterior), regras e responsável.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -139,8 +161,9 @@ export function DatasetDetailPage() {
                   <TableHeader className="bg-muted/40">
                     <TableRow className="hover:bg-transparent">
                       <TableHead>Versão</TableHead>
+                      <TableHead>Origem</TableHead>
                       <TableHead>Válidos</TableHead>
-                      <TableHead>Rejeitados</TableHead>
+                      <TableHead>Excluídos</TableHead>
                       <TableHead>Responsável</TableHead>
                       <TableHead>Publicada em</TableHead>
                     </TableRow>
@@ -159,11 +182,31 @@ export function DatasetDetailPage() {
                             <span className="ml-2 text-xs text-success">atual</span>
                           )}
                         </TableCell>
+                        <TableCell className="text-xs">
+                          {version.parent_version_id ? (
+                            <span title={version.transformations.transformation_set?.name}>
+                              v{version.parent_version_number ?? '?'} +{' '}
+                              {version.transformations.transformation_set?.name ?? 'regras'}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              Importação{' '}
+                              {(version.transformations.source_format ?? 'csv').toUpperCase()}
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell className="tabular">
                           {formatInteger(version.row_count)}
                         </TableCell>
-                        <TableCell className="tabular">
-                          {formatInteger(version.rejected_count)}
+                        <TableCell
+                          className="tabular"
+                          title={`Rejeitados ${version.rejected_count} · filtrados ${version.filtered_count} · duplicados ${version.duplicate_count ?? 'não avaliado'}`}
+                        >
+                          {formatInteger(
+                            version.rejected_count +
+                              version.filtered_count +
+                              (version.duplicate_count ?? 0),
+                          )}
                         </TableCell>
                         <TableCell>{version.created_by_name ?? '—'}</TableCell>
                         <TableCell className="tabular whitespace-nowrap">
@@ -203,6 +246,7 @@ export function DatasetDetailPage() {
                         {formatTimestamp(job.created_at)}
                       </Link>
                       <p className="text-xs text-muted-foreground">
+                        {job.kind === 'transform' ? 'Transformação · ' : 'Importação · '}
                         {job.created_by_name ?? '—'}
                         {job.result_version_number ? ` · gerou v${job.result_version_number}` : ''}
                       </p>
@@ -223,7 +267,7 @@ export function DatasetDetailPage() {
           <CardHeader>
             <CardTitle>Mapeamento de colunas</CardTitle>
             <CardDescription>
-              Configuração salva e reutilizada nos reprocessamentos.
+              Configuração da importação, salva e reutilizada nos reprocessamentos do arquivo.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -236,6 +280,8 @@ export function DatasetDetailPage() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Formato</TableHead>
+                    <TableHead>Obrigatória</TableHead>
+                    <TableHead>Se vazio</TableHead>
                     <TableHead>Inferido</TableHead>
                     <TableHead>Nulos (versão atual)</TableHead>
                   </TableRow>
@@ -257,6 +303,10 @@ export function DatasetDetailPage() {
                           stats?.scale !== undefined
                             ? `${stats.scale} casas`
                             : formatLabel(column.format)}
+                        </TableCell>
+                        <TableCell>{column.required ? 'Sim' : 'Não'}</TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {column.fill_value ?? '—'}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {column.inferred_type ? DATA_TYPE_LABEL[column.inferred_type] : '—'}

@@ -1,6 +1,6 @@
 import uuid
 
-from app.services.job_runner import TransientJobError, run_import_job
+from app.services.job_runner import TransientJobError, run_job
 from app.tasks.celery_app import celery_app, settings
 
 
@@ -13,4 +13,4 @@ from app.tasks.celery_app import celery_app, settings
     max_retries=settings.job_max_attempts,
 )
 def run_import(job_id: str) -> str:
-    return run_import_job(uuid.UUID(job_id))
+    return run_job(uuid.UUID(job_id))

@@ -27,7 +27,10 @@ def test_upload_stores_original_privately_with_random_key(client: TestClient, s3
 @pytest.mark.parametrize(
     ("filename", "content", "status", "code"),
     [
-        ("planilha.xlsx", b"PK\x03\x04...", 415, "format_not_yet_supported"),
+        ("planilha.xlsx", b"PK\x03\x04...", 422, "xlsx_invalid"),
+        ("texto.xlsx", b"a,b\n1,2\n", 422, "xlsx_invalid"),
+        ("antiga.xls", b"\xd0\xcf\x11\xe0...", 415, "unsupported_extension"),
+        ("macros.xlsm", b"PK\x03\x04...", 415, "unsupported_extension"),
         ("script.exe", b"MZ...", 415, "unsupported_extension"),
         ("disfarcado.csv", b"PK\x03\x04conteudo-zip", 422, "content_mismatch"),
         ("imagem.csv", b"\x89PNG\r\n\x1a\nxxxx", 422, "content_mismatch"),

@@ -77,3 +77,32 @@ Versões estáveis verificadas em 29/10/2026. Escolhas conscientes de não usar 
 
 **Decisão.** A mesma suíte roda com SQLite (rápida, sem infraestrutura) ou com PostgreSQL real via `TEST_DATABASE_URL` — a CI usa PostgreSQL e aplica as migrations (upgrade → check → downgrade → upgrade). S3 (moto) e Redis (fakeredis) são simulados **apenas nos testes**.
 **Consequências.** Tipos portáveis (`Uuid`, `JSON` com variante `JSONB`, timestamps UTC por `TypeDecorator`). Comportamentos específicos do PostgreSQL (FKs circulares, `FOR UPDATE SKIP LOCKED`) são exercitados na CI.
+
+## ADR-014 — XLSX com openpyxl somente leitura, sem executar fórmulas
+
+**Contexto.** Planilhas são ZIP com XML: podem ser bombas de descompressão, trazer macros, estar criptografadas ou ter fórmulas cujo resultado depende de recálculo.
+**Decisão.** Verificar o contêiner antes de abrir (assinatura, criptografia, entradas, tamanho e taxa de descompressão, `[Content_Types].xml`, macros), no upload e de novo no worker. Abrir com openpyxl em `read_only=True` e `defusedxml` ativo, duas vezes (valores salvos e fórmulas), para distinguir fórmula com valor salvo (entra pelo valor) de fórmula sem valor (registro rejeitado com `formula_sem_valor`). Nenhuma fórmula é calculada e nenhuma macro é lida. Dimensões declaradas são ignoradas; o cabeçalho é a primeira linha "larga" das 50 primeiras, ajustável pelo usuário.
+**Consequências.** Arquivos gerados por bibliotecas que não calculam fórmulas têm essas linhas rejeitadas — de forma explícita, nunca com valor inventado. A leitura dupla custa tempo — cerca de 40 vezes mais lento que CSV na medição local (ver `docs/benchmark.md`); por isso o limite de XLSX (25 MB) é menor que o de CSV e o progresso de XLSX mostra só registros processados.
+
+## ADR-015 — Transformações como regras declarativas de uma lista fechada
+
+**Contexto.** O usuário precisa limpar e derivar dados sem que o sistema execute código, SQL ou expressões enviadas por ele.
+**Decisão.** Cada regra é um objeto JSON validado por um modelo Pydantic de uma união discriminada (`operation`), com `extra="forbid"`. Antes de qualquer execução, `plan_rules` percorre as regras na ordem e calcula o esquema após cada uma, recusando coluna inexistente, tipo incompatível, formato fora da allowlist, nome inválido ou duplicado e literal que não converte — com a posição da regra no erro. Colunas derivadas só aceitam operações enumeradas (aritmética, concatenação, parte de data, diferença de dias) com operandos que são coluna ou valor fixo. A execução usa expressões do Polars montadas pelo backend.
+**Consequências.** Não há como injetar código; a mesma validação roda ao salvar o conjunto, na prévia e no worker (contra a versão de origem escolhida). O frontend simula o esquema só para oferecer as colunas certas; quem decide é o servidor.
+
+## ADR-016 — Categorias de exclusão mutuamente exclusivas
+
+**Contexto.** Com filtros e deduplicação, "rejeitado" deixou de descrever tudo o que não entra na versão, e a reconciliação precisa continuar fechando sem contagem dupla.
+**Decisão.** Quatro categorias: válido, rejeitado (problema de dado), filtrado (escolha do usuário) e duplicado (removido pela deduplicação). Um registro sai na primeira regra que o exclui e é registrado uma vez no `rejected.parquet`, com categoria, motivo, regra, coluna, detalhe e valores de entrada. `recebidos = válidos + rejeitados + filtrados + duplicados`; política de duplicados explícita (`removidos_dos_validos` ou `nao_aplicada`). A deduplicação precisa ser a última regra ativa e roda sobre o resultado inteiro da primeira passada, não por lote.
+**Consequências.** Contagens comparáveis entre importação e transformação; a análise de duplicidades (DuckDB) e o job (Polars) usam a mesma semântica — nulos iguais entre si — e a suíte confere que contam o mesmo. A deduplicação carrega a chave e o número do registro de toda a versão em memória; para volumes muito acima do benchmark será preciso particionar por hash da chave.
+
+## ADR-017 — Reprocessamento por jobs versão → versão, com cópia das regras
+
+**Contexto.** Versões publicadas são imutáveis, e cada nova versão precisa dizer de onde veio e o que foi aplicado.
+**Decisão.** Transformação é um job próprio (`kind = "transform"`) com a mesma máquina de estados, idempotência, cancelamento, retentativas e publicação atômica da importação. A entrada é o Parquet de uma versão publicada (SHA-256 conferido); a saída é uma nova versão com `parent_version_id`, `transformation_set_id` e, em `transformations`, a origem, o conjunto (nome e revisão) e a lista de regras aplicadas. O job guarda essa cópia na criação; conjuntos têm revisão incrementada a cada edição.
+**Consequências.** Editar ou excluir um conjunto não altera versões já geradas (a FK vira nula, a cópia permanece). Qualquer versão pode ser origem, formando cadeias como v1 → v2 → v3. A tarefa Celery continua `imports.run` para não perder mensagens em trânsito; o worker despacha pelo tipo do job.
+
+## ADR-018 — Aritmética decimal com arredondamento meio-para-par
+
+**Decisão.** Colunas derivadas aritméticas operam em `Decimal(38, escala)` com escala de trabalho maior que a de saída; o ajuste para a escala pedida segue o cast do Polars, que arredonda meio-para-par (1,005 → 1,00; 1,015 → 1,02). Conversões de tipo e de escala configuradas pelo usuário continuam sem arredondar: se perder casas, o registro é rejeitado (ADR-005). Divisão por zero rejeita o registro com `divisao_por_zero`.
+**Consequências.** Resultado determinístico e sem viés estatístico de arredondamento; difere do arredondamento "meio para cima" de planilhas, o que está documentado em `docs/data-pipeline.md`.
