@@ -171,7 +171,39 @@ python3 scripts/benchmark_stack.py --base-url http://localhost:8080 \
 | Exportações nos limites | CSV de 500 mil e XLSX de 100 mil gerados pelo worker, baixados pela API e conferidos (linhas, tamanho, assinatura ZIP) |
 | Planilha perto de 25 MB | `vendas_atendimentos_280000.xlsx` (24,7 MiB, gerada de forma determinística): prévia e importação da aba "Vendas" |
 
-Os números entram aqui quando a CI deste pull request rodar; o resumo sai no `$GITHUB_STEP_SUMMARY` e no artefato `benchmark-stack`. Localmente, sem Docker, o script foi validado de ponta a ponta contra a API com infraestrutura simulada e arquivos menores (100 mil linhas e a planilha de 8,8 MB). Esses números não servem de referência, porque o S3 e o worker rodam no mesmo processo.
+O resumo sai no `$GITHUB_STEP_SUMMARY` e no artefato `benchmark-stack`. Localmente, sem Docker, o script foi validado de ponta a ponta contra a API com infraestrutura simulada e arquivos menores (100 mil linhas e a planilha de 8,8 MB). Esses números não servem de referência, porque o S3 e o worker rodam no mesmo processo.
+
+### Resultados na CI (04/11/2026)
+
+[Execução 41835630810](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41835630810), commit `d57434c`, uma execução. O runner do GitHub Actions tinha 4 vCPUs e 15 GiB de memória. O cgroup limitava o worker a 2 CPUs (`cpu.max` 200000 100000) e 2 GiB (`memory.max` 2147483648), com `WORKER_CONCURRENCY=2`. Todas as conferências do script passaram.
+
+O pico de cada job segue a ADR-030: é o pico de RSS do processo do worker durante o job e inclui o RSS que o processo já tinha no início, mostrado ao lado. Os valores estão em MiB, porque o `/proc` informa kB de 1.024 bytes.
+
+| Etapa | Resultado |
+| --- | --- |
+| CSV de 1 milhão (80,3 MB): envio pela borda | 0,71 s |
+| Importação do CSV de 1 milhão | **4,4 s (229.200 registros/s)**: leitura 3,0 s, conversão 0,6 s, escrita 0,35 s; pico de 366 MB, partindo de 143 MB |
+| Página final, sem cache · com cache | 291 · 263 ms |
+| Explorer: filtro + busca + contagem | 109 ms |
+| KPIs · por vendedor com "Outros" · série mensal | 36 · 76 · 44 ms |
+| Exportação CSV da versão de 1 milhão | recusada com `export_too_large`, como esperado |
+| Deduplicação por vendedor + produto (999.520 duplicados, 480 mantidos) | **1,6 s**, dos quais 0,92 s na deduplicação; pico de **611 MB**, partindo de 383 MB; reconciliação fechada |
+| Exportação CSV de 500 mil (o limite) | 4,1 s no worker; 42,6 MB, baixados em 43 ms |
+| Exportação XLSX de 100 mil (o limite) | 10,2 s no worker; 4,7 MB |
+| Planilha de 24,7 MiB (280 mil registros): envio · prévia | 0,20 · 0,65 s |
+| Importação da planilha | **47,9 s (5.850 registros/s)**; pico de 568 MB, partindo de 486 MB |
+| Pico do cgroup no fim do benchmark: worker · API | 802.779.136 bytes (766 MiB) · 361.467.904 bytes (345 MiB) |
+
+A primeira execução do mesmo job ([execução 41820017555](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41820017555), commit `37031d7`, antes das ADR-030 e ADR-031) rodou em outro runner. Nela, todas as etapas foram mais lentas, inclusive as que não mudaram entre os dois commits: a importação de 1 milhão levou 5,3 s, contra 4,4 s; a exportação XLSX, 16,6 s, contra 10,2 s; e a planilha, 69,2 s, contra 47,9 s. Por isso as duas execuções não servem para comparar tempos. A memória pode ser comparada:
+
+| Pico de memória | `37031d7` | `d57434c` |
+| --- | --- | --- |
+| Deduplicação de 1 milhão, processo do worker | 1.357,3 MB | **611,0 MB** (partindo de 382,7 MB) |
+| Importação da planilha, processo do worker | 1.357,3 MB, herdado da deduplicação (ADR-030) | **568,1 MB** (partindo de 485,6 MB) |
+| Importação de 1 milhão, processo do worker | 375,9 MB | 366,4 MB (partindo de 142,7 MB) |
+| cgroup do worker no fim do benchmark | 1.501.970.432 bytes (1.432 MiB) | **802.779.136 bytes (766 MiB)** |
+
+O benchmark usa o Compose de desenvolvimento. No de produção, em que o worker roda com `cap_drop: [ALL]` e `no-new-privileges`, o pico também foi zerado: o job de 100 mil linhas do E2E registrou 394,2 MB, partindo de 287,2 MB.
 
 ## Memória da deduplicação de 1 milhão (Fase 6)
 
@@ -209,11 +241,12 @@ Com `WORKER_CONCURRENCY=2` e `WORKER_MEMORY=2g` (os valores do `.env.example`), 
 | vendedor + produto (999.520 duplicados) | 1.358 MB | **513–536 MB** | 4,5–5,8 s | 6,5–6,8 s |
 | chave de 6 colunas quase única (1 duplicado) | 1.085 MB | **627–636 MB** | 4,3–4,8 s | 4,5–4,7 s |
 
-A reconciliação fechou em todas as execuções. O caso com muitos duplicados ficou mais lento porque as exclusões passaram a ser gravadas em grupos de 50 mil linhas, que o Parquet comprime mais devagar que um grupo único: 2,1 s contra 1,3 s para gravar as mesmas 999.520 linhas. Lotes de 250 mil devolviam o tempo (5,1–5,6 s), mas levavam o pico a cerca de 800 MB, e por isso ficaram os 50 mil das outras etapas. Os números do contêiner vêm do job `benchmark` da CI.
+A reconciliação fechou em todas as execuções. O caso com muitos duplicados ficou mais lento porque as exclusões passaram a ser gravadas em grupos de 50 mil linhas, que o Parquet comprime mais devagar que um grupo único: 2,1 s contra 1,3 s para gravar as mesmas 999.520 linhas. Lotes de 250 mil devolviam o tempo (5,1–5,6 s), mas levavam o pico a cerca de 800 MB, e por isso ficaram os 50 mil das outras etapas.
+
+No contêiner, na CI, a mesma deduplicação ficou em 611 MB de pico, partindo de 383 MB; antes, 1.357 MB (ver os resultados na CI, acima). Os tempos da CI não confirmam nem descartam a perda de tempo medida localmente: a etapa de deduplicação levou 0,92 s, contra 1,30 s na primeira execução, mas naquele runner todas as etapas foram mais lentas.
 
 ## Pendente
 
-- Números do `benchmark_stack` na CI (acima), com o pico de memória por job (ADR-030).
 - Mais repetições em um ambiente dedicado, para obter média e variação confiáveis.
 - Transformações com 1 milhão de linhas e outras regras além da deduplicação; consultas dos dashboards com muitos widgets abertos ao mesmo tempo (cada widget é uma requisição, e a API atende 2 consultas por vez por processo, ADR-028).
 - CSV perto do limite de 100 MB (o de 1 milhão tem 80 MB).

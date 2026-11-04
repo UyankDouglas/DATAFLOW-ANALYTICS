@@ -2,7 +2,7 @@
 
 Plataforma de engenharia de dados e Business Intelligence: transforma planilhas CSV e XLSX brutas em datasets tratados, versionados e consultáveis — com rastreabilidade de cada registro recebido.
 
-> **Status:** As 6 fases estão implementadas. As Fases 1 a 5 (fundação, motor ETL, qualidade e Data Explorer, Business Intelligence, relatórios, exportações e administração) foram validadas na CI com a infraestrutura real (PostgreSQL, Redis, MinIO e Celery), nos Compose de desenvolvimento e de produção. A Fase 6 (qualidade e produção) foi validada localmente, sem Docker, e ainda não passou pela CI. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
+> **Status:** As 6 fases estão implementadas e validadas na CI com a infraestrutura real (PostgreSQL, Redis, MinIO e Celery), nos Compose de desenvolvimento e de produção. Na Fase 6, a CI também executa o ciclo de backup e restauração em produção e o benchmark com 1 milhão de registros. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
 
 ![Visão geral](docs/screenshots/02-visao-geral.png)
 
@@ -304,12 +304,18 @@ Fase 6, no mesmo ambiente, com **1 milhão de registros** (80 MB):
 - consultas do explorer e dos dashboards entre 0,10 e 0,25 s;
 - exportação no limite: CSV de 500 mil registros em 10,1 s e XLSX de 100 mil em 28 s.
 
-O mesmo volume no fluxo completo, com infraestrutura real, é medido pelo job `benchmark` da CI.
+O mesmo volume no fluxo completo, com infraestrutura real, na CI (worker limitado a 2 CPUs e 2 GB, uma execução):
+
+- CSV de 1 milhão importado em 4,4 s (229 mil registros/s), com pico de 366 MB no processo do worker;
+- página final, explorer e dashboards entre 36 e 291 ms;
+- deduplicação de 1 milhão (999.520 duplicados) em 1,6 s, com pico de 611 MB;
+- exportação no limite: CSV de 500 mil registros em 4,1 s e XLSX de 100 mil em 10,2 s;
+- planilha de 25 MB (280 mil registros) importada em 47,9 s, com pico de 568 MB.
 
 ## Limitações conhecidas
 
-- XLSX é lido em Python pelo openpyxl, em duas passadas: ~2,5 mil registros/s na medição local; o progresso mostra só a contagem de registros. A tabela de textos compartilhados da planilha fica inteira em memória.
-- A deduplicação mantém em memória a chave de todos os registros: com 1 milhão, o pico ficou entre 0,5 e 0,65 GB, medido localmente ([docs/benchmark.md](docs/benchmark.md#memória-da-deduplicação-de-1-milhão-fase-6)).
+- XLSX é lido em Python pelo openpyxl, em duas passadas: ~2,5 mil registros/s na medição local e ~5,9 mil na CI, com a planilha de 25 MB; o progresso mostra só a contagem de registros. A tabela de textos compartilhados da planilha fica inteira em memória.
+- A deduplicação mantém em memória a chave de todos os registros: com 1 milhão, o pico do processo do worker ficou em 611 MB na CI e entre 0,5 e 0,65 GB na medição local ([docs/benchmark.md](docs/benchmark.md#memória-da-deduplicação-de-1-milhão-fase-6)).
 - A prévia de transformações usa os primeiros 200 registros; a análise de duplicidades da versão inteira é separada.
 - Arredondamento de colunas derivadas é meio-para-par (1,005 → 1,00), diferente do "meio para cima" das planilhas.
 - A busca do Data Explorer cobre só colunas de texto.
@@ -334,4 +340,4 @@ O mesmo volume no fluxo completo, com infraestrutura real, é medido pelo job `b
 | 3 ✅ | Qualidade dos dados (pontuação documentada), Data Explorer com filtros, busca e seleção de colunas |
 | 4 ✅ | Dashboards, KPIs, gráficos, filtros dinâmicos, comparação temporal, construtor de dashboards |
 | 5 ✅ | Relatórios, exportações CSV/XLSX em segundo plano, gestão de usuários, auditoria, retenção |
-| 6 ✅ | Testes ampliados, benchmarks com infraestrutura, revisão de segurança e performance, backup e restauração, deploy (validação na CI pendente) |
+| 6 ✅ | Testes ampliados, benchmarks com infraestrutura, revisão de segurança e performance, backup e restauração, deploy |
