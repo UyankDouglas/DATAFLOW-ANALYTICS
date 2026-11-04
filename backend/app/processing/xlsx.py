@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from openpyxl import load_workbook
+from openpyxl.cell.read_only import EMPTY_CELL
 from openpyxl.utils.cell import range_boundaries
 from openpyxl.workbook.workbook import Workbook
 from openpyxl.worksheet._read_only import ReadOnlyWorksheet
@@ -45,6 +46,12 @@ _ENCRYPTION_MARKERS = (
     "EncryptedPackage".encode("utf-16-le"),
 )
 HEADER_SCAN_ROWS = 50
+# Limites do próprio Excel e da leitura: sem eles, uma linha `r="999999999999"` faz o openpyxl
+# devolver uma linha vazia para cada índice que falta, e uma célula muito à direita, uma linha
+# com milhares de células vazias.
+EXCEL_MAX_ROWS = 1_048_576
+MAX_SCAN_COLUMNS = 1_024
+OVERFLOW_TEXT = "(conteúdo além da coluna 1.024)"
 _DIMENSION_TAG = f"{{{SHEET_MAIN_NS}}}dimension"
 _SHEET_DATA_TAG = f"{{{SHEET_MAIN_NS}}}sheetData"
 _ROW_TAG = re.compile(rb"<(?:[A-Za-z_][\w.-]*:)?row[\s/>]")
@@ -143,11 +150,40 @@ class _RowReader:
         value_cells = next(self.values)
         formula_cells = next(self.formulas, ())
         self._row += 1
+        if self._row > EXCEL_MAX_ROWS:
+            raise FileRejected(
+                "A planilha tem linhas além do limite do Excel (1.048.576 linhas).",
+                "xlsx_invalid",
+            )
+        values, overflow = _bounded(value_cells)
         cells = [
             cell_text(value, formula_cells[i] if i < len(formula_cells) else None)
-            for i, value in enumerate(value_cells)
+            for i, value in enumerate(values)
         ]
-        return self._row, cells
+        return self._row, _with_overflow(cells, overflow)
+
+
+def _bounded(cells: tuple[Any, ...]) -> tuple[tuple[Any, ...], bool]:
+    """Células até a última ocupada, no máximo `MAX_SCAN_COLUMNS`, e se havia conteúdo além.
+
+    O openpyxl monta a linha até a última célula gravada, preenchendo as lacunas com a mesma
+    célula vazia; só ela é descartada no fim, por identidade, sem examinar célula a célula.
+    """
+    overflow = False
+    if len(cells) > MAX_SCAN_COLUMNS:
+        overflow = bool(cell_text(cells[-1], None).text.strip())
+        cells = cells[:MAX_SCAN_COLUMNS]
+    end = len(cells)
+    while end and cells[end - 1] is EMPTY_CELL:
+        end -= 1
+    return cells[:end], overflow
+
+
+def _with_overflow(cells: list["_Cell"], overflow: bool) -> list["_Cell"]:
+    """Marca o conteúdo além do limite como uma célula a mais (campo excedente ou cabeçalho largo)."""
+    if not overflow:
+        return cells
+    return [*cells, *[_Cell("")] * (MAX_SCAN_COLUMNS - len(cells)), _Cell(OVERFLOW_TEXT)]
 
 
 def column_letter(index: int) -> str:
@@ -277,7 +313,8 @@ def _open(path: Path, *, data_only: bool) -> Workbook:
 
 
 def _row_values(cells: tuple[Any, ...]) -> list[_Cell]:
-    return [cell_text(cell, None) for cell in cells]
+    values, overflow = _bounded(cells)
+    return _with_overflow([cell_text(cell, None) for cell in values], overflow)
 
 
 def _filled(cells: list[_Cell]) -> list[int]:
@@ -337,7 +374,11 @@ def inspect_xlsx(path: Path, limits: XlsxLimits) -> dict[str, Any]:
         default = worksheet.title
         worksheet.reset_dimensions()
         layout = detect_layout(
-            ((i, _row_values(r)) for i, r in enumerate(worksheet.iter_rows(), start=1)), None
+            (
+                (i, _row_values(r))
+                for i, r in enumerate(worksheet.iter_rows(max_row=HEADER_SCAN_ROWS), start=1)
+            ),
+            None,
         )
     except FileRejected:
         raise
@@ -381,9 +422,10 @@ class _Workbooks:
         formula_sheet = self.formulas[self.sheet]
         value_sheet.reset_dimensions()
         formula_sheet.reset_dimensions()
+        # Uma linha além do limite basta para o leitor recusar a planilha.
         return _RowReader(
-            values=value_sheet.iter_rows(min_row=start_row),
-            formulas=formula_sheet.iter_rows(min_row=start_row),
+            values=value_sheet.iter_rows(min_row=start_row, max_row=EXCEL_MAX_ROWS + 1),
+            formulas=formula_sheet.iter_rows(min_row=start_row, max_row=EXCEL_MAX_ROWS + 1),
             start_row=start_row,
         )
 

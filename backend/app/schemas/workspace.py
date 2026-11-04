@@ -52,6 +52,8 @@ class WorkspaceSettingsOut(BaseModel):
     name: str
     slug: str
     settings: WorkspaceSettings
+    storage_used_bytes: int = 0
+    storage_quota_bytes: int | None = None  # vazio = sem cota
 
 
 class WorkspaceUpdate(BaseModel):

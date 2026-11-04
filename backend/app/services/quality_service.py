@@ -18,9 +18,9 @@ from sqlalchemy.orm import Session
 from app.analytics.cache import local_parquet
 from app.analytics.quality import FORMULA_VERSION, compute_quality
 from app.analytics.query import (
+    query_connection,
     quote_identifier,
     run_limited,
-    sandboxed_connection,
     to_json_value,
 )
 from app.core.errors import NotFound, ServiceUnavailable, ValidationFailed
@@ -262,22 +262,20 @@ def inconsistencies(
     rule_sql = "__df_rule" if "__df_rule" in names else "NULL::INTEGER"
     duplicate_sql = "__df_duplicate_of" if "__df_duplicate_of" in names else "NULL::BIGINT"
     select_inputs = "".join(f", {quote_identifier(n)}" for n in inputs)
-    con = sandboxed_connection(path.parent)
     try:
-        total = int(
-            run_limited(con, f"SELECT count(*) FROM read_parquet($path){where}", params)[0][0]  # noqa: S608
-        )
-        found = run_limited(
-            con,
-            f"SELECT __df_row, __df_line, {category_sql}, __df_reason, __df_column, "  # noqa: S608
-            f"{rule_sql}, {duplicate_sql}, __df_detail{select_inputs} "
-            f"FROM read_parquet($path){where} ORDER BY __df_row LIMIT $limit OFFSET $offset",
-            {**params, "limit": page_size, "offset": (page - 1) * page_size},
-        )
+        with query_connection(path.parent) as con:
+            total = int(
+                run_limited(con, f"SELECT count(*) FROM read_parquet($path){where}", params)[0][0]  # noqa: S608
+            )
+            found = run_limited(
+                con,
+                f"SELECT __df_row, __df_line, {category_sql}, __df_reason, __df_column, "  # noqa: S608
+                f"{rule_sql}, {duplicate_sql}, __df_detail{select_inputs} "
+                f"FROM read_parquet($path){where} ORDER BY __df_row LIMIT $limit OFFSET $offset",
+                {**params, "limit": page_size, "offset": (page - 1) * page_size},
+            )
     except duckdb.Error as exc:
         raise ServiceUnavailable("Não foi possível consultar as inconsistências agora.") from exc
-    finally:
-        con.close()
 
     items = []
     for row in found:
@@ -322,23 +320,21 @@ def value_frequency(
         raise ValidationFailed("Coluna desconhecida nesta versão.", details={"column": column})
     path = local_parquet(f"v-{version.id}", version.storage_key, version.checksum_sha256)
     name = quote_identifier(column)
-    con = sandboxed_connection(path.parent)
     try:
-        totals = run_limited(
-            con,
-            f"SELECT count(*), count({name}), count(DISTINCT {name}) FROM read_parquet($path)",  # noqa: S608
-            {"path": str(path)},
-        )[0]
-        top = run_limited(
-            con,
-            f"SELECT {name}, count(*) AS n FROM read_parquet($path) WHERE {name} IS NOT NULL "  # noqa: S608
-            f"GROUP BY {name} ORDER BY n DESC, {name} LIMIT $limit",
-            {"path": str(path), "limit": limit},
-        )
+        with query_connection(path.parent) as con:
+            totals = run_limited(
+                con,
+                f"SELECT count(*), count({name}), count(DISTINCT {name}) FROM read_parquet($path)",  # noqa: S608
+                {"path": str(path)},
+            )[0]
+            top = run_limited(
+                con,
+                f"SELECT {name}, count(*) AS n FROM read_parquet($path) WHERE {name} IS NOT NULL "  # noqa: S608
+                f"GROUP BY {name} ORDER BY n DESC, {name} LIMIT $limit",
+                {"path": str(path), "limit": limit},
+            )
     except duckdb.Error as exc:
         raise ServiceUnavailable("Não foi possível calcular a frequência agora.") from exc
-    finally:
-        con.close()
     total, non_null, distinct = (int(v) for v in totals)
     values = [ValueCount(value=to_json_value(v), count=int(n)) for v, n in top]
     return ValueFrequency(

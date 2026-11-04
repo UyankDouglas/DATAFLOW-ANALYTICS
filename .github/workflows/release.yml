@@ -1,0 +1,59 @@
+name: Release
+
+# Publica as imagens de produção no GitHub Container Registry quando uma tag `v*` é enviada
+# (ex.: git tag v1.0.0 && git push origin v1.0.0). O deploy pode então usar as imagens prontas:
+#   BACKEND_IMAGE=ghcr.io/<dono>/dataflow-backend:v1.0.0 WEB_IMAGE=ghcr.io/<dono>/dataflow-web:v1.0.0 \
+#     docker compose -f docker-compose.prod.yml up -d --no-build
+# A CI (ci.yml) já valida as mesmas imagens a cada pull request; este fluxo só as publica.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  images:
+    name: Imagens ${{ matrix.image }}
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - image: dataflow-backend
+            dockerfile: docker/api/Dockerfile
+            target: runtime
+          - image: dataflow-web
+            dockerfile: docker/web/Dockerfile
+            target: ""
+    steps:
+      - uses: actions/checkout@v7
+      - name: Nome da imagem
+        id: name
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          version="${GITHUB_REF_NAME}"
+          [[ "$GITHUB_REF_TYPE" == tag ]] || version="sha-${GITHUB_SHA::7}"
+          echo "ref=ghcr.io/${owner}/${{ matrix.image }}" >>"$GITHUB_OUTPUT"
+          echo "version=${version}" >>"$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          push: true
+          tags: |
+            ${{ steps.name.outputs.ref }}:${{ steps.name.outputs.version }}
+            ${{ github.ref_type == 'tag' && format('{0}:latest', steps.name.outputs.ref) || '' }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.name.outputs.version }}

@@ -10,11 +10,19 @@ from redis.exceptions import RedisError
 logger = logging.getLogger(__name__)
 
 
-def _send(name: str, args: list[Any], task_id: str | None = None) -> bool:
+# Tarefas de e-mail levam endereço e token: o Celery registra `argsrepr` em vez dos argumentos.
+REDACTED_ARGS = "['<omitido>']"
+
+
+def _send(
+    name: str, args: list[Any], task_id: str | None = None, *, sensitive: bool = False
+) -> bool:
     from app.tasks.celery_app import celery_app
 
     try:
-        celery_app.send_task(name, args=args, task_id=task_id)
+        celery_app.send_task(
+            name, args=args, task_id=task_id, argsrepr=REDACTED_ARGS if sensitive else None
+        )
         return True
     except (KombuOperationalError, RedisError, OSError):
         # O job continua durável no PostgreSQL; a tarefa de recuperação o reenfileira.
@@ -27,7 +35,7 @@ def enqueue_job(job_id: uuid.UUID) -> bool:
 
 
 def enqueue_password_reset_email(email: str, token: str) -> bool:
-    return _send("email.password_reset", [email, token])
+    return _send("email.password_reset", [email, token], sensitive=True)
 
 
 def enqueue_export(export_id: uuid.UUID) -> bool:
@@ -35,4 +43,4 @@ def enqueue_export(export_id: uuid.UUID) -> bool:
 
 
 def enqueue_invitation_email(email: str, token: str, workspace_name: str, role: str) -> bool:
-    return _send("email.invitation", [email, token, workspace_name, role])
+    return _send("email.invitation", [email, token, workspace_name, role], sensitive=True)

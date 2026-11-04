@@ -43,6 +43,10 @@ from app.core.config import get_settings  # noqa: E402
 from app.core.db import get_engine, session_scope  # noqa: E402
 from app.models import Base, Role, WorkspaceMember  # noqa: E402
 from app.services import storage  # noqa: E402
+from app.tasks import dispatch  # noqa: E402
+
+# Publicação real de tarefas, para os testes que conferem o que chega ao Celery.
+REAL_SEND = dispatch._send
 
 IS_POSTGRES = get_settings().database_url.startswith("postgresql")
 PASSWORD = "Senha-forte-123"
@@ -107,7 +111,7 @@ def dispatched(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, list[Any]]]:
     """Captura tarefas publicadas em vez de enviá-las ao broker."""
     calls: list[tuple[str, list[Any]]] = []
 
-    def fake_send(name: str, args: list[Any], task_id: str | None = None) -> bool:
+    def fake_send(name: str, args: list[Any], task_id: str | None = None, **_: Any) -> bool:
         calls.append((name, args))
         return True
 

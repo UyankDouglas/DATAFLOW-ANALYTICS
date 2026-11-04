@@ -37,6 +37,7 @@ from app.services import (
     import_service,
     jobs_service,
     preview_service,
+    quota_service,
     upload_service,
 )
 
@@ -69,6 +70,10 @@ async def upload_dataset(
     safe_name, file_format = await anyio.to_thread.run_sync(
         upload_service.check_upload_request, ctx, filename, content_length
     )
+    if content_length is not None:  # recusa antes de ler o corpo; confirmado depois com o real
+        await anyio.to_thread.run_sync(
+            quota_service.check_quota, db, ctx.workspace_id, content_length
+        )
 
     settings = get_settings()
     settings.temp_dir.mkdir(parents=True, exist_ok=True)

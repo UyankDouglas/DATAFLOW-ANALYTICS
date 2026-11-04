@@ -9,6 +9,14 @@ from datetime import UTC, datetime
 request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
 
 _RESERVED = set(logging.LogRecord("", 0, "", 0, "", (), None).__dict__) | {"message"}
+# O Celery anexa os argumentos da tarefa em `data` ao registrar falhas; nunca saem no log.
+_SCRUBBED = {"args", "kwargs"}
+
+
+def _scrub(value: object) -> object:
+    if isinstance(value, dict) and _SCRUBBED & value.keys():
+        return {k: "<omitido>" if k in _SCRUBBED else v for k, v in value.items()}
+    return value
 
 
 class JsonFormatter(logging.Formatter):
@@ -24,7 +32,7 @@ class JsonFormatter(logging.Formatter):
             payload["request_id"] = request_id
         for key, value in record.__dict__.items():
             if key not in _RESERVED and not key.startswith("_"):
-                payload[key] = value
+                payload[key] = _scrub(value)
         if record.exc_info:
             payload["exc"] = self.formatException(record.exc_info)
         return json.dumps(payload, default=str, ensure_ascii=False)

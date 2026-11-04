@@ -128,11 +128,54 @@ Medido pelo mesmo `benchmark_pipeline`, que passou a exportar a versão inteira 
 
 O XLSX é cerca de 13 vezes mais lento, porque o openpyxl monta cada célula em Python. Numa medição isolada com as mesmas 900 mil células, a escrita levou 24,8 s com formato em todas as células, 21,3 s só tipando o texto e 17,4 s com valores puros. A formatação custa cerca de 30%, e o limite de 100 mil registros para XLSX segura o pior caso em torno de meio minuto, em segundo plano. O CSV ficou com 500 mil registros (≈ 10 s, por extrapolação linear, não medido).
 
+## Resultados — Fase 6: 1 milhão de registros, em processo (03/11/2026)
+
+Medido pelo mesmo `benchmark_pipeline`, no mesmo ambiente das fases anteriores (Windows 10 Pro, Intel Family 6 Model 79, Python 3.13.12, Polars 2.1.0, DuckDB 1.5.6, lote de 50.000 registros), uma execução. As exportações passaram a respeitar os limites que a API aceita, como o worker faz: até 500 mil registros em CSV e 100 mil em XLSX.
+
+**Arquivo:** `vendas_1000000.csv` (`generate_samples.py --rows 1000000 --only vendas`, seed 42), 80,3 MB, 1.000.000 registros → 1.000.000 válidos; Parquet de 10,9 MB.
+
+| Etapa | Tempo |
+| --- | --- |
+| Inspeção do upload (hash, UTF-8, delimitador) | 0,42 s |
+| Prévia (1.000 registros + inferência) | 0,12 s |
+| Pipeline completo | **8,1 s (123.344 registros/s)** — leitura 5,1 s, conversão 1,5 s, escrita 1,4 s |
+| Pico do heap Python no pipeline (`tracemalloc`) | **43,3 MB**, o mesmo das 100 mil linhas: a leitura é por lotes |
+| Página ordenada (`OFFSET 5000`) | 0,23 s |
+| Relatório de qualidade completo | 0,88 s |
+| Explorer: filtro + busca + contagem (varredura completa) | 0,25 s |
+| Dashboards: KPIs · por categoria com "Outros" · série mensal · comparação · comparação por categoria | 0,10 · 0,24 · 0,13 · 0,10 · 0,19 s |
+| Exportação CSV de 500 mil registros (o limite) | 10,1 s |
+| Exportação XLSX de 100 mil registros (o limite) | 28,0 s |
+
+Comparado às 100 mil linhas, o pipeline escalou de forma linear (0,8–1,0 s → 8,1 s) e as consultas, abaixo disso (0,05–0,09 s → 0,10–0,25 s). Todas ficaram longe do tempo-limite de 10 s. O CSV de 500 mil confirmou a extrapolação da Fase 5 (≈ 10 s). O pico de RSS não é medido no Windows; o do processo do worker em contêiner vem da CI.
+
+## Fluxo completo com infraestrutura real: `benchmark_stack` (Fase 6)
+
+`scripts/benchmark_stack.py` mede o fluxo inteiro contra uma instalação em execução, só pela API pública e com a biblioteca padrão do Python. Ele cadastra uma conta descartável e envia os arquivos em streaming. Depois processa, consulta, deduplica e exporta, e confere as contagens em cada etapa: falha se algo não bater. O job `benchmark` da CI roda o script contra o Docker Compose de desenvolvimento, com o worker limitado a 2 CPUs e 2 GB:
+
+```bash
+python3 scripts/generate_samples.py --rows 1000000 500000 100000 --only vendas
+uv run --no-project --with openpyxl==3.1.5 python scripts/generate_samples.py --xlsx --rows 280000
+python3 scripts/benchmark_stack.py --base-url http://localhost:8080 \
+  --large samples/generated/vendas_1000000.csv \
+  --csv-limit samples/generated/vendas_500000.csv \
+  --xlsx-limit samples/generated/vendas_100000.csv \
+  --workbook samples/generated/vendas_atendimentos_280000.xlsx --out benchmark-stack.json
+```
+
+| Etapa | O que mede |
+| --- | --- |
+| CSV de 1 milhão (≈ 80 MB) | upload pela borda, job de importação (tempos por etapa, registros/s, pico de RSS do worker), página final com e sem cache, explorer com filtro e busca, KPIs, agrupamento com "Outros" e série mensal |
+| Exportação acima do limite | o pedido de CSV da versão de 1 milhão precisa ser recusado com `export_too_large` |
+| Deduplicação de 1 milhão | transformação versão → versão por vendedor + produto; a reconciliação precisa fechar (ADR-016) |
+| Exportações nos limites | CSV de 500 mil e XLSX de 100 mil gerados pelo worker, baixados pela API e conferidos (linhas, tamanho, assinatura ZIP) |
+| Planilha perto de 25 MB | `vendas_atendimentos_280000.xlsx` (24,7 MiB, gerada de forma determinística): prévia e importação da aba "Vendas" |
+
+Os números entram aqui quando a CI deste pull request rodar; o resumo sai no `$GITHUB_STEP_SUMMARY` e no artefato `benchmark-stack`. Localmente, sem Docker, o script foi validado de ponta a ponta contra a API com infraestrutura simulada e arquivos menores (100 mil linhas e a planilha de 8,8 MB). Esses números não servem de referência, porque o S3 e o worker rodam no mesmo processo.
+
 ## Pendente
 
-- Medições com 1 milhão de linhas e com arquivos próximos do limite de 100 MB. Até lá, não há evidência de como a memória e o tempo escalam acima de 100 mil linhas.
+- Números do `benchmark_stack` na CI (acima).
 - Mais repetições em um ambiente dedicado, para obter média e variação confiáveis.
-- XLSX perto do limite de 25 MB e transformações com 1 milhão de linhas, inclusive o pico de memória da deduplicação (ADR-016).
-- XLSX e transformação no fluxo completo com infraestrutura real (CI), como foi feito para o CSV.
-- Consultas dos dashboards com 1 milhão de registros e com muitos widgets abertos ao mesmo tempo (cada widget é uma requisição).
-- Exportação CSV no limite de 500 mil registros e XLSX no limite de 100 mil, no fluxo completo com MinIO e Celery reais.
+- Transformações com 1 milhão de linhas e outras regras além da deduplicação; consultas dos dashboards com muitos widgets abertos ao mesmo tempo (cada widget é uma requisição, e a API atende 2 consultas por vez por processo, ADR-028).
+- CSV perto do limite de 100 MB (o de 1 milhão tem 80 MB).

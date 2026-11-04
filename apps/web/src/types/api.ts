@@ -883,6 +883,9 @@ export interface WorkspaceSettingsInfo {
   name: string
   slug: string
   settings: WorkspaceSettings
+  storage_used_bytes: number
+  /** Vazio quando a instalação não define cota. */
+  storage_quota_bytes: number | null
 }
 
 export interface Invitation {

@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     processing_batch_rows: int = 50_000
     max_rejection_samples: int = 200
     rows_page_size_max: int = 200
+    # Consultas DuckDB simultâneas por processo e memória de cada uma (o teto da API é a soma).
+    query_concurrency: int = Field(default=2, ge=1)
+    query_memory_mb: int = Field(default=512, ge=64)
     transform_preview_rows: int = 200
 
     # Exportações (arquivos temporários no armazenamento de objetos, baixados pela API)
@@ -76,6 +79,9 @@ class Settings(BaseSettings):
     job_max_attempts: int = 3
     job_stale_after_seconds: int = 300
     job_requeue_after_seconds: int = 600
+    # Carência antes de um objeto sem registro no banco ser tratado como órfão. Precisa ser maior
+    # que a duração máxima de uma tarefa (o envio ao MinIO acontece antes do commit).
+    orphan_grace_hours: int = Field(default=24, ge=2)
 
     # Rate limiting (requisições por janela)
     rate_limit_enabled: bool = True
@@ -83,6 +89,9 @@ class Settings(BaseSettings):
     register_limit_per_hour: int = 10
     forgot_limit_per_hour: int = 5
     upload_limit_per_min: int = 30
+
+    # Cota de armazenamento por workspace (originais, versões e exportações); 0 desliga.
+    workspace_storage_quota_mb: int = Field(default=10_240, ge=0)
 
     # E-mail (Mailpit em desenvolvimento; qualquer SMTP em produção)
     smtp_host: str | None = "localhost"
@@ -98,6 +107,8 @@ class Settings(BaseSettings):
     cache_max_mb: int = 2048
 
     log_level: str = "INFO"
+    # Documentação interativa da API (/api/docs): ligada fora de produção; em produção, só se pedida.
+    expose_api_docs: bool | None = None
 
     @field_validator("allowed_origins", mode="before")
     @classmethod
@@ -106,7 +117,7 @@ class Settings(BaseSettings):
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
 
-    @field_validator("s3_endpoint_url", "smtp_host", "smtp_user", mode="before")
+    @field_validator("s3_endpoint_url", "smtp_host", "smtp_user", "expose_api_docs", mode="before")
     @classmethod
     def _empty_to_none(cls, value: object) -> object:
         return None if value == "" else value
@@ -132,6 +143,10 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
+
+    @property
+    def api_docs(self) -> bool:
+        return self.expose_api_docs if self.expose_api_docs is not None else not self.is_production
 
     @property
     def temp_dir(self) -> Path:

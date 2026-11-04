@@ -25,7 +25,7 @@ flowchart TD
 | **Caddy** | Serve o build estático, aplica CSP e cabeçalhos de segurança, limita corpo de requisição e faz proxy de `/api` e `/health`. HTTPS automático em produção. |
 | **FastAPI** | Autenticação, RBAC, validação, upload em streaming, pré-visualização, criação de jobs e consultas. Não executa processamento pesado. |
 | **Celery worker** | Executa importações, transformações, exportações (CSV/XLSX) e o envio de e-mails (redefinição de senha, convites). Compartilha modelos, regras e serviços com a API (mesma imagem e mesmo pacote `app`). |
-| **Celery beat** | A cada 60 s recupera jobs e exportações interrompidos ou não publicados; a cada 10 min apaga exportações vencidas; a cada 6 h aplica a retenção de originais. |
+| **Celery beat** | A cada 60 s recupera jobs e exportações interrompidos ou não publicados; a cada 10 min apaga exportações vencidas; a cada 6 h aplica a retenção de originais; uma vez por dia apaga objetos órfãos do armazenamento (ADR-026). |
 | **PostgreSQL** | Fonte da verdade: usuários, workspaces, sessões, datasets, colunas, uploads, jobs (estado durável), versões, relatórios de qualidade e dashboards (só a definição dos widgets). |
 | **Redis** | Transporte da fila (sem backend de resultados) e contadores de rate limiting. |
 | **MinIO (S3)** | Arquivos originais, Parquet das versões e exportações temporárias. Bucket privado; não há URL pública: downloads passam pela API. |

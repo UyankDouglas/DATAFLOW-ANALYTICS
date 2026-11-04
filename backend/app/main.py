@@ -49,9 +49,9 @@ def create_app() -> FastAPI:
         version="0.1.0",
         description="API de importação, processamento e análise de dados.",
         lifespan=lifespan,
-        docs_url="/api/docs",
+        docs_url="/api/docs" if settings.api_docs else None,
         redoc_url=None,
-        openapi_url="/api/openapi.json",
+        openapi_url="/api/openapi.json" if settings.api_docs else None,
     )
     register_error_handlers(app)
     app.add_middleware(CSRFMiddleware)

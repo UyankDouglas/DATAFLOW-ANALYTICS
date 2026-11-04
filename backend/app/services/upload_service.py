@@ -29,7 +29,7 @@ from app.processing.types import ParseOptions
 from app.processing.xlsx import inspect_xlsx
 from app.repositories import datasets as repo
 from app.schemas.dataset import SheetImportRequest
-from app.services import audit, storage
+from app.services import audit, quota_service, storage
 from app.services.preview_service import ensure_original
 
 logger = logging.getLogger(__name__)
@@ -160,6 +160,8 @@ def store_upload(
     """Envia o arquivo validado ao armazenamento e registra os metadados (executa em thread)."""
     key = storage.upload_key(ctx.workspace_id, upload_id)
     file_format = str(detection.get("format", "csv"))
+    # Tamanho real, depois do recebimento (o Content-Length pode faltar ou mentir).
+    quota_service.check_quota(db, ctx.workspace_id, int(detection["size_bytes"]))
     try:
         storage.upload_file(temp_path, key, CONTENT_TYPES[file_format])
     except storage.StorageError as exc:
@@ -225,6 +227,7 @@ def import_sheet(
             f"A aba '{request.sheet}' não existe na planilha.", code="xlsx_sheet_not_found"
         )
     ensure_original(upload)
+    quota_service.check_quota(db, ctx.workspace_id, upload.size_bytes)
     upload_id = uuid.uuid4()
     key = storage.upload_key(ctx.workspace_id, upload_id)
     try:

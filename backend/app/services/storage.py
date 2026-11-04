@@ -5,6 +5,9 @@ workspace antes de transmitir o conteúdo.
 """
 
 import logging
+from collections.abc import Iterator
+from dataclasses import dataclass
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -110,6 +113,36 @@ def delete_prefix(prefix: str) -> int:
             s3.delete_objects(Bucket=bucket(), Delete={"Objects": objects, "Quiet": True})  # type: ignore[typeddict-item]
             deleted += len(objects)
     return deleted
+
+
+@dataclass(frozen=True)
+class StoredObject:
+    key: str
+    size: int
+    last_modified: datetime
+
+
+def list_objects(prefix: str, page_size: int = 1000) -> Iterator[list[StoredObject]]:
+    """Objetos do bucket sob o prefixo, uma página por vez."""
+    paginator = get_s3().get_paginator("list_objects_v2")
+    for page in paginator.paginate(
+        Bucket=bucket(), Prefix=prefix, PaginationConfig={"PageSize": page_size}
+    ):
+        yield [
+            StoredObject(item["Key"], item.get("Size", 0), item["LastModified"])
+            for item in page.get("Contents", [])
+        ]
+
+
+def delete_keys(keys: list[str]) -> list[str]:
+    """Apaga até 1.000 chaves numa requisição; devolve as que o armazenamento recusou."""
+    if not keys:
+        return []
+    response = get_s3().delete_objects(
+        Bucket=bucket(),
+        Delete={"Objects": [{"Key": key} for key in keys], "Quiet": True},
+    )
+    return [error["Key"] for error in response.get("Errors", []) if "Key" in error]
 
 
 def is_available() -> bool:

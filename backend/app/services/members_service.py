@@ -26,7 +26,7 @@ from app.schemas.workspace import (
     WorkspaceSettingsOut,
     WorkspaceUpdate,
 )
-from app.services import audit
+from app.services import audit, quota_service
 from app.services.auth_service import normalize_email
 from app.tasks.dispatch import enqueue_invitation_email
 
@@ -295,6 +295,8 @@ def get_settings_out(db: Session, workspace_id: uuid.UUID) -> WorkspaceSettingsO
         name=workspace.name,
         slug=workspace.slug,
         settings=WorkspaceSettings.model_validate(workspace.settings or {}),
+        storage_used_bytes=quota_service.storage_usage(db, workspace.id),
+        storage_quota_bytes=quota_service.quota_bytes(),
     )
 
 

@@ -11,9 +11,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { workspaceApi } from '@/features/admin/api'
 import { ME_KEY, usePermission } from '@/features/auth/use-auth'
+import { formatBytes, formatPercent } from '@/lib/format'
 import { describeError } from '@/services/api-client'
 import type { WorkspaceSettingsInfo } from '@/types/api'
 
@@ -33,6 +35,38 @@ export function SettingsPage() {
         <SettingsForm key={settings.data.id} initial={settings.data} />
       )}
     </>
+  )
+}
+
+function StorageUsage({ info }: { info: WorkspaceSettingsInfo }) {
+  const quota = info.storage_quota_bytes
+  const ratio = quota ? Math.min(info.storage_used_bytes / quota, 1) : null
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Armazenamento</CardTitle>
+        <CardDescription>
+          Arquivos originais, versões publicadas e exportações prontas. Ao atingir a cota, novos
+          envios são recusados; exclua datasets ou versões antigos ou ative a retenção.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-md space-y-2">
+        <p className="text-sm" data-testid="storage-usage">
+          <span className="tabular font-medium">{formatBytes(info.storage_used_bytes)}</span>
+          {quota ? (
+            <span className="text-muted-foreground">
+              {' '}
+              de {formatBytes(quota)} ({formatPercent(ratio)})
+            </span>
+          ) : (
+            <span className="text-muted-foreground"> usados, sem cota nesta instalação</span>
+          )}
+        </p>
+        {ratio !== null && (
+          <Progress value={ratio * 100} aria-label="Uso do armazenamento do workspace" />
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -76,6 +110,7 @@ function SettingsForm({ initial }: { initial: WorkspaceSettingsInfo }) {
         if (valid) save.mutate()
       }}
     >
+      <StorageUsage info={initial} />
       {!canManage && (
         <Alert>
           <AlertDescription>

@@ -1,4 +1,5 @@
 import datetime as dt
+import time
 from pathlib import Path
 
 import pyarrow.parquet as pq
@@ -8,7 +9,7 @@ from app.processing.inspection import FileRejected
 from app.processing.pipeline import run_xlsx_pipeline
 from app.processing.reader import HeaderMismatch
 from app.processing.types import ColumnConfig, DataType, ParseOptions
-from app.processing.xlsx import XlsxLimits, inspect_xlsx, parse_xlsx_sample
+from app.processing.xlsx import MAX_SCAN_COLUMNS, XlsxLimits, inspect_xlsx, parse_xlsx_sample
 from tests.xlsx_factory import (
     Blank,
     Date,
@@ -17,6 +18,7 @@ from tests.xlsx_factory import (
     build_xlsx,
     fake_encrypted,
     fake_legacy_xls,
+    text_cell,
     zip_bomb,
 )
 
@@ -194,3 +196,45 @@ def test_truncated_sample_estimates_rows_without_reading_the_whole_sheet(tmp_pat
     assert info["sheets"][0]["declared_rows"] == 2001
     sample = parse_xlsx_sample(write(tmp_path, declared, "d.xlsx"), ParseOptions(), 10)
     assert sample.estimated_rows == 2000
+
+
+# ---------------------------------------------------------------- planilhas maliciosas (DoS)
+
+
+def test_row_index_beyond_excel_limit_is_rejected_quickly(tmp_path: Path) -> None:
+    # Uma linha com índice enorme fazia o leitor devolver uma linha vazia por índice faltante.
+    raw = '<row r="999999999999"><c r="A999999999999"><v>1</v></c></row>'
+    data = build_xlsx({"Dados": [["n"], [1]]}, raw_rows={"Dados": raw})
+    path = write(tmp_path, data)
+    assert inspect_xlsx(path, LIMITS)["sheets"][0]["name"] == "Dados"  # 50 linhas: passa
+    start = time.perf_counter()
+    with pytest.raises(FileRejected) as preview:
+        parse_xlsx_sample(path, ParseOptions(), 1000)
+    with pytest.raises(FileRejected) as worker:
+        run_xlsx_pipeline(
+            path, tmp_path / "out", ParseOptions(sheet="Dados"),
+            [ColumnConfig(position=0, source_name="n", name="n", data_type=DataType.INTEGER)],
+            ["n"], first_column=1, batch_rows=1000, on_progress=lambda _: None,
+        )  # fmt: skip
+    assert preview.value.code == worker.value.code == "xlsx_invalid"
+    assert "1.048.576" in str(preview.value)
+    assert time.perf_counter() - start < 60  # limitado pelas linhas do Excel, não pelo índice
+
+
+def test_cells_far_to_the_right_are_capped_and_flagged(tmp_path: Path) -> None:
+    far = MAX_SCAN_COLUMNS + 4000
+    raw = f'<row r="3">{text_cell(1, 3, "b")}{text_cell(2, 3, "2")}{text_cell(far, 3, "x")}</row>'
+    data = build_xlsx({"Dados": [["a", "n"], ["a", 1]]}, raw_rows={"Dados": raw})
+    sample = parse_xlsx_sample(write(tmp_path, data), ParseOptions(), 1000)
+    assert sample.table.column_count == 2
+    assert sample.table.rows == [["a", "1"], ["b", "2"]]
+    assert sample.table.ragged_rows == 1  # o conteúdo distante vira campo excedente
+
+    # Cabeçalho largo demais: a largura passa do limite e a pré-visualização recusa.
+    wide = f'<row r="1">{text_cell(1, 1, "a")}{text_cell(far, 1, "z")}</row>'
+    header = parse_xlsx_sample(
+        write(tmp_path, build_xlsx({"Dados": []}, raw_rows={"Dados": wide}), "w.xlsx"),
+        ParseOptions(),
+        10,
+    )
+    assert header.table.column_count == MAX_SCAN_COLUMNS + 1

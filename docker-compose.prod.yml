@@ -1,7 +1,8 @@
 # Implantação de produção em um único host (Docker Compose).
 #   cp .env.example .env   # preencha os segredos
 #   docker compose -f docker-compose.prod.yml up -d --build
-# Apenas o Caddy (80/443) é publicado; banco, Redis e MinIO ficam na rede interna.
+# Apenas o Caddy (80/443) é publicado. Banco, Redis e MinIO ficam numa rede sem saída para a
+# internet (`backend`); só a API (atrás do Caddy) e o worker (SMTP) têm uma segunda rede.
 
 name: dataflow-prod
 
@@ -36,8 +37,13 @@ x-backend: &backend
     REGISTER_LIMIT_PER_HOUR: ${REGISTER_LIMIT_PER_HOUR:-10}
     EXPORT_MAX_ROWS: ${EXPORT_MAX_ROWS:-500000}
     EXPORT_XLSX_MAX_ROWS: ${EXPORT_XLSX_MAX_ROWS:-100000}
+    WORKSPACE_STORAGE_QUOTA_MB: ${WORKSPACE_STORAGE_QUOTA_MB:-10240}
+    EXPOSE_API_DOCS: ${EXPOSE_API_DOCS:-false}
     LOG_LEVEL: ${LOG_LEVEL:-INFO}
-  networks: [internal]
+  networks: [backend]
+  # Processos sem privilégios: nenhuma capability e sem escalar via setuid.
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
 
 services:
   postgres:
@@ -53,7 +59,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-    networks: [internal]
+    networks: [backend]
+    security_opt: ["no-new-privileges:true"]
 
   redis:
     image: redis:8.8-alpine
@@ -67,13 +74,15 @@ services:
       retries: 10
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-    networks: [internal]
+    networks: [backend]
+    security_opt: ["no-new-privileges:true"]
 
   minio-perms:
     image: busybox:1.37
     command: ["sh", "-c", "chown -R 65532:65532 /data"]
     volumes: [miniodata:/data]
     restart: "no"
+    network_mode: none
 
   minio:
     # Fixe um digest em produção: MINIO_IMAGE=cgr.dev/chainguard/minio@sha256:...
@@ -88,7 +97,9 @@ services:
     depends_on:
       minio-perms:
         condition: service_completed_successfully
-    networks: [internal]
+    networks: [backend]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
 
   storage-setup:
     <<: *backend
@@ -118,9 +129,11 @@ services:
       timeout: 5s
       retries: 8
       start_period: 15s
+    networks: [backend, edge]
     deploy:
       resources:
-        limits: {cpus: "${API_CPUS:-1}", memory: "${API_MEMORY:-1g}"}
+        # QUERY_CONCURRENCY consultas DuckDB de até QUERY_MEMORY_MB cada, mais o processo.
+        limits: {cpus: "${API_CPUS:-1}", memory: "${API_MEMORY:-1536m}", pids: 512}
 
   worker:
     <<: *backend
@@ -137,10 +150,11 @@ services:
       timeout: 15s
       retries: 5
       start_period: 20s
+    networks: [backend, egress]  # egress: envio de e-mail pelo SMTP
     deploy:
       replicas: ${WORKER_REPLICAS:-1}
       resources:
-        limits: {cpus: "${WORKER_CPUS:-2}", memory: "${WORKER_MEMORY:-3g}"}
+        limits: {cpus: "${WORKER_CPUS:-2}", memory: "${WORKER_MEMORY:-3g}", pids: 1024}
 
   beat:
     <<: *backend
@@ -167,10 +181,16 @@ services:
       - caddyconfig:/config
     depends_on:
       api: {condition: service_healthy}
-    networks: [internal]
+    networks: [edge]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: ["no-new-privileges:true"]
 
 networks:
-  internal:
+  backend:
+    internal: true
+  edge:
+  egress:
 
 volumes:
   pgdata:

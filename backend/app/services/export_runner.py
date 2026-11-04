@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 
 from app.analytics.aggregate import AggregateResult, plan_aggregate, run_aggregate
 from app.analytics.cache import local_parquet
-from app.analytics.query import build_where, quote_identifier, sandboxed_connection
+from app.analytics.query import build_where, query_connection, quote_identifier
 from app.core.config import get_settings
 from app.core.db import session_scope
 from app.core.errors import AppError, ServiceUnavailable
@@ -151,13 +151,10 @@ def _rows_source(
     columns = [ExportColumn(n, by_name[n].data_type, by_name[n].scale) for n in names]
 
     def stream() -> Iterator[tuple[Any, ...]]:
-        con = sandboxed_connection(path.parent)
-        try:
+        with query_connection(path.parent) as con:
             cursor = con.execute(sql, {"path": str(path), **where.params})
             while batch := cursor.fetchmany(FETCH_ROWS):
                 yield from batch
-        finally:
-            con.close()
 
     return columns, stream()
 
