@@ -485,6 +485,14 @@ function JobResult({ job }: { job: Job }) {
                   ? `${job.metrics.peak_memory_mb.toLocaleString('pt-BR')} MB`
                   : 'não mensurável'}
               </dd>
+              {job.metrics.start_memory_mb ? (
+                <>
+                  <dt className="text-muted-foreground">Memória no início</dt>
+                  <dd className="tabular text-right">
+                    {job.metrics.start_memory_mb.toLocaleString('pt-BR')} MB
+                  </dd>
+                </>
+              ) : null}
             </dl>
           </CardContent>
         </Card>

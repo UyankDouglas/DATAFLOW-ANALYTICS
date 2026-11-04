@@ -195,7 +195,7 @@ Para ver rejeições rastreáveis, importe `samples/qualidade_1000.csv` e defina
 ## Testes
 
 ```bash
-cd backend && uv run pytest                   # 230 testes (SQLite + S3/Redis simulados)
+cd backend && uv run pytest                   # 252 testes (SQLite + S3/Redis simulados)
 TEST_DATABASE_URL=postgresql+psycopg://dataflow:dataflow@localhost:5432/dataflow_test uv run pytest
 cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app
 
@@ -309,7 +309,7 @@ O mesmo volume no fluxo completo, com infraestrutura real, é medido pelo job `b
 ## Limitações conhecidas
 
 - XLSX é lido em Python pelo openpyxl, em duas passadas: ~2,5 mil registros/s na medição local; o progresso mostra só a contagem de registros. A tabela de textos compartilhados da planilha fica inteira em memória.
-- A deduplicação carrega a chave de toda a versão em memória; não foi medida acima de 100 mil registros.
+- A deduplicação mantém em memória a chave de todos os registros: com 1 milhão, o pico ficou entre 0,5 e 0,65 GB, medido localmente ([docs/benchmark.md](docs/benchmark.md#memória-da-deduplicação-de-1-milhão-fase-6)).
 - A prévia de transformações usa os primeiros 200 registros; a análise de duplicidades da versão inteira é separada.
 - Arredondamento de colunas derivadas é meio-para-par (1,005 → 1,00), diferente do "meio para cima" das planilhas.
 - A busca do Data Explorer cobre só colunas de texto.

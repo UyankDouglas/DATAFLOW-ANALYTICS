@@ -165,7 +165,7 @@ python3 scripts/benchmark_stack.py --base-url http://localhost:8080 \
 
 | Etapa | O que mede |
 | --- | --- |
-| CSV de 1 milhão (≈ 80 MB) | upload pela borda, job de importação (tempos por etapa, registros/s, pico de RSS do worker), página final com e sem cache, explorer com filtro e busca, KPIs, agrupamento com "Outros" e série mensal |
+| CSV de 1 milhão (≈ 80 MB) | upload pela borda, job de importação (tempos por etapa, registros/s, pico de RSS do processo do worker durante o job e RSS no início dele), página final com e sem cache, explorer com filtro e busca, KPIs, agrupamento com "Outros" e série mensal |
 | Exportação acima do limite | o pedido de CSV da versão de 1 milhão precisa ser recusado com `export_too_large` |
 | Deduplicação de 1 milhão | transformação versão → versão por vendedor + produto; a reconciliação precisa fechar (ADR-016) |
 | Exportações nos limites | CSV de 500 mil e XLSX de 100 mil gerados pelo worker, baixados pela API e conferidos (linhas, tamanho, assinatura ZIP) |
@@ -173,9 +173,47 @@ python3 scripts/benchmark_stack.py --base-url http://localhost:8080 \
 
 Os números entram aqui quando a CI deste pull request rodar; o resumo sai no `$GITHUB_STEP_SUMMARY` e no artefato `benchmark-stack`. Localmente, sem Docker, o script foi validado de ponta a ponta contra a API com infraestrutura simulada e arquivos menores (100 mil linhas e a planilha de 8,8 MB). Esses números não servem de referência, porque o S3 e o worker rodam no mesmo processo.
 
+## Memória da deduplicação de 1 milhão (Fase 6)
+
+Na primeira execução do job `benchmark` na CI ([execução 41820017555](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41820017555)), a deduplicação de 1 milhão de registros por vendedor + produto registrou 1.357,3 MB de pico de RSS no processo do worker, e o cgroup do worker chegou a 1.501.970.432 bytes, com limite de 2 GB. A importação da planilha, que rodou depois no mesmo processo, registrou os mesmos 1.357,3 MB: era o pico herdado, corrigido pela ADR-030.
+
+Medido localmente (04/11/2026, Windows 10, Python 3.13, Polars 2.1.0), com o mesmo `vendas_1000000.csv`, uma transformação "aparar + remover duplicidades" num processo novo por cenário (pico do working set):
+
+| Cenário | Pico antes da deduplicação | Pico no fim | Tempo |
+| --- | --- | --- | --- |
+| vendedor + produto (480 chaves, 999.520 duplicados), o do job `benchmark` | 249 MB | **1.358 MB** | 4,5 s |
+| chave de 6 colunas quase única (1 duplicado) | 230 MB | **1.085 MB** | 4,8 s |
+
+Por etapa, só a deduplicação, num processo novo que começa com cerca de 67 MB:
+
+| Etapa (pico acumulado) | 480 chaves | Chave quase única |
+| --- | --- | --- |
+| Marcar mantidos e de qual registro cada um é duplicado | 314 MB | 862 MB |
+| Gravar os mantidos | 331 MB | 963 MB |
+| Carregar os registros originais dos duplicados | 634 MB | 963 MB |
+| Montar as exclusões com os valores de entrada | 980 MB | 963 MB |
+| Gravar as exclusões | 1.222 MB | 963 MB |
+
+Na chave quase única, marcar só com `is_first_distinct` chega a 358 MB; a janela `first().over(chaves)`, que calcula de qual registro cada um é duplicado, sozinha chega a 762 MB. Selecionar só as colunas da chave antes de marcar não muda nada nesse cenário (802 MB), porque a chave já ocupa quase todas as colunas.
+
+São duas causas, e as duas crescem com o volume:
+- **Muitos duplicados:** as exclusões, com todas as colunas de entrada como texto (999.520 registros), são montadas inteiras em memória antes de gravar, cerca de 900 MB.
+- **Muitas chaves distintas:** a janela calcula o registro mantido para todos os registros, com um grupo por chave, cerca de 700 MB com 1 milhão de grupos.
+
+Com `WORKER_CONCURRENCY=2` e `WORKER_MEMORY=2g` (os valores do `.env.example`), duas deduplicações desse porte ao mesmo tempo somariam mais que o limite do contêiner. É uma conta a partir das medições acima, não um teste.
+
+**Depois da ADR-031** (só a chave em memória, mantido procurado só para os descartados, gravação em lotes), mesmo ambiente e mesmo método, três execuções de cada:
+
+| Cenário | Pico antes | Pico depois | Tempo antes | Tempo depois |
+| --- | --- | --- | --- | --- |
+| vendedor + produto (999.520 duplicados) | 1.358 MB | **513–536 MB** | 4,5–5,8 s | 6,5–6,8 s |
+| chave de 6 colunas quase única (1 duplicado) | 1.085 MB | **627–636 MB** | 4,3–4,8 s | 4,5–4,7 s |
+
+A reconciliação fechou em todas as execuções. O caso com muitos duplicados ficou mais lento porque as exclusões passaram a ser gravadas em grupos de 50 mil linhas, que o Parquet comprime mais devagar que um grupo único: 2,1 s contra 1,3 s para gravar as mesmas 999.520 linhas. Lotes de 250 mil devolviam o tempo (5,1–5,6 s), mas levavam o pico a cerca de 800 MB, e por isso ficaram os 50 mil das outras etapas. Os números do contêiner vêm do job `benchmark` da CI.
+
 ## Pendente
 
-- Números do `benchmark_stack` na CI (acima).
+- Números do `benchmark_stack` na CI (acima), com o pico de memória por job (ADR-030).
 - Mais repetições em um ambiente dedicado, para obter média e variação confiáveis.
 - Transformações com 1 milhão de linhas e outras regras além da deduplicação; consultas dos dashboards com muitos widgets abertos ao mesmo tempo (cada widget é uma requisição, e a API atende 2 consultas por vez por processo, ADR-028).
 - CSV perto do limite de 100 MB (o de 1 milhão tem 80 MB).

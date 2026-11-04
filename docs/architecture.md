@@ -123,7 +123,7 @@ sequenceDiagram
         W->>W: aplica as regras (Polars), separa rejeitados e filtrados
         W->>DB: progresso (registros), heartbeat, checa cancelamento
     end
-    W->>W: deduplicação sobre o resultado inteiro (se houver)
+    W->>W: deduplicação: marca a chave inteira, grava em lotes (se houver)
     W->>S3: data.parquet + rejected.parquet da nova versão
     W->>DB: transação única: versão com parent_version_id + dataset.current_version + job succeeded
 ```

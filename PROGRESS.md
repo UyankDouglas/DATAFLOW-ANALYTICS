@@ -94,8 +94,10 @@ Branch `fase-6-qualidade-producao`, em pull request para a `main`.
   - Compose de produção com rede `internal` para banco, Redis e MinIO, `cap_drop: [ALL]`, `no-new-privileges` e limite de processos;
   - ADR-024 corrigida: sem verificação de e-mail, o link de convite para quem ainda não tem conta é a prova de posse do e-mail.
 - [x] **Revisão de performance**: `benchmark_pipeline` com 1 milhão de registros (8,1 s, 123 mil registros/s, mesmo pico de 43 MB de heap das 100 mil linhas) e exportações nos limites que a API aceita; `scripts/benchmark_stack.py` mede o fluxo completo pela API e confere as contagens; o job `benchmark` da CI o roda com 1 milhão de linhas, deduplicação, XLSX perto de 25 MB e exportações nos limites.
+- [x] **Pico de memória por job** (ADR-030): `peak_memory_mb` passou a ser o pico do processo do worker durante o job, e não o da vida do processo. O pico é zerado em `/proc/self/clear_refs` no início do job, e `start_memory_mb` registra o RSS nesse momento. A tela do job mostra os dois. A primeira CI mostrou o defeito: a planilha herdou os 1.357,3 MB da deduplicação anterior.
+- [x] **Memória da deduplicação reduzida** (ADR-031, `docs/benchmark.md`). Com 1 milhão de registros, o pico era de 1,36 GB com 999.520 duplicados e de 1,09 GB com chave quase única. As causas eram as exclusões montadas inteiras em memória e a janela `over` sobre todas as chaves. Agora só a chave fica em memória, o mantido é procurado só para os descartados, e mantidos e exclusões são gravados em lotes. Medido localmente: 513–536 MB e 627–636 MB. O caso com muitos duplicados ficou cerca de 1 a 2 s mais lento. Um teste compara a saída com a da implementação anterior.
 - [x] **Testes ampliados**:
-  - backend de 205 para **230** (`test_orphans.py` ×7, `test_operations.py` ×13, XLSX maliciosos ×2, cota ×2, configuração ×1);
+  - backend de 205 para **252** (`test_orphans.py` ×7, `test_operations.py` ×13, deduplicação igual à implementação anterior ×16, pico de memória por job ×6, XLSX maliciosos ×2, cota ×2, configuração ×1), mais um teste do pico de memória que só roda no Linux;
   - publicação de tarefas, e-mails, SMTP, saúde das dependências e documentação da API, que não tinham teste;
   - frontend de 99 para **101** (uso do armazenamento).
 - [x] **CI/CD**:
@@ -105,7 +107,7 @@ Branch `fase-6-qualidade-producao`, em pull request para a `main`.
   - ciclo de backup e restauração e o job `benchmark`;
   - `release.yml` publica as imagens no GHCR a cada tag `v*` (ainda não executado: nenhuma tag criada).
 - [x] **Dados de demonstração** (`scripts/seed_demo.py`): conta, quatro datasets processados (incluindo uma aba de planilha), versão limpa das vendas, dashboard "Comercial" e uma exportação, tudo pela API; não duplica se rodar de novo.
-- [x] **Documentação**: `security.md` (revisão da Fase 6), `deploy.md` (variáveis, redes, imagens, seed, backup e restauração, o que a CI valida), `benchmark.md` (1 milhão e `benchmark_stack`), `administration.md` (órfãos, cota), `architecture.md`, `decisions.md` (ADR-024 corrigida, ADR-026 a ADR-029), README.
+- [x] **Documentação**: `security.md` (revisão da Fase 6), `deploy.md` (variáveis, redes, imagens, seed, backup e restauração, o que a CI valida), `benchmark.md` (1 milhão e `benchmark_stack`), `administration.md` (órfãos, cota), `architecture.md`, `decisions.md` (ADR-024 corrigida, ADR-026 a ADR-031), README.
 
 ## Fase 5 — concluído
 
@@ -205,7 +207,7 @@ A primeira execução ([41682378950](https://github.com/UyankDouglas/DATAFLOW-AN
 
 | Comando | Resultado |
 | --- | --- |
-| `cd backend && uv run pytest --cov=app` | **230 passed**, cobertura de 90% (25 novos) |
+| `cd backend && uv run pytest --cov=app` | **252 passed**, 1 ignorado (o do kernel só roda no Linux, na CI), cobertura de 90% (47 novos) |
 | ruff, ruff format, mypy strict (103 arquivos) | sem problemas |
 | `cd apps/web && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build` | OK, **101 passed** |
 | `pnpm audit --prod` (frontend) | nenhuma vulnerabilidade conhecida |
@@ -214,6 +216,7 @@ A primeira execução ([41682378950](https://github.com/UyankDouglas/DATAFLOW-AN
 | `benchmark_pipeline vendas_1000000.csv` | pipeline 8,1 s (123.344 registros/s), heap 43,3 MB, consultas 0,10–0,25 s, CSV de 500 mil em 10,1 s, XLSX de 100 mil em 28,0 s |
 | `scripts/benchmark_stack.py` contra a API local (100 mil linhas, planilha de 8,8 MB) | todas as conferências passaram; valida o script, os números não servem de referência |
 | `scripts/seed_demo.py` contra a API local, duas vezes | cria tudo na primeira; na segunda, não duplica |
+| Memória da deduplicação de 1 milhão, um processo novo por cenário | antes: pico de 1.358 MB com 999.520 duplicados e de 1.085 MB com 1 duplicado; depois da ADR-031: 513–536 MB e 627–636 MB, em três execuções (ver `docs/benchmark.md`) |
 | Planilha maliciosa (linha `r="999999999999"`) | recusada em cerca de 2,8 s na pré-visualização e no worker; antes, não terminava |
 
 **Ainda não validado (depende da CI):**
@@ -371,7 +374,7 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 - `peak_memory_mb` só é medido em Linux.
 - Worker Celery em Windows exige `--pool solo` (o Compose usa Linux).
 - XLSX ~40× mais lento que CSV (duas passadas do openpyxl em Python; ≈ 2.470 registros/s); tabela de textos compartilhados inteira em memória; perto de 25 MB, só o job `benchmark` da CI vai medir.
-- Deduplicação mantém chave e número do registro da versão inteira em memória; com 1 milhão, só o job `benchmark` da CI vai medir.
+- A deduplicação mantém a chave de todos os registros em memória: com 1 milhão, 0,5 a 0,65 GB de pico, medido localmente; no contêiner, só o job `benchmark` da CI vai medir.
 - A prévia de transformações vê só os primeiros 200 registros (a análise de duplicidades da versão inteira é separada).
 - Na exclusão de um dataset, conjuntos de regras e colunas saem junto, na ordem explícita da ADR-025.
 - Dashboards: vale a última gravação quando duas pessoas editam ao mesmo tempo; reorganização por setas (sem arrastar e soltar); consultas medidas até 100 mil registros. Versões fixadas por dashboards não podem ser excluídas (FK sem `ON DELETE`; a tela explica).

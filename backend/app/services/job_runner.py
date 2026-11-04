@@ -12,7 +12,6 @@ Garantias:
 
 import logging
 import shutil
-import sys
 import time
 import uuid
 from dataclasses import dataclass
@@ -115,14 +114,34 @@ class JobSnapshot:
     source: SourceVersion | None
 
 
-def _peak_memory_mb() -> float | None:
+# Pico de memória por job (ADR-030). No Linux, gravar 5 em clear_refs zera o pico de RSS do
+# processo (VmHWM) no RSS atual; cada processo do worker executa um job por vez (prefork).
+_PROC_STATUS = Path("/proc/self/status")
+_PROC_CLEAR_REFS = Path("/proc/self/clear_refs")
+
+
+def _proc_memory_mb(field: str) -> float | None:
     try:
-        import resource  # indisponível no Windows
-    except ImportError:
+        for line in _PROC_STATUS.read_text(encoding="ascii").splitlines():
+            if line.startswith(f"{field}:"):
+                return round(int(line.split()[1]) / 1024, 1)  # em kB
+    except (OSError, ValueError, IndexError):
         return None
-    usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    divisor = 1024 * 1024 if sys.platform == "darwin" else 1024
-    return round(usage / divisor, 1)
+    return None
+
+
+def _reset_peak_memory() -> float | None:
+    """Zera o pico de memória do processo e devolve o RSS de partida (MB), ou None se não der."""
+    try:
+        _PROC_CLEAR_REFS.write_text("5", encoding="ascii")
+    except OSError:
+        return None
+    return _proc_memory_mb("VmRSS")
+
+
+def _peak_memory_mb(start_mb: float | None) -> float | None:
+    """Pico de RSS desde o início do job. Sem o reset, None: o pico da vida do processo enganaria."""
+    return _proc_memory_mb("VmHWM") if start_mb is not None else None
 
 
 def claim(db: Session, job_id: uuid.UUID) -> bool:
@@ -311,7 +330,12 @@ def _lineage(snapshot: JobSnapshot) -> dict[str, Any]:
     }
 
 
-def _publish(snapshot: JobSnapshot, result: PipelineResult, timings: dict[str, int]) -> uuid.UUID:
+def _publish(
+    snapshot: JobSnapshot,
+    result: PipelineResult,
+    timings: dict[str, int],
+    start_memory_mb: float | None,
+) -> uuid.UUID:
     assert result.data_path is not None
     prefix = storage.version_prefix(snapshot.workspace_id, snapshot.dataset_id, snapshot.id)
     data_key = prefix + "data.parquet"
@@ -393,7 +417,8 @@ def _publish(snapshot: JobSnapshot, result: PipelineResult, timings: dict[str, i
         upload_timing = {"upload": snapshot.upload_ms} if snapshot.kind == JobKind.IMPORT else {}
         job.metrics = {
             "timings_ms": {**upload_timing, **timings},
-            "peak_memory_mb": _peak_memory_mb(),
+            "peak_memory_mb": _peak_memory_mb(start_memory_mb),
+            "start_memory_mb": start_memory_mb,
             "rows_per_second": round(
                 result.rows_total / max(timings.get("total", 1) / 1000, 0.001), 1
             ),
@@ -593,6 +618,7 @@ def run_job(job_id: uuid.UUID) -> str:
     logger.info("job_started", extra=log_extra)
     try:
         timings: dict[str, int] = {}
+        start_memory_mb = _reset_peak_memory()
         if snapshot.kind == JobKind.TRANSFORM:
             result = _run_transform(snapshot, work, timings)
         else:
@@ -605,7 +631,7 @@ def run_job(job_id: uuid.UUID) -> str:
 
         # Etapa: salvamento e publicação
         _set_status(job_id, JobStatus.SAVING)
-        version_id = _publish(snapshot, result, timings)
+        version_id = _publish(snapshot, result, timings, start_memory_mb)
         _record_quality(snapshot, version_id, result)
         logger.info("job_succeeded", extra={**log_extra, "rows": result.rows_total})
         return "succeeded"

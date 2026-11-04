@@ -1,4 +1,5 @@
 import datetime as dt
+import random
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -8,8 +9,15 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
+from app.processing import pipeline
 from app.processing.pipeline import data_schema, run_transform_pipeline
-from app.processing.transforms import RuleError, apply_rules, plan_rules, resolve_rules
+from app.processing.transforms import (
+    RuleError,
+    apply_rules,
+    duplicate_exclusions,
+    plan_rules,
+    resolve_rules,
+)
 from app.processing.types import ColumnSpec, DataType
 
 SCHEMA = [
@@ -332,3 +340,129 @@ def test_transform_pipeline_deduplicates_and_reconciles(
     assert excluded["filtrado"]["valor"] == "-1.00"  # valor de entrada preservado como texto
     # Ambos os " Ana"/"Ana " viram "Ana": o registro removido guarda o valor original.
     assert excluded["duplicado"]["vendedor"] in (" Ana", "Ana ")
+
+
+def _previous_deduplicate(
+    outputs: Any,
+    target: Path,
+    plan: Any,
+    source: Path,
+    input_schema: list[ColumnSpec],
+    result: Any,
+    batch_rows: int,
+) -> int:
+    """A implementação anterior, com tudo em memória, como referência de resultado (ADR-031)."""
+    outputs.close()  # ela relia e regravava o arquivo de exclusões inteiro
+    keys = plan.dedup_keys
+    keep_first = plan.dedup.rule.keep == "first"
+    distinct = (
+        pl.struct(keys).is_first_distinct() if keep_first else pl.struct(keys).is_last_distinct()
+    )
+    kept_row = pl.col("__df_row").first() if keep_first else pl.col("__df_row").last()
+    marked = (
+        pl.scan_parquet(outputs.data_path)
+        .with_columns(distinct.alias("__df_keep"), kept_row.over(keys).alias("__df_kept_row"))
+        .collect()
+    )
+    kept = marked.filter(pl.col("__df_keep")).drop("__df_keep", "__df_kept_row")
+    pq.write_table(kept.to_arrow().cast(outputs.valid_schema), target, compression="zstd")
+    duplicates = marked.filter(~pl.col("__df_keep")).select("__df_row", "__df_kept_row")
+    if not duplicates.height:
+        return 0
+    originals = (
+        pl.scan_parquet(source)
+        .select(["__df_row", *[s.name for s in input_schema]])
+        .join(duplicates.lazy().select("__df_row"), on="__df_row", how="semi")
+        .collect()
+    )
+    existing = pq.read_table(outputs.rejected_path) if outputs.rejected_path.exists() else None
+    excluded = duplicate_exclusions(duplicates, plan)
+    rows = pipeline._with_input_values(excluded, originals, input_schema).sort("__df_row")
+    table = rows.to_arrow().cast(outputs.rejected_schema)
+    pq.write_table(
+        pa.concat_tables([existing, table]) if existing is not None else table,
+        outputs.rejected_path,
+        compression="zstd",
+    )
+    pipeline._collect_samples(result, rows)
+    return duplicates.height
+
+
+def _varied_rows(count: int, seed: int) -> list[dict[str, Any]]:
+    rng = random.Random(seed)
+    names = ["Ana", " Ana", "Ana ", "Bia", "Cid", "Davi", None]
+    rows = []
+    for row in range(1, count + 1):
+        rows.append(
+            {
+                "__df_row": row,
+                "data": rng.choice([None, *(dt.date(2025, 1, d) for d in range(1, 6))]),
+                "vendedor": rng.choice(names),
+                "valor": Decimal(rng.randint(-3, 12)).quantize(Decimal("0.01")),
+                "qtd": rng.choice([0, 1, 2, 3, None]),
+                "ativo": rng.choice([True, False, None]),
+            }
+        )
+    return rows
+
+
+@pytest.mark.parametrize("keep", ["first", "last"])
+@pytest.mark.parametrize(
+    "keys",
+    [
+        ["vendedor"],  # poucas chaves, muitos duplicados, nulos entre eles
+        ["data", "vendedor"],
+        ["preco_unitario", "ativo"],  # coluna derivada e booleano na chave
+        [],  # todas as colunas: quase nenhum duplicado
+    ],
+)
+@pytest.mark.parametrize("batch_rows", [7, 10_000])
+def test_deduplication_matches_previous_in_memory_implementation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    keep: str,
+    keys: list[str],
+    batch_rows: int,
+) -> None:
+    schema = [
+        ColumnSpec(name="data", data_type=DataType.DATE, format="%Y-%m-%d"),
+        ColumnSpec(name="vendedor", data_type=DataType.TEXT),
+        ColumnSpec(name="valor", data_type=DataType.DECIMAL, scale=2),
+        ColumnSpec(name="qtd", data_type=DataType.INTEGER),
+        ColumnSpec(name="ativo", data_type=DataType.BOOLEAN),
+    ]
+    source = _source(tmp_path, _varied_rows(600, seed=len(keys) * 10 + batch_rows), schema)
+    rules = [
+        {"operation": "trim", "columns": ["vendedor"]},
+        {"operation": "derived_column", "name": "preco_unitario", "expression": {
+            "kind": "arithmetic", "operator": "divide", "left": {"column": "valor"},
+            "right": {"column": "qtd"}, "scale": 2}},  # qtd 0: rejeitado na 1ª passada
+        {"operation": "filter_rows",
+         "conditions": [{"column": "valor", "operator": "gte", "value": "0"}]},
+        {"operation": "deduplicate", "columns": keys, "keep": keep},
+    ]  # fmt: skip
+    plan = plan_rules(resolve_rules(rules), schema)
+
+    def execute(out: Path) -> Any:
+        return run_transform_pipeline(
+            source, out, schema, plan,
+            batch_rows=batch_rows, rows_total=600, on_progress=lambda _: None,
+        )  # fmt: skip
+
+    current = execute(tmp_path / "atual")
+    monkeypatch.setattr(pipeline, "_deduplicate", _previous_deduplicate)
+    previous = execute(tmp_path / "anterior")
+
+    assert current.rows_duplicates == previous.rows_duplicates
+    assert current.rows_duplicates
+    assert current.reconciliation == previous.reconciliation
+    assert current.reconciliation["consistent"]
+    assert current.reasons == previous.reasons
+    assert current.samples == previous.samples
+    assert current.null_counts == previous.null_counts
+    assert pq.read_table(current.data_path).to_pylist() == (
+        pq.read_table(previous.data_path).to_pylist()
+    )
+    assert pq.read_table(current.rejected_path).to_pylist() == (
+        pq.read_table(previous.rejected_path).to_pylist()
+    )

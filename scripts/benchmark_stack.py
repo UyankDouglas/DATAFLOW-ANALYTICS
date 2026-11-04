@@ -187,6 +187,7 @@ def job_summary(job: dict[str, Any]) -> dict[str, Any]:
         "timings_ms": metrics.get("timings_ms"),
         "rows_per_second": metrics.get("rows_per_second"),
         "peak_memory_mb": metrics.get("peak_memory_mb"),
+        "start_memory_mb": metrics.get("start_memory_mb"),
     }
 
 
@@ -341,6 +342,10 @@ def _n(value: Any, digits: int = 0) -> str:
     return text.replace(",", "_").replace(".", ",").replace("_", ".")
 
 
+def _rss(job: dict[str, Any]) -> str:
+    return f"RSS {_n(job['peak_memory_mb'])} MB ({_n(job['start_memory_mb'])} MB)"
+
+
 def summary_markdown(result: dict[str, Any]) -> str:
     large = result["csv_grande"]
     imported = large["importacao"]
@@ -351,21 +356,22 @@ def summary_markdown(result: dict[str, Any]) -> str:
     lines = [
         "## Benchmark do fluxo completo",
         "",
-        f"Base: `{result['base_url']}`. Tempos em milissegundos; RSS = pico do processo do worker.",
+        f"Base: `{result['base_url']}`. Tempos em milissegundos; RSS = pico do processo do "
+        "worker durante o job (entre parênteses, no início dele).",
         "",
         "| Etapa | Resultado |",
         "| --- | --- |",
         f"| Upload de {large['arquivo']} ({_n(large['tamanho_mb'], 1)} MB) "
         f"| {_n(large['upload_ms'])} ms |",
         f"| Importação de {_n(imported['rows_total'])} registros | {_n(total(imported))} ms "
-        f"({_n(imported['rows_per_second'])} registros/s); RSS {_n(imported['peak_memory_mb'])} MB |",
+        f"({_n(imported['rows_per_second'])} registros/s); {_rss(imported)} |",
     ]
     for name, value in large["consultas_ms"].items():
         lines.append(f"| Consulta: {name.removesuffix('_ms').replace('_', ' ')} | {_n(value)} ms |")
     lines.append(
         f"| Deduplicação de {_n(dedup['rows_total'])} registros (vendedor + produto) "
         f"| {_n(total(dedup))} ms; {_n(dedup['rows_valid'])} mantidos; "
-        f"RSS {_n(dedup['peak_memory_mb'])} MB |"
+        f"{_rss(dedup)} |"
     )
     for key, label in (
         ("exportacao_csv", "Exportação CSV"),
@@ -378,7 +384,7 @@ def summary_markdown(result: dict[str, Any]) -> str:
         )
     lines.append(
         f"| Planilha {workbook['arquivo']} ({_n(workbook['tamanho_mb'], 1)} MB): "
-        f"{_n(book['rows_valid'])} registros | {_n(total(book))} ms; RSS {_n(book['peak_memory_mb'])} MB |"
+        f"{_n(book['rows_valid'])} registros | {_n(total(book))} ms; {_rss(book)} |"
     )
     return "\n".join(lines) + "\n"
 

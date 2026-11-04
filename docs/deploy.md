@@ -90,7 +90,7 @@ As migrations rodam automaticamente no serviço `migrate` antes de API e worker.
 
 ## Escala
 
-- **Workers**: `WORKER_REPLICAS`, `WORKER_CPUS`, `WORKER_MEMORY` e `WORKER_CONCURRENCY`. O processamento é por lotes de 50 mil registros. Referências medidas: pico de cerca de 390 MB de RSS no processo do worker com 100 mil linhas, na CI. Com 1 milhão, o pico do heap Python foi de 43 MB, medido localmente fora de contêiner. As medições de 1 milhão no fluxo completo estão em `benchmark.md`. Confira o uso real antes de reduzir `WORKER_MEMORY`.
+- **Workers**: `WORKER_REPLICAS`, `WORKER_CPUS`, `WORKER_MEMORY` e `WORKER_CONCURRENCY`. O processamento é por lotes de 50 mil registros. Referências medidas: pico de cerca de 390 MB de RSS no processo do worker com 100 mil linhas, na CI. Com 1 milhão, o pico do heap Python foi de 43 MB, medido localmente fora de contêiner, e a deduplicação de 1 milhão, que chegava a 1,36 GB de RSS, ficou entre 0,5 e 0,65 GB depois da ADR-031, medida localmente (ver `benchmark.md`). As medições de 1 milhão no fluxo completo estão em `benchmark.md`. Confira o uso real antes de reduzir `WORKER_MEMORY`.
 - **API**: stateless (sessões no PostgreSQL); o cache de Parquet é local por contêiner e se recompõe sob demanda.
 - **Beat**: manter **uma** instância.
 

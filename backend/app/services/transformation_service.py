@@ -313,9 +313,8 @@ def preview(
     reasons = dict(batch.reasons)
     duplicates: int | None = None
     if plan.dedup is not None:
-        marked = mark_duplicates(kept.lazy(), plan).collect()
-        removed = marked.filter(~pl.col("__df_keep")).select("__df_row", "__df_kept_row")
-        kept = marked.filter(pl.col("__df_keep")).drop("__df_keep", "__df_kept_row")
+        keep, removed = mark_duplicates(kept.lazy(), plan)
+        kept = kept.filter(keep)
         duplicates = removed.height
         if duplicates:
             reasons[DUPLICATE_REASON] = duplicates

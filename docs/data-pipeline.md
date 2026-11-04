@@ -94,7 +94,7 @@ A identificação de duplicidades sem remover nada é a análise da versão inte
 ### Deduplicação
 
 - **Chave:** todas as colunas ou as escolhidas; nulos contam como iguais entre si.
-- **Execução:** segunda passada sobre o resultado inteiro da primeira passada (não por lote), com `is_first_distinct`/`is_last_distinct` do Polars sobre a chave. Cada duplicado registra `__df_duplicate_of`, o número do registro mantido.
+- **Execução:** segunda passada sobre o resultado inteiro da primeira passada. Primeiro marca o mantido de cada chave com `is_first_distinct`/`is_last_distinct` do Polars, lendo só a chave. Depois grava mantidos e exclusões em lotes (ADR-031). Cada duplicado registra `__df_duplicate_of`, o número do registro mantido, procurado só para os descartados.
 - **Análise sem alterar dados:** `POST /datasets/{id}/versions/{vid}/duplicates` conta, na versão inteira, registros duplicados, chaves distintas, chaves repetidas e as 20 chaves mais repetidas (DuckDB `GROUP BY`, que também agrupa nulos juntos). A suíte confere que a análise e o job contam o mesmo (`test_preview_reconciles_sample_and_matches_full_duplicate_analysis`).
 - **Prévia:** a prévia de transformações deduplica só a amostra (primeiros 200 registros) e avisa isso na tela.
 
@@ -152,4 +152,4 @@ Conjuntos de regras (`transformation_sets` + `transformation_rules`) são reutil
 
 ## Métricas registradas por job
 
-`timings_ms`: envio do arquivo (importação), leitura e validação, processamento (leitura, conversão ou regras, escrita Parquet, deduplicação), persistência e total; `rows_per_second`; `peak_memory_mb` (via `resource` no Linux; indisponível no Windows).
+`timings_ms`: envio do arquivo (importação), leitura e validação, processamento (leitura, conversão ou regras, escrita Parquet, deduplicação), persistência e total; `rows_per_second`; `peak_memory_mb`, o pico de RSS do processo do worker durante o job, e `start_memory_mb`, o RSS no início dele (Linux; nulos onde o pico não pode ser zerado, como no Windows; ADR-030).

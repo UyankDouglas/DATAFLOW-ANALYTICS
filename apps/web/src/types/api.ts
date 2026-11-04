@@ -305,6 +305,7 @@ export interface Job {
   metrics: {
     timings_ms?: Record<string, number | null>
     peak_memory_mb?: number | null
+    start_memory_mb?: number | null
     rows_per_second?: number
   }
   config: {
