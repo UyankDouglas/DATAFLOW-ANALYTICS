@@ -92,6 +92,13 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      # Só `dependencies` (e `optionalDependencies`), lidas do pnpm-lock.yaml: é o que vai no
+      # bundle servido pelo Caddy; as de desenvolvimento só rodam no build e nos testes. Sem
+      # --audit-level, qualquer aviso (a partir de "low") sai com código 1 e falha o job. Sem
+      # --ignore-registry-errors, um erro do registro também falha, em vez de dar verde falso.
+      # Fica por último para não esconder o resultado dos testes.
+      - name: Auditoria das dependências de produção (pnpm audit --prod)
+        run: pnpm audit --prod
 
   docker:
     name: Docker Compose + E2E (Playwright)

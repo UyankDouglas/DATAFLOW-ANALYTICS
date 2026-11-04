@@ -149,6 +149,18 @@ Branch `fase-6-qualidade-producao`, [PR #5](https://github.com/UyankDouglas/DATA
 - [x] **Documentação**: `security.md` (nova seção "Dependências", com o procedimento para quando aparecer um aviso), `deploy.md` ("O que a CI valida"), README.
 - [x] **Validado na CI** ([execução 41870601906](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41870601906), [PR #6](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/6)).
 
+## Depois das fases — auditoria das dependências do frontend na CI
+
+- [x] **Passo novo no fim do job do frontend** (`.github/workflows/ci.yml`): `pnpm audit --prod`, com o pnpm 10.34.7. Audita os 136 pacotes de produção travados no `apps/web/pnpm-lock.yaml`, o que vai para o bundle.
+  - Sem `--audit-level`: qualquer aviso, a partir de "low", sai com código 1 e falha o job.
+  - Sem `--ignore-registry-errors`: um erro do registro também falha o job, em vez de passar sem auditar.
+  - O código de saída, que a documentação do pnpm não descreve, foi conferido no código da versão 10.34.7 e num projeto de controle.
+- [x] **`e2e/` fora do passo**: só tem `devDependencies` e não entra em nenhuma imagem; o `pnpm audit` completo ali não acusou nada.
+- [x] **Resultado**: nenhuma vulnerabilidade conhecida nas dependências de produção em 04/11/2026. O `pnpm-lock.yaml` não mudou e nenhum aviso é ignorado.
+- [x] **Aviso nas dependências de desenvolvimento, registrado e não corrigido**: GHSA-g3hv-75wg-m249 (moderado) no `minimatch` 10.2.6 do ESLint. Só existe correção no `minimatch` 11, que o ESLint 10.14.0 ainda não aceita; justificativa em `security.md`.
+- [x] **Documentação**: `security.md` ("Dependências" e "Pendências", com o procedimento do frontend e como ignorar um aviso), `deploy.md` ("O que a CI valida"), README.
+- [x] **Validado na CI** ([execução 41873462152](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41873462152), [PR #7](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/7)).
+
 ## Depois das fases — E2E instável: espera dos testes e telas que não se atualizavam
 
 - [x] **Causa da instabilidade de `exports.spec.ts:62`** na execução 41870601906. No Compose de produção, a primeira tentativa esperou 90 s pelo campo "Agrupar por" e passou na retentativa.
@@ -163,6 +175,21 @@ Branch `fase-6-qualidade-producao`, [PR #5](https://github.com/UyankDouglas/DATA
   - Com a fila lenta, os testes antigos da `main`, ainda com a espera errada, passaram a passar contra a aplicação corrigida.
   - 7 testes novos no Vitest.
 - [x] **Documentação**: `architecture.md` (o frontend depois do fluxo de importação).
+
+## Testes executados na CI — auditoria das dependências do frontend (04/11/2026, commit `cfc2dc6`, [execução 41873462152](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41873462152), PR #7)
+
+Os 5 jobs passaram. O commit está sobre o `398f0c4`, a ponta do PR #6, então a execução também cobre a auditoria Python.
+
+| Verificação | Resultado |
+| --- | --- |
+| Passo novo "Auditoria das dependências de produção (pnpm audit --prod)", no Linux | `No known vulnerabilities found`, em menos de 1 s |
+| Frontend: formatação, lint, tipos, Vitest, build | OK, **101 passed** em 28 arquivos |
+| Backend contra **PostgreSQL 17 real** | **253 passed**, cobertura de 90% |
+| Auditoria das dependências Python | `61 pacotes travados no uv.lock (sem os de desenvolvimento)` e `No known vulnerabilities found` |
+| E2E em desenvolvimento | **18 passed**, 1 ignorado (capturas de tela), sem retentativas |
+| E2E em produção, em HTTPS | **16 passed**, 3 ignorados, sem retentativas: o `exports.spec.ts:62`, instável na execução 41870601906, passou de primeira |
+| Backup, destruição dos volumes e restauração em produção | contagens iguais antes e depois (17 usuários, 14 datasets, 15 versões, 14 uploads, 3 exportações, 98 eventos de auditoria); 29 hashes conferidos, nenhum objeto faltando ou divergente |
+| Job `benchmark` | concluído; pico do cgroup do worker em 730 MiB (765.198.336 bytes), com limite de 2 GiB |
 
 ## Testes executados na CI — auditoria das dependências Python (04/11/2026, commit `effeef5`, [execução 41870601906](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41870601906), PR #6)
 
@@ -274,6 +301,24 @@ API real com o mesmo harness das fases anteriores: SQLite, moto, fakeredis e o j
 | Suíte inteira com as duas correções (testes e aplicação), a combinação deste PR | **14 passed**, 5 ignorados |
 | `cd apps/web && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build` | OK, **108 passed** (7 novos em `use-job-completion-sync.test.tsx`) |
 | `pnpm exec tsc --noEmit` no `e2e/` | sem erros |
+
+## Testes executados localmente — auditoria das dependências do frontend (04/11/2026, Windows 10)
+
+Com o pnpm 10.34.7, o mesmo da CI, e sem `node_modules`: o `pnpm audit` lê só o lockfile.
+
+| Comando | Resultado |
+| --- | --- |
+| `cd apps/web && pnpm audit --prod`, o comando do passo | `No known vulnerabilities found`, saída 0 |
+| O mesmo com `--json` | 136 pacotes auditados, nenhum aviso |
+| `pnpm audit` em `apps/web`, com as de desenvolvimento | 423 pacotes; 1 aviso moderado, GHSA-g3hv-75wg-m249, no `minimatch` 10.2.6 (`.>eslint>minimatch`), saída 1 |
+| `pnpm audit --prod` e `pnpm audit` em `e2e/` | `No known vulnerabilities found` nos dois, saída 0 |
+| Controle negativo: projeto descartável com `minimatch` 10.2.6 em `dependencies` | `pnpm audit --prod` acusa o aviso, saída 1; com `--dev`, saída 0 |
+| O mesmo com `--audit-level high` | saída 0: o limite esconderia o aviso moderado, por isso o passo não o usa |
+| O mesmo com `pnpm.auditConfig.ignoreGhsas` no `package.json` | `1 moderate (1 ignored)`, saída 0 |
+| O mesmo com `pnpm audit --prod --ignore <CVE>` | grava o CVE num `pnpm-workspace.yaml` novo e sai com 0 sem mostrar o relatório |
+| `actionlint` 1.7.12 no `ci.yml` | sem problemas |
+
+O `pnpm-lock.yaml` não mudou, então formatação, lint, tipos, testes e build do frontend não foram rodados de novo.
 
 ## Testes executados localmente — auditoria das dependências Python (04/11/2026, Windows 10)
 
@@ -463,7 +508,7 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 - Objetos órfãos no MinIO só são apagados depois de 24 h (carência da varredura diária).
 - Sem verificação de e-mail no cadastro: o link de convite para quem ainda não tem conta é a prova de posse do e-mail (ADR-024).
 - A API e o worker usam as credenciais raiz do MinIO e o usuário do contêiner do PostgreSQL; o Caddy roda como root, só com `NET_BIND_SERVICE` (ADR-029).
-- A auditoria das dependências do frontend (`pnpm audit --prod`) só roda localmente; a CI audita as do backend.
+- A CI audita só as dependências de produção. Nas de desenvolvimento do frontend há um aviso moderado (GHSA-g3hv-75wg-m249) no `minimatch` 10.2.6 do ESLint, sem correção que o ESLint 10.14.0 aceite (ver `docs/security.md`).
 - As telas se atualizam quando as notificações da barra superior percebem o fim do job: até 3 s depois, se o job foi visto em andamento, ou até 30 s, se rodou inteiro entre duas leituras sem job ativo. A primeira leitura, ao abrir o app, só serve de base: um job que termine exatamente entre a consulta da tela e essa leitura passa despercebido até a tela ser aberta de novo.
 - O nome sugerido do arquivo exportado usa o horário UTC.
 
