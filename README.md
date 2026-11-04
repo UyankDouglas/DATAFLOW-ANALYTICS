@@ -28,7 +28,7 @@ Equipes de vendas, atendimento e operações vivem de planilhas exportadas de si
   - rede interna sem saída e contêineres sem capabilities.
 - **Limpeza diária de objetos órfãos** no armazenamento, com carência e só de chaves geradas pelo sistema.
 - **Backup e restauração** (`scripts/backup.sh`, `scripts/restore.sh`), com conferência de cada objeto contra o banco. A CI faz o ciclo inteiro: backup, destruição dos volumes, restauração e verificação.
-- **Dados de demonstração pela API** (`scripts/seed_demo.py`) e publicação das imagens no GitHub Container Registry a cada tag `v*`.
+- **Dados de demonstração pela API** (`scripts/seed_demo.py`) e publicação das imagens no GitHub Container Registry a cada tag `v*`; a `v1.0.0` já está publicada.
 
 ### Fase 5 — relatórios, exportações e administração
 

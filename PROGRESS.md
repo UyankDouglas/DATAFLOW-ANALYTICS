@@ -105,7 +105,7 @@ Branch `fase-6-qualidade-producao`, [PR #5](https://github.com/UyankDouglas/DATA
   - banco e Redis sem saída para a internet, com controle positivo na API;
   - HSTS e `/api/openapi.json` 404 em produção;
   - ciclo de backup e restauração e o job `benchmark`;
-  - `release.yml` publica as imagens no GHCR a cada tag `v*` (ainda não executado: nenhuma tag criada).
+  - `release.yml` publica as imagens no GHCR a cada tag `v*`; executado pela primeira vez na `v1.0.0` (ver "Versão v1.0.0").
 - [x] **Dados de demonstração** (`scripts/seed_demo.py`): conta, quatro datasets processados (incluindo uma aba de planilha), versão limpa das vendas, dashboard "Comercial" e uma exportação, tudo pela API; não duplica se rodar de novo.
 - [x] **Documentação**: `security.md` (revisão da Fase 6), `deploy.md` (variáveis, redes, imagens, seed, backup e restauração, o que a CI valida), `benchmark.md` (1 milhão e `benchmark_stack`), `administration.md` (órfãos, cota), `architecture.md`, `decisions.md` (ADR-024 corrigida, ADR-026 a ADR-031), README.
 
@@ -175,6 +175,21 @@ Branch `fase-6-qualidade-producao`, [PR #5](https://github.com/UyankDouglas/DATA
   - Com a fila lenta, os testes antigos da `main`, ainda com a espera errada, passaram a passar contra a aplicação corrigida.
   - 7 testes novos no Vitest.
 - [x] **Documentação**: `architecture.md` (o frontend depois do fluxo de importação).
+
+## Versão v1.0.0 — imagens publicadas (04/11/2026)
+
+- [x] **Tag anotada `v1.0.0`** no commit `48143cf` (merge do PR #8), criada depois de a CI da `main` passar nos 5 jobs ([execução 41892997174](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41892997174)).
+- [x] **Release** ([execução 41894805962](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41894805962)): primeira execução do `release.yml`. Os dois jobs passaram, em menos de 1 minuto cada.
+- [x] **Imagens no GHCR**, conferidas pela API do registro sem login. O manifesto das duas baixa sem autenticação, então elas são públicas:
+
+| Imagem | Tags | Digest | Plataforma | Camadas comprimidas |
+| --- | --- | --- | --- | --- |
+| `ghcr.io/uyankdouglas/dataflow-backend` | `v1.0.0`, `latest` | `sha256:6b4df55b5b6c75393bafa61ff53b572bfd490184258bbc72039adb47242e2dd8` | linux/amd64 | 239 MiB |
+| `ghcr.io/uyankdouglas/dataflow-web` | `v1.0.0`, `latest` | `sha256:de76ca4cbd40a81712c51d8b9f5d92033a39e54a7d0c1035030eeba2f69b12f3` | linux/amd64 | 24 MiB |
+
+Os rótulos OCI das duas imagens apontam para o commit `48143cf`, a versão `v1.0.0` e este repositório.
+
+Subir o Compose de produção com essas imagens (`--no-build`) ainda não foi exercitado: a CI compila as imagens a partir do código.
 
 ## Testes executados na CI — auditoria das dependências do frontend (04/11/2026, commit `cfc2dc6`, [execução 41873462152](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41873462152), PR #7)
 
@@ -350,7 +365,7 @@ A suíte do backend não foi rodada de novo: nenhuma dependência nem código do
 | Memória da deduplicação de 1 milhão, um processo novo por cenário | antes: pico de 1.358 MB com 999.520 duplicados e de 1.085 MB com 1 duplicado; depois da ADR-031: 513–536 MB e 627–636 MB, em três execuções (ver `docs/benchmark.md`) |
 | Planilha maliciosa (linha `r="999999999999"`) | recusada em cerca de 2,8 s na pré-visualização e no worker; antes, não terminava |
 
-Validação na CI: ver "Testes executados na CI — Fase 6" ([execução 41835630810](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41835630810)). A publicação das imagens (`release.yml`) continua sem execução, porque só roda com uma tag `v*`.
+Validação na CI: ver "Testes executados na CI — Fase 6" ([execução 41835630810](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41835630810)). A publicação das imagens (`release.yml`) rodou depois, na tag `v1.0.0` (ver "Versão v1.0.0").
 
 ## Testes executados localmente — Fase 5 (03/11/2026, Windows 10, sem Docker)
 
@@ -518,6 +533,5 @@ As 6 fases do prompt mestre estão concluídas. Roadmap, fora dele:
 
 1. verificação de e-mail no cadastro e MFA;
 2. credenciais dedicadas para MinIO e PostgreSQL;
-3. SMTP e certificado reais num deploy de verdade;
-4. uma tag `v*`, para o `release.yml` publicar as imagens pela primeira vez;
-5. atualização de uma instalação existente com migrations novas.
+3. SMTP e certificado reais num deploy de verdade, já com as imagens publicadas da `v1.0.0`;
+4. atualização de uma instalação existente com migrations novas.
