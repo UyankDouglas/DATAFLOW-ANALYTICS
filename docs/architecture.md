@@ -96,6 +96,12 @@ sequenceDiagram
 
 Para XLSX, o upload verifica o contêiner e lista as abas; a pré-visualização lê a aba escolhida de uma cópia local em cache (conferida pelo SHA-256), e o worker repete a verificação do contêiner antes de ler. O progresso de XLSX é a contagem de registros (sem percentual).
 
+No frontend, as notificações da barra superior acompanham os últimos jobs do workspace em todas as telas: a cada 3 s enquanto há algum em andamento e a cada 30 s fora disso. `useJobCompletionSync` (`features/jobs/use-job-completion-sync.ts`) entra em ação quando:
+- um job visto em andamento termina;
+- um job aparece já encerrado entre duas leituras.
+
+Nesses casos, ele invalida as consultas de datasets, análises, dashboards e visão geral. Uma tela aberta durante o processamento (Relatórios, Dashboard geral, Data Explorer, detalhe do dataset) passa a mostrar a versão nova sem ser aberta de novo.
+
 ## Fluxo de uma transformação
 
 ```mermaid

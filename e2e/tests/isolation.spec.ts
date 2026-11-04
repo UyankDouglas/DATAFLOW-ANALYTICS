@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { newUser, register, uploadSample } from './helpers'
+import { newUser, register, uploadSample, waitForJobSuccess } from './helpers'
 
 test('usuário de outro workspace não acessa dataset, arquivo nem registros alheios', async ({ browser }) => {
   const ownerContext = await browser.newContext()
@@ -9,7 +9,7 @@ test('usuário de outro workspace não acessa dataset, arquivo nem registros alh
   const datasetId = await uploadSample(owner, 'vendas_1000.csv')
   await owner.goto(`/datasets/${datasetId}/preview`)
   await owner.getByRole('button', { name: 'Iniciar processamento' }).last().click()
-  await expect(owner.getByText('Concluído').first()).toBeVisible({ timeout: 60_000 })
+  await waitForJobSuccess(owner)
   const jobUrl = owner.url()
 
   const intruderContext = await browser.newContext()

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-import { newUser, register, uploadSample } from './helpers'
+import { newUser, register, uploadSample, waitForJobSuccess } from './helpers'
 
 // samples/vendas_1000.csv é fixo: soma de "valor" 4.340.899,35; só as vendas pagas, 3.236.897,89.
 const TOTAL = '4.340.899,35'
@@ -10,7 +10,7 @@ async function processedSales(page: Page): Promise<string> {
   const datasetId = await uploadSample(page, 'vendas_1000.csv')
   await page.goto(`/datasets/${datasetId}/preview`)
   await page.getByRole('button', { name: 'Iniciar processamento' }).last().click()
-  await expect(page.getByText('Concluído').first()).toBeVisible({ timeout: 60_000 })
+  await waitForJobSuccess(page)
   return datasetId
 }
 

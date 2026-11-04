@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-import { newUser, register, uploadSample } from './helpers'
+import { newUser, register, uploadSample, waitForJobSuccess } from './helpers'
 
 const XLSX = 'vendas_atendimentos_1000.xlsx'
 
@@ -12,8 +12,7 @@ async function countAfter(scope: Locator, label: string): Promise<number> {
 
 async function processCurrentPreview(page: Page) {
   await page.getByRole('button', { name: 'Iniciar processamento' }).last().click()
-  await expect(page).toHaveURL(/\/processamentos\//)
-  await expect(page.getByText('Concluído').first()).toBeVisible({ timeout: 60_000 })
+  await waitForJobSuccess(page)
 }
 
 test('XLSX: aba, linha do cabeçalho, obrigatoriedade e fórmulas nunca executadas', async ({ page }) => {
@@ -84,8 +83,7 @@ test('transformações: prévia, duplicidades e nova versão com linhagem', asyn
   await expect(page.getByText(/salvo \(revisão 1\)/)).toBeVisible()
   await page.getByRole('button', { name: 'Aplicar e gerar nova versão' }).click()
 
-  await expect(page).toHaveURL(/\/processamentos\//)
-  await expect(page.getByText('Concluído').first()).toBeVisible({ timeout: 60_000 })
+  await waitForJobSuccess(page)
   await expect(page.getByText('Transformação', { exact: true })).toBeVisible()
   await expect(page.getByText('Reconciliação — versão 2')).toBeVisible()
   await expect(page.getByText('Regras aplicadas')).toBeVisible()

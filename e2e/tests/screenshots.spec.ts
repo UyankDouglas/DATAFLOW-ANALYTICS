@@ -2,7 +2,7 @@ import path from 'node:path'
 
 import { expect, test, type Page } from '@playwright/test'
 
-import { newUser, register, SAMPLES, uploadSample } from './helpers'
+import { newUser, register, SAMPLES, uploadSample, waitForJobSuccess } from './helpers'
 
 /**
  * Gera as capturas do README a partir de um fluxo real com os dados fictícios de samples/.
@@ -21,7 +21,7 @@ async function processSample(page: Page, file: string): Promise<string> {
   const id = await uploadSample(page, file)
   await page.goto(`/datasets/${id}/preview`)
   await page.getByRole('button', { name: 'Iniciar processamento' }).last().click()
-  await expect(page.getByText('Concluído').first()).toBeVisible({ timeout: 60_000 })
+  await waitForJobSuccess(page)
   return id
 }
 
@@ -49,7 +49,7 @@ test('capturas de tela', async ({ page }) => {
   await shot(page, '04-preview')
 
   await page.getByRole('button', { name: 'Iniciar processamento' }).last().click()
-  await expect(page.getByText('Concluído').first()).toBeVisible({ timeout: 60_000 })
+  await waitForJobSuccess(page)
   await page.getByText('Exclusões por motivo').scrollIntoViewIfNeeded()
   await shot(page, '06-rejeicoes')
 

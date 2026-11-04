@@ -39,6 +39,20 @@ export async function submitRegistration(page: Page, user: TestUser): Promise<vo
   await page.getByRole('button', { name: 'Criar conta' }).click()
 }
 
+/**
+ * Espera o job aberto em /processamentos/<id> terminar com sucesso.
+ *
+ * Não espere por `getByText('Concluído')`: as etapas do job mostram "Concluído" como rótulo da
+ * última etapa desde o início, então o texto aparece antes de o worker pegar o job. Quem
+ * navegava logo em seguida abria a página seguinte com o dataset ainda em processamento.
+ * A reconciliação só aparece com o job concluído, e o worker publica a versão, marca o dataset
+ * como pronto e conclui o job na mesma transação.
+ */
+export async function waitForJobSuccess(page: Page, timeout = 60_000): Promise<void> {
+  await expect(page).toHaveURL(/\/processamentos\/[0-9a-f-]{36}$/)
+  await expect(page.getByText(/^Reconciliação — versão \d+$/)).toBeVisible({ timeout })
+}
+
 export async function uploadSample(page: Page, file: string): Promise<string> {
   await page.goto('/importar')
   await page.getByLabel('Selecionar arquivos CSV').setInputFiles(path.join(SAMPLES, file))

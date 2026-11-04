@@ -1,6 +1,6 @@
 import { expect, test, type APIRequestContext } from '@playwright/test'
 
-import { newUser, register, submitRegistration, uploadSample } from './helpers'
+import { newUser, register, submitRegistration, uploadSample, waitForJobSuccess } from './helpers'
 
 // Vazio desativa o teste do convite: o Compose de produção não tem Mailpit.
 const MAILPIT = process.env.E2E_MAILPIT_URL ?? 'http://localhost:8025'
@@ -69,7 +69,7 @@ test('configurações, auditoria e exclusão controlada de um dataset', async ({
   const datasetId = await uploadSample(page, 'vendas_1000.csv')
   await page.goto(`/datasets/${datasetId}/preview`)
   await page.getByRole('button', { name: 'Iniciar processamento' }).last().click()
-  await expect(page.getByText('Concluído').first()).toBeVisible({ timeout: 60_000 })
+  await waitForJobSuccess(page)
 
   await page.goto('/configuracoes')
   const ttl = page.getByLabel('Validade dos arquivos (horas)')

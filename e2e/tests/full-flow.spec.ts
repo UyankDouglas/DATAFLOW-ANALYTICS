@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { newUser, register, uploadSample } from './helpers'
+import { newUser, register, uploadSample, waitForJobSuccess } from './helpers'
 
 test('login → upload → preview → processamento → resultado → explorer', async ({ page }) => {
   const user = newUser('Fluxo')
@@ -37,8 +37,7 @@ test('login → upload → preview → processamento → resultado → explorer'
   await page.getByRole('button', { name: 'Iniciar processamento' }).last().click()
 
   // Acompanhamento real do job até a conclusão.
-  await expect(page).toHaveURL(/\/processamentos\//)
-  await expect(page.getByText('Concluído').first()).toBeVisible({ timeout: 60_000 })
+  await waitForJobSuccess(page)
   await expect(page.getByText('Reconciliação — versão 1')).toBeVisible()
   await expect(page.getByText('Válidos (publicados)')).toBeVisible()
 
@@ -66,7 +65,7 @@ test('dataset com problemas: rejeições com motivo e valor original', async ({ 
   await page.goto(`/datasets/${datasetId}/preview`)
   await expect(page.getByText(/quantidade de campos diferente do cabeçalho/)).toBeVisible()
   await page.getByRole('button', { name: 'Iniciar processamento' }).last().click()
-  await expect(page.getByText('Concluído').first()).toBeVisible({ timeout: 60_000 })
+  await waitForJobSuccess(page)
   await expect(page.getByText('Exclusões por motivo')).toBeVisible()
   await expect(page.getByText('Campos a menos').first()).toBeVisible()
   await expect(page.getByText('Registros excluídos', { exact: true })).toBeVisible()
