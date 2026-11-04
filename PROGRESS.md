@@ -159,6 +159,22 @@ Branch `fase-6-qualidade-producao`, [PR #5](https://github.com/UyankDouglas/DATA
 - [x] **Resultado**: nenhuma vulnerabilidade conhecida nas dependências de produção em 04/11/2026. O `pnpm-lock.yaml` não mudou e nenhum aviso é ignorado.
 - [x] **Aviso nas dependências de desenvolvimento, registrado e não corrigido**: GHSA-g3hv-75wg-m249 (moderado) no `minimatch` 10.2.6 do ESLint. Só existe correção no `minimatch` 11, que o ESLint 10.14.0 ainda não aceita; justificativa em `security.md`.
 - [x] **Documentação**: `security.md` ("Dependências" e "Pendências", com o procedimento do frontend e como ignorar um aviso), `deploy.md` ("O que a CI valida"), README.
+- [x] **Validado na CI** ([execução 41873462152](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41873462152), [PR #7](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/7)).
+
+## Testes executados na CI — auditoria das dependências do frontend (04/11/2026, commit `cfc2dc6`, [execução 41873462152](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41873462152), PR #7)
+
+Os 5 jobs passaram. O commit está sobre o `398f0c4`, a ponta do PR #6, então a execução também cobre a auditoria Python.
+
+| Verificação | Resultado |
+| --- | --- |
+| Passo novo "Auditoria das dependências de produção (pnpm audit --prod)", no Linux | `No known vulnerabilities found`, em menos de 1 s |
+| Frontend: formatação, lint, tipos, Vitest, build | OK, **101 passed** em 28 arquivos |
+| Backend contra **PostgreSQL 17 real** | **253 passed**, cobertura de 90% |
+| Auditoria das dependências Python | `61 pacotes travados no uv.lock (sem os de desenvolvimento)` e `No known vulnerabilities found` |
+| E2E em desenvolvimento | **18 passed**, 1 ignorado (capturas de tela), sem retentativas |
+| E2E em produção, em HTTPS | **16 passed**, 3 ignorados, sem retentativas: o `exports.spec.ts:62`, instável na execução 41870601906, passou de primeira |
+| Backup, destruição dos volumes e restauração em produção | contagens iguais antes e depois (17 usuários, 14 datasets, 15 versões, 14 uploads, 3 exportações, 98 eventos de auditoria); 29 hashes conferidos, nenhum objeto faltando ou divergente |
+| Job `benchmark` | concluído; pico do cgroup do worker em 730 MiB (765.198.336 bytes), com limite de 2 GiB |
 
 ## Testes executados na CI — auditoria das dependências Python (04/11/2026, commit `effeef5`, [execução 41870601906](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41870601906), PR #6)
 
