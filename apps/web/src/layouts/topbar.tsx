@@ -28,6 +28,7 @@ import { authApi } from '@/features/auth/api'
 import { useLogout, useSession, useSwitchWorkspace } from '@/features/auth/use-auth'
 import { jobsApi } from '@/features/jobs/api'
 import { JOB_STATUS_LABEL, JOB_STATUS_TONE, isActive } from '@/features/jobs/status'
+import { useJobCompletionSync } from '@/features/jobs/use-job-completion-sync'
 import { useTheme } from '@/hooks/use-theme'
 import { formatRelative } from '@/lib/format'
 import { describeError } from '@/services/api-client'
@@ -130,6 +131,7 @@ function Notifications() {
     refetchInterval: (query) =>
       query.state.data?.items.some((job) => isActive(job.status)) ? 3000 : 30_000,
   })
+  useJobCompletionSync(jobs.data?.items)
   const items = jobs.data?.items ?? []
   const active = items.filter((job) => isActive(job.status)).length
 
