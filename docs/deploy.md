@@ -66,6 +66,8 @@ Cria a conta `demo@example.com` (ou a de `--email`) e, pela API, envia e process
 
 ## O que a CI valida
 
+Antes de qualquer Compose, o job do backend audita as dependências Python que entram na imagem. Elas saem do `uv.lock`, sem as de desenvolvimento, e o `pip-audit` as consulta na base OSV. Uma vulnerabilidade conhecida falha o job e impede os jobs de Compose. Ver `security.md`, seção "Dependências".
+
 A cada pull request e push na `main`, o job `docker-prod` segue este guia: cria o `.env` a partir do `.env.example`, gera os segredos e sobe o `docker-compose.prod.yml` com `SITE_ADDRESS=localhost`, em que o Caddy emite o certificado pela própria CA interna. Depois confere:
 
 - todos os serviços saudáveis, o redirecionamento de HTTP para HTTPS e os cookies `Secure`;
