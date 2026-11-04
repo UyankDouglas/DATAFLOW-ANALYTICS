@@ -1,13 +1,13 @@
 import { expect, test } from '@playwright/test'
 
-import { newUser, register, uploadSample } from './helpers'
+import { newUser, register, uploadSample, waitForJobSuccess } from './helpers'
 
 test('qualidade: nota, indicadores e inconsistências da versão processada', async ({ page }) => {
   await register(page, newUser('Qualidade'))
   const datasetId = await uploadSample(page, 'qualidade_1000.csv')
   await page.goto(`/datasets/${datasetId}/preview`)
   await page.getByRole('button', { name: 'Iniciar processamento' }).last().click()
-  await expect(page.getByText('Concluído').first()).toBeVisible({ timeout: 60_000 })
+  await waitForJobSuccess(page)
 
   // O worker publica o relatório junto com a versão; a tela abre a partir do dataset.
   await page.goto(`/datasets/${datasetId}`)
@@ -36,7 +36,7 @@ test('data explorer: busca, filtros e colunas consultados no servidor', async ({
   const datasetId = await uploadSample(page, 'vendas_1000.csv')
   await page.goto(`/datasets/${datasetId}/preview`)
   await page.getByRole('button', { name: 'Iniciar processamento' }).last().click()
-  await expect(page.getByText('Concluído').first()).toBeVisible({ timeout: 60_000 })
+  await waitForJobSuccess(page)
 
   await page.goto(`/datasets/${datasetId}/explorar`)
   await expect(page.getByText('registros na versão')).toBeVisible()
