@@ -209,7 +209,7 @@ E2E_BASE_URL=http://localhost:8080 pnpm test  # com o Docker Compose em execuç�
 A CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) roda:
 
 - lint, formatação, tipos e testes com PostgreSQL real;
-- a auditoria das dependências Python de produção travadas no `uv.lock` (`pip-audit`, base OSV): qualquer vulnerabilidade conhecida falha a CI ([docs/security.md](docs/security.md#dependências));
+- a auditoria das dependências de produção: as Python travadas no `uv.lock` (`pip-audit`, base OSV) e as do frontend travadas no `pnpm-lock.yaml` (`pnpm audit --prod`). Qualquer vulnerabilidade conhecida falha a CI ([docs/security.md](docs/security.md#dependências));
 - migrations em banco descartável (upgrade → check → downgrade → upgrade) e o build;
 - a subida dos Compose de desenvolvimento e de produção (em HTTPS com a CA interna do Caddy), com E2E nos dois;
 - a conferência de que os logs não têm tokens nem e-mails e de que banco e Redis não alcançam a internet;
