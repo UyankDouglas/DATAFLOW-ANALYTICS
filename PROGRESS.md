@@ -149,6 +149,15 @@ Branch `fase-6-qualidade-producao`, [PR #5](https://github.com/UyankDouglas/DATA
 - [x] **Documentação**: `security.md` (nova seção "Dependências", com o procedimento para quando aparecer um aviso), `deploy.md` ("O que a CI valida"), README.
 - [x] **Validado na CI** ([execução 41870601906](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41870601906), [PR #6](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/6)).
 
+## Depois das fases — E2E esperando o fim real do processamento
+
+- [x] **Causa da instabilidade de `exports.spec.ts:62`** na execução 41870601906. No Compose de produção, a primeira tentativa esperou 90 s pelo campo "Agrupar por" e passou na retentativa.
+  - As etapas da página do job mostram "Concluído" como rótulo da última etapa desde o início. Assim, `getByText('Concluído')` passava antes de o worker pegar o job.
+  - O teste abria Relatórios com o dataset ainda em processamento. A lista da tela, que só mostra datasets prontos, vinha vazia e não era refeita, e a tela ficava em "Nenhum dataset processado" até o tempo-limite.
+  - Reproduzido localmente com 6 s de espera na fila: mesma linha, mesmo erro e a captura em "Nenhum dataset processado". Com essa fila, os testes da `main` falham em 8 dos 14 casos executáveis, todos pela mesma espera.
+- [x] **Correção nos testes**: o helper `waitForJobSuccess` (`e2e/tests/helpers.ts`) espera a reconciliação, que só aparece com o job concluído. O worker publica a versão, marca o dataset como pronto e conclui o job na mesma transação. O helper substitui as 12 esperas por "Concluído", em 8 arquivos. `journey.spec.ts` e `large-file.spec.ts` já esperavam a reconciliação.
+- [x] **Aplicação sem mudança**: as telas que não se atualizam quando o job termina ficaram registradas em "Erros conhecidos / limitações".
+
 ## Testes executados na CI — auditoria das dependências Python (04/11/2026, commit `effeef5`, [execução 41870601906](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41870601906), PR #6)
 
 Os 5 jobs passaram.
@@ -245,6 +254,17 @@ A primeira execução ([41682378950](https://github.com/UyankDouglas/DATAFLOW-AN
 | Borda de produção | HTTP responde 308 para HTTPS; cookies `Secure`; portas 5432, 6379, 8000, 8025, 8080, 9000 e 9001 fechadas; Redis responde `NOAUTH` sem senha |
 | E2E em produção | **5 passed**, 2 ignorados (e-mail, pois produção não tem Mailpit, e capturas de tela) |
 | Fluxo completo medido | job de 100 mil linhas entre 741 ms e 1.046 ms em 3 execuções; detalhes em `docs/benchmark.md` |
+
+## Testes executados localmente — E2E esperando o fim do processamento (04/11/2026, Windows 10, sem Docker)
+
+API real com o mesmo harness das fases anteriores: SQLite, moto, fakeredis e o job numa thread. A fila espera **6 s** antes de o worker pegar o importador, para simular um worker ocupado. Frontend Vite e Playwright 1.64.1.
+
+| Execução | Resultado |
+| --- | --- |
+| `exports.spec.ts:62` sem a correção | falhou como na CI: `locator.click: Test timeout of 90000ms exceeded`, à espera de `getByRole('combobox', { name: 'Agrupar por' })`; a captura mostra "Nenhum dataset processado" |
+| Suíte inteira **sem a correção** (testes da `main`) | **8 failed**, 6 passed, 5 ignorados. Falharam `admin.spec.ts:67`, `dashboards.spec.ts:22` e `:38`, `etl.spec.ts:49`, `exports.spec.ts:23` e `:62`, `quality.spec.ts:5` e `:34`, todos com a página parada antes de o dataset ficar pronto |
+| Suíte inteira **com a correção** | **14 passed**, 5 ignorados (convite e recuperação de senha precisam do Mailpit, o limite do proxy precisa do Caddy, o arquivo de 100 mil linhas não foi gerado, capturas sob demanda) |
+| `pnpm exec tsc --noEmit` no `e2e/` | sem erros |
 
 ## Testes executados localmente — auditoria das dependências Python (04/11/2026, Windows 10)
 
@@ -435,7 +455,12 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 - Sem verificação de e-mail no cadastro: o link de convite para quem ainda não tem conta é a prova de posse do e-mail (ADR-024).
 - A API e o worker usam as credenciais raiz do MinIO e o usuário do contêiner do PostgreSQL; o Caddy roda como root, só com `NET_BIND_SERVICE` (ADR-029).
 - A auditoria das dependências do frontend (`pnpm audit --prod`) só roda localmente; a CI audita as do backend.
-- E2E instável: `exports.spec.ts:62` ("relatório agrupado exportado em XLSX") esperou 90 s pelo campo "Agrupar por" no Compose de produção (execução 41870601906) e passou na retentativa. Causa não investigada.
+- As telas abertas com o dataset ainda em processamento não se atualizam quando o processamento termina em segundo plano; é preciso abrir a tela de novo. Visto localmente com fila lenta:
+  - Relatórios e Dashboard geral: "Nenhum dataset processado";
+  - Data Explorer: "Ainda não há versão processada";
+  - detalhe do dataset: "Nenhuma versão publicada ainda".
+
+  Foi isso que deixou o E2E instável, junto com a espera errada corrigida em `waitForJobSuccess`.
 - O nome sugerido do arquivo exportado usa o horário UTC.
 
 ## Próxima tarefa
