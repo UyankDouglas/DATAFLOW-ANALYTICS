@@ -147,6 +147,21 @@ Branch `fase-6-qualidade-producao`, [PR #5](https://github.com/UyankDouglas/DATA
 - [x] **Mesmo critério do `pnpm audit --prod`**: só dependências de produção, e uma vulnerabilidade conhecida bloqueia.
 - [x] **Resultado**: nenhuma vulnerabilidade conhecida em 04/11/2026. O `uv.lock` não mudou e nenhum aviso é ignorado.
 - [x] **Documentação**: `security.md` (nova seção "Dependências", com o procedimento para quando aparecer um aviso), `deploy.md` ("O que a CI valida"), README.
+- [x] **Validado na CI** ([execução 41870601906](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41870601906), [PR #6](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/6)).
+
+## Testes executados na CI — auditoria das dependências Python (04/11/2026, commit `effeef5`, [execução 41870601906](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41870601906), PR #6)
+
+Os 5 jobs passaram.
+
+| Verificação | Resultado |
+| --- | --- |
+| Passo novo "Auditoria das dependências Python (pip-audit, base OSV)", no Linux | `61 pacotes travados no uv.lock (sem os de desenvolvimento)` e `No known vulnerabilities found`, em cerca de 10 s |
+| Backend contra **PostgreSQL 17 real** | **253 passed**, cobertura de 90% |
+| Frontend: formatação, lint, tipos, Vitest, build | OK, **101 passed** |
+| E2E em desenvolvimento | **18 passed**, 1 ignorado (capturas de tela), sem retentativas |
+| E2E em produção, em HTTPS | **15 passed**, 3 ignorados e **1 instável**: `exports.spec.ts:62` ("relatório agrupado exportado em XLSX") esperou 90 s pelo campo "Agrupar por" em `/relatorios` e passou na retentativa, em 2,9 s. A mudança não toca nas imagens nem no E2E. A causa não foi investigada: o relatório do Playwright só é guardado quando o job falha |
+| Backup, destruição dos volumes e restauração em produção | contagens iguais antes e depois (18 usuários, 15 datasets, 16 versões, 15 uploads, 3 exportações, 103 eventos de auditoria) |
+| Job `benchmark` | concluído; pico do cgroup do worker em 712 MiB (746.782.720 bytes), com limite de 2 GiB |
 
 ## Testes executados na CI — Fase 6 (04/11/2026, commit `d57434c`, [execução 41835630810](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41835630810), PR #5)
 
@@ -420,6 +435,7 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 - Sem verificação de e-mail no cadastro: o link de convite para quem ainda não tem conta é a prova de posse do e-mail (ADR-024).
 - A API e o worker usam as credenciais raiz do MinIO e o usuário do contêiner do PostgreSQL; o Caddy roda como root, só com `NET_BIND_SERVICE` (ADR-029).
 - A auditoria das dependências do frontend (`pnpm audit --prod`) só roda localmente; a CI audita as do backend.
+- E2E instável: `exports.spec.ts:62` ("relatório agrupado exportado em XLSX") esperou 90 s pelo campo "Agrupar por" no Compose de produção (execução 41870601906) e passou na retentativa. Causa não investigada.
 - O nome sugerido do arquivo exportado usa o horário UTC.
 
 ## Próxima tarefa
