@@ -138,6 +138,31 @@ Branch `fase-6-qualidade-producao`, [PR #5](https://github.com/UyankDouglas/DATA
 - [x] **Benchmark**: `benchmark_pipeline` mede a exportação da versão inteira em CSV e XLSX.
 - [x] **Documentação**: `docs/administration.md` (novo), ADR-023 a ADR-025, `security.md`, `architecture.md`, `deploy.md`, `benchmark.md`, README; capturas 16, 17 e 18, e as demais regeneradas.
 
+## Depois das fases — auditoria das dependências Python na CI
+
+- [x] **Passo novo no fim do job do backend** (`.github/workflows/ci.yml`):
+  - `uv export --frozen --no-dev --no-emit-project` gera os requisitos travados no `uv.lock`, com hash: 61 pacotes, os mesmos que o Dockerfile instala.
+  - O `pip-audit` 2.10.1, fixado e executado pelo `uvx --python 3.13`, consulta cada pacote na base OSV. Os marcadores são avaliados como no contêiner, então o `uvloop`, que só existe fora do Windows, entra na conta.
+  - Uma vulnerabilidade conhecida falha o job, e o `--strict` também o derruba quando um pacote não pode ser auditado. O passo ainda confere que o export não saiu vazio.
+- [x] **Mesmo critério do `pnpm audit --prod`**: só dependências de produção, e uma vulnerabilidade conhecida bloqueia.
+- [x] **Resultado**: nenhuma vulnerabilidade conhecida em 04/11/2026. O `uv.lock` não mudou e nenhum aviso é ignorado.
+- [x] **Documentação**: `security.md` (nova seção "Dependências", com o procedimento para quando aparecer um aviso), `deploy.md` ("O que a CI valida"), README.
+- [x] **Validado na CI** ([execução 41870601906](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41870601906), [PR #6](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/6)).
+
+## Testes executados na CI — auditoria das dependências Python (04/11/2026, commit `effeef5`, [execução 41870601906](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41870601906), PR #6)
+
+Os 5 jobs passaram.
+
+| Verificação | Resultado |
+| --- | --- |
+| Passo novo "Auditoria das dependências Python (pip-audit, base OSV)", no Linux | `61 pacotes travados no uv.lock (sem os de desenvolvimento)` e `No known vulnerabilities found`, em cerca de 10 s |
+| Backend contra **PostgreSQL 17 real** | **253 passed**, cobertura de 90% |
+| Frontend: formatação, lint, tipos, Vitest, build | OK, **101 passed** |
+| E2E em desenvolvimento | **18 passed**, 1 ignorado (capturas de tela), sem retentativas |
+| E2E em produção, em HTTPS | **15 passed**, 3 ignorados e **1 instável**: `exports.spec.ts:62` ("relatório agrupado exportado em XLSX") esperou 90 s pelo campo "Agrupar por" em `/relatorios` e passou na retentativa, em 2,9 s. A mudança não toca nas imagens nem no E2E. A causa não foi investigada: o relatório do Playwright só é guardado quando o job falha |
+| Backup, destruição dos volumes e restauração em produção | contagens iguais antes e depois (18 usuários, 15 datasets, 16 versões, 15 uploads, 3 exportações, 103 eventos de auditoria) |
+| Job `benchmark` | concluído; pico do cgroup do worker em 712 MiB (746.782.720 bytes), com limite de 2 GiB |
+
 ## Testes executados na CI — Fase 6 (04/11/2026, commit `d57434c`, [execução 41835630810](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41835630810), PR #5)
 
 A primeira execução da Fase 6 ([execução 41820017555](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41820017555), commit `37031d7`) também passou nos 5 jobs. Foi ela que mostrou o pico herdado entre jobs (ADR-030) e a memória da deduplicação (ADR-031).
@@ -220,6 +245,20 @@ A primeira execução ([41682378950](https://github.com/UyankDouglas/DATAFLOW-AN
 | Borda de produção | HTTP responde 308 para HTTPS; cookies `Secure`; portas 5432, 6379, 8000, 8025, 8080, 9000 e 9001 fechadas; Redis responde `NOAUTH` sem senha |
 | E2E em produção | **5 passed**, 2 ignorados (e-mail, pois produção não tem Mailpit, e capturas de tela) |
 | Fluxo completo medido | job de 100 mil linhas entre 741 ms e 1.046 ms em 3 execuções; detalhes em `docs/benchmark.md` |
+
+## Testes executados localmente — auditoria das dependências Python (04/11/2026, Windows 10)
+
+| Comando | Resultado |
+| --- | --- |
+| `uv export --frozen --no-dev --no-emit-project --format requirements.txt` (uv 0.13.6, o mesmo da CI) | 61 pacotes travados, todos com hash |
+| `uvx --python 3.13 pip-audit@2.10.1 -r … --disable-pip --strict` (base PyPI, a padrão) | `No known vulnerabilities found` |
+| O mesmo com `--vulnerability-service osv`, o comando da CI | `No known vulnerabilities found`; 60 pacotes auditados, porque no Windows o marcador tira o `uvloop` |
+| O mesmo arquivo sem os marcadores, para incluir o `uvloop`, nas bases OSV e PyPI | 61 pacotes auditados em cada uma, nenhuma vulnerabilidade |
+| Controle negativo: `jinja2==2.11.2` | `Found 10 known vulnerabilities in 1 package` (5 avisos distintos, cada um listado duas vezes pelo OSV), saída 1 |
+| O bloco do passo, extraído do `ci.yml` e rodado com `bash -e` | `61 pacotes travados…`, `No known vulnerabilities found`, saída 0 |
+| `actionlint` 1.7.12 no `ci.yml` | sem problemas (sem ShellCheck, que não está instalado) |
+
+A suíte do backend não foi rodada de novo: nenhuma dependência nem código do backend mudou.
 
 ## Testes executados localmente — Fase 6 (03/11/2026, Windows 10, sem Docker)
 
@@ -395,7 +434,8 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 - Objetos órfãos no MinIO só são apagados depois de 24 h (carência da varredura diária).
 - Sem verificação de e-mail no cadastro: o link de convite para quem ainda não tem conta é a prova de posse do e-mail (ADR-024).
 - A API e o worker usam as credenciais raiz do MinIO e o usuário do contêiner do PostgreSQL; o Caddy roda como root, só com `NET_BIND_SERVICE` (ADR-029).
-- Dependências Python não auditadas (pip-audit não está instalado nesta máquina); nenhuma auditoria de dependências roda na CI.
+- A auditoria das dependências do frontend (`pnpm audit --prod`) só roda localmente; a CI audita as do backend.
+- E2E instável: `exports.spec.ts:62` ("relatório agrupado exportado em XLSX") esperou 90 s pelo campo "Agrupar por" no Compose de produção (execução 41870601906) e passou na retentativa. Causa não investigada.
 - O nome sugerido do arquivo exportado usa o horário UTC.
 
 ## Próxima tarefa
@@ -404,7 +444,6 @@ As 6 fases do prompt mestre estão concluídas. Roadmap, fora dele:
 
 1. verificação de e-mail no cadastro e MFA;
 2. credenciais dedicadas para MinIO e PostgreSQL;
-3. auditoria de dependências na CI;
-4. SMTP e certificado reais num deploy de verdade;
-5. uma tag `v*`, para o `release.yml` publicar as imagens pela primeira vez;
-6. atualização de uma instalação existente com migrations novas.
+3. SMTP e certificado reais num deploy de verdade;
+4. uma tag `v*`, para o `release.yml` publicar as imagens pela primeira vez;
+5. atualização de uma instalação existente com migrations novas.

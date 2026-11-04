@@ -55,6 +55,20 @@ jobs:
           uv run alembic upgrade head
       - name: Testes (PostgreSQL real)
         run: uv run pytest -q --cov=app --cov-report=term-missing:skip-covered
+      # Mesmo critério do `pnpm audit --prod`: só o que vai para a imagem (o Dockerfile roda
+      # `uv sync --frozen --no-dev`), com os marcadores avaliados como no contêiner (Linux,
+      # CPython 3.13). Qualquer vulnerabilidade conhecida, ou pacote que não dê para auditar
+      # (--strict), falha o job. Fica por último para não esconder o resultado dos testes.
+      - name: Auditoria das dependências Python (pip-audit, base OSV)
+        run: |
+          requirements="$RUNNER_TEMP/requirements-audit.txt"
+          uv export --quiet --frozen --no-dev --no-emit-project --format requirements.txt \
+            --output-file "$requirements"
+          packages="$(grep -cE '^[A-Za-z0-9]' "$requirements")"
+          echo "$packages pacotes travados no uv.lock (sem os de desenvolvimento)"
+          [[ "$packages" -gt 0 ]]
+          uvx --python 3.13 pip-audit@2.10.1 --requirement "$requirements" --disable-pip \
+            --strict --vulnerability-service osv --aliases on --progress-spinner off
 
   frontend:
     name: Frontend (formatação, lint, tipos, testes, build)

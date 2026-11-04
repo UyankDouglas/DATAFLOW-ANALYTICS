@@ -75,6 +75,31 @@ O sistema recebe arquivos de usuários; segurança é requisito central. Esta p�
 
 - **Objetos órfãos**: varredura diária apaga do MinIO só chaves geradas pelo sistema, sem registro no banco, fora de processamento ou exportação em andamento e com mais de 24 h (ADR-026).
 
+## Dependências
+
+- **Backend (Python), na CI**: o último passo do job do backend exporta do `uv.lock` as dependências que vão para a imagem, com `uv export --frozen --no-dev --no-emit-project`. O `pip-audit` 2.10.1, em versão fixa e executado pelo `uvx`, consulta cada pacote na base OSV, que reúne os avisos da PyPA (PYSEC) e do GitHub (GHSA).
+  - Qualquer vulnerabilidade conhecida falha o job. Os jobs de Compose e o benchmark dependem dele e, nesse caso, não rodam.
+  - Com `--strict`, um pacote que não pode ser auditado também falha o job.
+  - Os marcadores de ambiente são avaliados como no contêiner (Linux, CPython 3.13).
+  - As dependências de desenvolvimento ficam de fora, como no `pnpm audit --prod`, porque não entram na imagem (`uv sync --frozen --no-dev` no Dockerfile).
+- **Frontend**: `pnpm audit --prod`, rodado localmente. Não encontrou vulnerabilidades conhecidas em 03/11/2026. Ainda não roda na CI.
+- **Quando aparecer uma vulnerabilidade**:
+  1. Atualizar o pacote no `uv.lock` (`uv lock --upgrade-package <pacote>`).
+  2. Rodar a suíte do backend (`uv run pytest --cov=app`).
+  3. Registrar a mudança no `PROGRESS.md`.
+
+  Ignorar um aviso (`--ignore-vuln <ID>` no passo da CI) só com a justificativa aqui: o ID, por que o código não é afetado e quando rever. Hoje nenhum aviso é ignorado.
+- **Resultado em 04/11/2026**: nenhuma vulnerabilidade conhecida nos 61 pacotes de produção, nas bases OSV e PyPI. O `uv.lock` não precisou mudar.
+- **Para rodar localmente**:
+
+  ```bash
+  cd backend
+  uv export --frozen --no-dev --no-emit-project --format requirements.txt --output-file /tmp/requirements-audit.txt
+  uvx --python 3.13 pip-audit@2.10.1 -r /tmp/requirements-audit.txt --disable-pip --strict --vulnerability-service osv
+  ```
+
+  No Windows, o marcador do `uvloop` (`sys_platform != 'win32'`) o tira da conta. Na CI, ele é auditado.
+
 ## Revisão de segurança da Fase 6
 
 Feita por um revisor independente, só leitura, sobre o código inteiro, os Dockerfiles, os Compose e o Caddyfile. Cada achado foi conferido no código antes da correção:
@@ -95,4 +120,4 @@ Conferidos e sem problema: isolamento por workspace em todas as rotas, CSRF em t
 - Verificação de e-mail no cadastro e MFA (roadmap). Até lá, o link do convite vale como prova de posse do e-mail (ADR-024).
 - Credenciais dedicadas: a API e o worker usam as credenciais raiz do MinIO e o usuário criado pelo contêiner do PostgreSQL (superusuário). O Caddy roda como root, só com `NET_BIND_SERVICE`.
 - Sistema de arquivos somente leitura nos contêineres (`read_only`) não foi aplicado: exige mapear cada diretório de escrita (cache, temporários, agenda do beat).
-- Varredura de dependências na CI. Em 03/11/2026, `pnpm audit --prod` no frontend não encontrou vulnerabilidades conhecidas; as dependências Python não foram auditadas (pip-audit não está instalado nesta máquina).
+- Auditoria das dependências do frontend na CI: `pnpm audit --prod` só roda localmente. As do backend são auditadas a cada pull request e push na `main` (ver "Dependências").
