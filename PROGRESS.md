@@ -1,6 +1,6 @@
 # PROGRESS — DataFlow Analytics
 
-Documento de retomada. Atualizado em **03/11/2026**.
+Documento de retomada. Atualizado em **04/11/2026**.
 
 ## Fases
 
@@ -11,7 +11,7 @@ Documento de retomada. Atualizado em **03/11/2026**.
 | 3 — Qualidade e Data Explorer completo | ✅ Concluída e validada na CI com a infraestrutura real ([PR #2](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/2)) |
 | 4 — Business Intelligence (dashboards) | ✅ Concluída e validada na CI com a infraestrutura real ([PR #3](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/3)) |
 | 5 — Relatórios, exportações e administração | ✅ Concluída e validada na CI com a infraestrutura real ([PR #4](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/4)) |
-| 6 — Qualidade e produção | Pendente |
+| 6 — Qualidade e produção | ✅ Concluída e validada na CI com a infraestrutura real ([PR #5](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/5)) |
 
 ## Fase 1 — concluído
 
@@ -77,6 +77,38 @@ Documento de retomada. Atualizado em **03/11/2026**.
 - [x] **Benchmark**: `benchmark_pipeline` mede KPIs, agrupamento com "Outros", série mensal e comparação entre períodos.
 - [x] **Documentação**: `docs/dashboards.md` (novo), ADR-021 e ADR-022, `security.md`, `architecture.md`, `benchmark.md`, README; capturas 13, 14 e 15, e as demais regeneradas.
 
+## Fase 6 — concluído
+
+Branch `fase-6-qualidade-producao`, [PR #5](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/pull/5).
+
+- [x] **E2E da jornada** (`e2e/tests/journey.spec.ts`): login → upload de `qualidade_1000.csv` → preview → configuração (Data, Inteiro e Decimal escolhidos na tela) → processamento → qualidade → dashboard geral → exportação CSV. O número de registros válidos do job persistido é conferido na qualidade, no dashboard, no explorer, no aviso da exportação e nas linhas do arquivo baixado, que não pode ter célula iniciada por `=`, `+` ou `@`.
+- [x] **Limpeza de objetos órfãos** (`services/orphan_service.py`, beat diário, `app.scripts.sweep_orphans --dry-run`): só chaves geradas pelo sistema, sem registro no banco, fora de processamento ou exportação em andamento e com mais de `ORPHAN_GRACE_HOURS` (24 h) (ADR-026).
+- [x] **Integridade do armazenamento** (`app.scripts.verify_storage [--deep]`): tudo o que o banco referencia existe, com o tamanho registrado e, com `--deep`, o SHA-256.
+- [x] **Backup e restauração** (`scripts/backup.sh`, `scripts/restore.sh`): banco e volume do MinIO do mesmo ponto no tempo, com os serviços parados durante a cópia; a restauração exige `--yes`, explica o impacto, confere os hashes do backup e termina com `verify_storage --deep`. A CI executa o ciclo inteiro em produção.
+- [x] **Revisão de segurança independente** (resultado e evidências em `docs/security.md`; ADR-027 a ADR-029):
+  - **alta**: planilha com índice de linha enorme travava a pré-visualização (negação de serviço da API); a leitura agora para no limite do Excel e examina cada linha até a coluna 1.024;
+  - tokens e e-mails fora dos logs (Celery `argsrepr`, formatador, filtro do Caddy, `Referrer-Policy: no-referrer`);
+  - cota de armazenamento por workspace, com uso mostrado em Configurações;
+  - teto de 2 consultas DuckDB simultâneas por processo e tempo-limite na análise de duplicidades;
+  - HSTS; `/api/docs` desligada em produção;
+  - Compose de produção com rede `internal` para banco, Redis e MinIO, `cap_drop: [ALL]`, `no-new-privileges` e limite de processos;
+  - ADR-024 corrigida: sem verificação de e-mail, o link de convite para quem ainda não tem conta é a prova de posse do e-mail.
+- [x] **Revisão de performance**: `benchmark_pipeline` com 1 milhão de registros (8,1 s, 123 mil registros/s, mesmo pico de 43 MB de heap das 100 mil linhas) e exportações nos limites que a API aceita; `scripts/benchmark_stack.py` mede o fluxo completo pela API e confere as contagens; o job `benchmark` da CI o roda com 1 milhão de linhas, deduplicação, XLSX perto de 25 MB e exportações nos limites.
+- [x] **Pico de memória por job** (ADR-030): `peak_memory_mb` passou a ser o pico do processo do worker durante o job, e não o da vida do processo. O pico é zerado em `/proc/self/clear_refs` no início do job, e `start_memory_mb` registra o RSS nesse momento. A tela do job mostra os dois. A primeira CI mostrou o defeito: a planilha herdou os 1.357,3 MB da deduplicação anterior. Na CI seguinte, o pico foi zerado nos dois Compose, inclusive no de produção, com `cap_drop: [ALL]`.
+- [x] **Memória da deduplicação reduzida** (ADR-031, `docs/benchmark.md`). Com 1 milhão de registros, o pico era de 1,36 GB com 999.520 duplicados e de 1,09 GB com chave quase única. As causas eram as exclusões montadas inteiras em memória e a janela `over` sobre todas as chaves. Agora só a chave fica em memória, o mantido é procurado só para os descartados, e mantidos e exclusões são gravados em lotes. Medido localmente: 513–536 MB e 627–636 MB. No contêiner, na CI: 611 MB com 999.520 duplicados, antes 1.357 MB. O caso com muitos duplicados ficou cerca de 1 a 2 s mais lento. Um teste compara a saída com a da implementação anterior.
+- [x] **Testes ampliados**:
+  - backend de 205 para **252** (`test_orphans.py` ×7, `test_operations.py` ×13, deduplicação igual à implementação anterior ×16, pico de memória por job ×6, XLSX maliciosos ×2, cota ×2, configuração ×1), mais um teste do pico de memória que só roda no Linux;
+  - publicação de tarefas, e-mails, SMTP, saúde das dependências e documentação da API, que não tinham teste;
+  - frontend de 99 para **101** (uso do armazenamento).
+- [x] **CI/CD**:
+  - logs sem tokens nem e-mails depois do E2E;
+  - banco e Redis sem saída para a internet, com controle positivo na API;
+  - HSTS e `/api/openapi.json` 404 em produção;
+  - ciclo de backup e restauração e o job `benchmark`;
+  - `release.yml` publica as imagens no GHCR a cada tag `v*` (ainda não executado: nenhuma tag criada).
+- [x] **Dados de demonstração** (`scripts/seed_demo.py`): conta, quatro datasets processados (incluindo uma aba de planilha), versão limpa das vendas, dashboard "Comercial" e uma exportação, tudo pela API; não duplica se rodar de novo.
+- [x] **Documentação**: `security.md` (revisão da Fase 6), `deploy.md` (variáveis, redes, imagens, seed, backup e restauração, o que a CI valida), `benchmark.md` (1 milhão e `benchmark_stack`), `administration.md` (órfãos, cota), `architecture.md`, `decisions.md` (ADR-024 corrigida, ADR-026 a ADR-031), README.
+
 ## Fase 5 — concluído
 
 - [x] **Exportações em segundo plano** (`models/export.py` `ExportJob`, `services/export_service.py`, `services/export_runner.py`, tarefa `exports.run`, migration 0005 aditiva):
@@ -105,6 +137,24 @@ Documento de retomada. Atualizado em **03/11/2026**.
   - Nada mais aparece como "Em desenvolvimento".
 - [x] **Benchmark**: `benchmark_pipeline` mede a exportação da versão inteira em CSV e XLSX.
 - [x] **Documentação**: `docs/administration.md` (novo), ADR-023 a ADR-025, `security.md`, `architecture.md`, `deploy.md`, `benchmark.md`, README; capturas 16, 17 e 18, e as demais regeneradas.
+
+## Testes executados na CI — Fase 6 (04/11/2026, commit `d57434c`, [execução 41835630810](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41835630810), PR #5)
+
+A primeira execução da Fase 6 ([execução 41820017555](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41820017555), commit `37031d7`) também passou nos 5 jobs. Foi ela que mostrou o pico herdado entre jobs (ADR-030) e a memória da deduplicação (ADR-031).
+
+| Verificação | Resultado |
+| --- | --- |
+| Backend contra **PostgreSQL 17 real** | **253 passed**, cobertura de 90%; inclui o teste do pico de memória contra o kernel, que fica de fora no Windows |
+| Alembic `upgrade` → `check` → `downgrade base` → `upgrade` no PostgreSQL (a Fase 6 não tem migration) | OK; `check`: "No new upgrade operations detected" |
+| Ruff, ruff format e mypy estrito | sem problemas (103 arquivos no mypy) |
+| Frontend: formatação, lint, tipos, Vitest, build | OK, **101 passed** |
+| E2E em desenvolvimento, com Celery, MinIO, Redis e Mailpit reais | **18 passed**, 1 ignorado (capturas de tela), sem retentativas; inclui a jornada (`journey.spec.ts`), o convite e a recuperação de senha com o e-mail entregue ao Mailpit |
+| Logs depois do E2E | o Caddy registrou `token=REDACTED`; nenhum token nem e-mail `@example.com` nos logs do Caddy, da API, do worker e do beat |
+| E2E em produção, em HTTPS | **16 passed**, 3 ignorados (convite e recuperação de senha, que dependem do e-mail, e capturas de tela), sem retentativas; inclui a jornada |
+| Endurecimento da produção | HTTP responde 308 para HTTPS; cookie CSRF com `Secure`; portas 5432, 6379, 8000, 8025, 8080, 9000 e 9001 fechadas no host; Redis exige senha; PostgreSQL e Redis sem saída para a internet, enquanto a API alcança (controle positivo); HSTS de um ano; `/api/openapi.json` responde 404 |
+| Backup, destruição dos volumes e restauração em produção | contagens iguais antes e depois (17 usuários, 14 datasets, 15 versões, 14 uploads, 3 exportações, 98 eventos de auditoria); a restauração sem `--yes` não alterou nada; 29 hashes conferidos, nenhum objeto faltando ou divergente |
+| CSV de 100 mil linhas pela interface | job de 754 ms em desenvolvimento e 861 ms em produção (132.626 e 116.144 registros/s); pico do processo do worker de 388,5 e 394,2 MB, partindo de 281,9 e 287,2 MB. Na produção, o worker roda com `cap_drop: [ALL]` |
+| Job `benchmark` (1 milhão de linhas, deduplicação, planilha de 25 MB, exportações nos limites) | todas as conferências passaram: importação de 1 milhão em 4,4 s, deduplicação em 1,6 s com pico de 611 MB (antes, 1.357 MB), planilha em 47,9 s, cgroup do worker em 766 MiB de 2 GiB; detalhes em `docs/benchmark.md` |
 
 ## Testes executados na CI — Fase 5 (03/11/2026, commit `c766deb`, [execução 41711947219](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41711947219), PR #4)
 
@@ -170,6 +220,24 @@ A primeira execução ([41682378950](https://github.com/UyankDouglas/DATAFLOW-AN
 | Borda de produção | HTTP responde 308 para HTTPS; cookies `Secure`; portas 5432, 6379, 8000, 8025, 8080, 9000 e 9001 fechadas; Redis responde `NOAUTH` sem senha |
 | E2E em produção | **5 passed**, 2 ignorados (e-mail, pois produção não tem Mailpit, e capturas de tela) |
 | Fluxo completo medido | job de 100 mil linhas entre 741 ms e 1.046 ms em 3 execuções; detalhes em `docs/benchmark.md` |
+
+## Testes executados localmente — Fase 6 (03/11/2026, Windows 10, sem Docker)
+
+| Comando | Resultado |
+| --- | --- |
+| `cd backend && uv run pytest --cov=app` | **252 passed**, 1 ignorado (o do kernel só roda no Linux, na CI), cobertura de 90% (47 novos) |
+| ruff, ruff format, mypy strict (103 arquivos) | sem problemas |
+| `cd apps/web && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build` | OK, **101 passed** |
+| `pnpm audit --prod` (frontend) | nenhuma vulnerabilidade conhecida |
+| `cd e2e && E2E_BASE_URL=http://localhost:5173 pnpm test` (API real com infraestrutura simulada) | **15 passed**, 4 ignorados (convite e recuperação de senha precisam do Mailpit, o limite do proxy precisa do Caddy, capturas sob demanda); inclui `journey.spec.ts` |
+| `docker compose config` dos dois Compose (só o cliente; o engine não sobe) | válidos; o de produção mostra as redes, `cap_drop`, `no-new-privileges` e limites |
+| `benchmark_pipeline vendas_1000000.csv` | pipeline 8,1 s (123.344 registros/s), heap 43,3 MB, consultas 0,10–0,25 s, CSV de 500 mil em 10,1 s, XLSX de 100 mil em 28,0 s |
+| `scripts/benchmark_stack.py` contra a API local (100 mil linhas, planilha de 8,8 MB) | todas as conferências passaram; valida o script, os números não servem de referência |
+| `scripts/seed_demo.py` contra a API local, duas vezes | cria tudo na primeira; na segunda, não duplica |
+| Memória da deduplicação de 1 milhão, um processo novo por cenário | antes: pico de 1.358 MB com 999.520 duplicados e de 1.085 MB com 1 duplicado; depois da ADR-031: 513–536 MB e 627–636 MB, em três execuções (ver `docs/benchmark.md`) |
+| Planilha maliciosa (linha `r="999999999999"`) | recusada em cerca de 2,8 s na pré-visualização e no worker; antes, não terminava |
+
+Validação na CI: ver "Testes executados na CI — Fase 6" ([execução 41835630810](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41835630810)). A publicação das imagens (`release.yml`) continua sem execução, porque só roda com uma tag `v*`.
 
 ## Testes executados localmente — Fase 5 (03/11/2026, Windows 10, sem Docker)
 
@@ -265,11 +333,11 @@ O E2E e a verificação manual usaram o mesmo harness da Fase 1, **fora do repos
 
 ## Fora do alcance da CI
 
-Não bloqueiam a Fase 3, mas ainda não foram exercitados em nenhum ambiente, porque dependem de uma implantação real:
+Ainda não foram exercitados em nenhum ambiente, porque dependem de uma implantação real:
 
 - Certificado público (Let's Encrypt) com domínio real; a CI usa a CA interna do Caddy.
 - SMTP real com TLS e autenticação; a CI usa o Mailpit, sem TLS.
-- Atualização de uma instalação existente e restauração de backup.
+- Atualização de uma instalação existente com migrations novas (a Fase 6 não tem migration). A restauração de backup passou a ser exercitada pela CI.
 
 O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (`Docker Desktop is unable to start`, em 30/10/2026). Enquanto isso, o ambiente em contêineres só roda na CI.
 
@@ -288,7 +356,9 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 | Exportações e administração | `backend/app/services/{export,members,retention,deletion}_service.py`, `backend/app/services/export_runner.py`, `backend/app/processing/export_writers.py`, `backend/app/api/routes/{exports,audit,workspaces}.py`, `apps/web/src/features/admin/`, `apps/web/src/pages/{reports,exports,audit,settings}/` |
 | BI e dashboards | `backend/app/analytics/aggregate.py`, `backend/app/services/{analytics,dashboards}_service.py`, `backend/app/api/routes/dashboards.py`, `backend/app/schemas/{analytics,dashboard}.py`, `apps/web/src/features/dashboards/`, `apps/web/src/pages/dashboards/` |
 | Frontend | `apps/web/src/app/router.tsx`, `apps/web/src/pages/**`, `apps/web/src/features/**` (inclui `transformations/`), `apps/web/src/services/api-client.ts` |
-| Infra | `docker-compose.yml`, `docker-compose.prod.yml`, `docker/**`, `.github/workflows/ci.yml` |
+| Infra | `docker-compose.yml`, `docker-compose.prod.yml`, `docker/**`, `.github/workflows/{ci,release}.yml` |
+| Operação | `backend/app/services/{orphan,quota}_service.py`, `backend/app/scripts/{sweep_orphans,verify_storage}.py`, `scripts/{backup,restore}.sh`, `scripts/seed_demo.py` |
+| Benchmarks | `backend/app/scripts/benchmark_{pipeline,etl}.py`, `scripts/benchmark_stack.py`, `docs/benchmark.md` |
 | Dados | `scripts/generate_samples.py`, `samples/` |
 
 ## Decisões que não podem se perder
@@ -308,28 +378,33 @@ O Docker Desktop foi instalado na máquina de desenvolvimento, mas não inicia (
 - Exportações: `ExportJob` próprio, volume conferido antes de enfileirar, arquivo temporário no MinIO e download só pela API; formula injection neutralizada com apóstrofo e texto tipado no XLSX (ADR-023).
 - Convites só com hash do token e aceite pelo e-mail convidado; permissões efetivas = perfil + concessões das configurações do workspace; nunca sem administrador (ADR-024).
 - Exclusão com impacto antes, ordem explícita e limpeza do armazenamento depois do commit; retenção só de originais (ADR-025).
+- Limpeza de órfãos só de chaves conhecidas, sem registro, fora de trabalho em andamento e depois da carência (ADR-026); cota por workspace conferida na entrada (ADR-027); 2 consultas DuckDB por vez por processo (ADR-028); planilhas lidas até a linha 1.048.576 e a coluna 1.024, logs sem tokens e rede `internal` em produção (ADR-029).
 - Dashboards guardam definições; versão nula acompanha a atual; tudo é revalidado ao salvar; widgets mantêm o id ao reorganizar (ADR-022). As regras por tipo de gráfico ficam no backend (`check_chart_rules`) e são espelhadas no frontend (`features/dashboards/rules.ts`) só para guiar a edição.
 
 ## Erros conhecidos / limitações
 
 - Gráfico da visão geral agrupa por dia em UTC.
-- Objetos órfãos no S3 se o commit do upload falhar após o envio (limpeza prevista na Fase 6).
 - `peak_memory_mb` só é medido em Linux.
 - Worker Celery em Windows exige `--pool solo` (o Compose usa Linux).
-- XLSX ~40× mais lento que CSV (duas passadas do openpyxl em Python; ≈ 2.470 registros/s); tabela de textos compartilhados inteira em memória; não medido perto de 25 MB.
-- Deduplicação mantém chave e número do registro da versão inteira em memória; não medida acima de 100 mil registros.
+- XLSX ~40× mais lento que CSV (duas passadas do openpyxl em Python; ≈ 2.470 registros/s); tabela de textos compartilhados inteira em memória; na CI, a planilha de 25 MB (280 mil registros) levou 47,9 s, com pico de 568 MB.
+- A deduplicação mantém a chave de todos os registros em memória: com 1 milhão, 611 MB de pico no contêiner, na CI, e 0,5 a 0,65 GB na medição local.
 - A prévia de transformações vê só os primeiros 200 registros (a análise de duplicidades da versão inteira é separada).
-- Excluir um dataset ainda não existe na interface; conjuntos de regras e versões seguem o dataset por `ON DELETE CASCADE`.
+- Na exclusão de um dataset, conjuntos de regras e colunas saem junto, na ordem explícita da ADR-025.
 - Dashboards: vale a última gravação quando duas pessoas editam ao mesmo tempo; reorganização por setas (sem arrastar e soltar); consultas medidas até 100 mil registros. Versões fixadas por dashboards não podem ser excluídas (FK sem `ON DELETE`; a tela explica).
 - Exportação XLSX lenta (≈ 3,6 mil registros/s, openpyxl em Python), por isso limitada a 100 mil registros.
-- Objetos órfãos no MinIO quando a remoção falha depois do commit (ou o commit falha depois do envio) ainda não têm limpeza periódica.
+- Objetos órfãos no MinIO só são apagados depois de 24 h (carência da varredura diária).
+- Sem verificação de e-mail no cadastro: o link de convite para quem ainda não tem conta é a prova de posse do e-mail (ADR-024).
+- A API e o worker usam as credenciais raiz do MinIO e o usuário do contêiner do PostgreSQL; o Caddy roda como root, só com `NET_BIND_SERVICE` (ADR-029).
+- Dependências Python não auditadas (pip-audit não está instalado nesta máquina); nenhuma auditoria de dependências roda na CI.
 - O nome sugerido do arquivo exportado usa o horário UTC.
 
 ## Próxima tarefa
 
-1. **Fase 6 — Qualidade e produção**, conforme o prompt mestre:
-   - testes ampliados (unidade, integração e E2E de ponta a ponta: login → upload → preview → configuração → processamento → qualidade → dashboard → exportação);
-   - benchmarks com a infraestrutura real (1 milhão de linhas, XLSX perto de 25 MB, exportações nos limites);
-   - revisão de segurança e de performance;
-   - limpeza de objetos órfãos;
-   - deploy documentado e verificado.
+As 6 fases do prompt mestre estão concluídas. Roadmap, fora dele:
+
+1. verificação de e-mail no cadastro e MFA;
+2. credenciais dedicadas para MinIO e PostgreSQL;
+3. auditoria de dependências na CI;
+4. SMTP e certificado reais num deploy de verdade;
+5. uma tag `v*`, para o `release.yml` publicar as imagens pela primeira vez;
+6. atualização de uma instalação existente com migrations novas.

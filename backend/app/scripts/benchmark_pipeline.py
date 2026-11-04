@@ -4,7 +4,8 @@ Mede as mesmas etapas executadas pelo worker: inspeção do arquivo, leitura/val
 conversão de tipos, escrita Parquet e uma consulta paginada com DuckDB. Também mede o relatório
 de qualidade, uma consulta do explorer e as consultas analíticas dos dashboards (KPIs,
 agrupamento por categoria, série mensal e comparação entre períodos) e as exportações completas da
-versão em CSV e XLSX, com o mesmo leitor e os mesmos escritores do worker.
+versão em CSV e XLSX, com o mesmo leitor e os mesmos escritores do worker, até os limites de
+registros que a API aceita (`EXPORT_MAX_ROWS` e `EXPORT_XLSX_MAX_ROWS`).
 
     uv run python -m app.scripts.benchmark_pipeline ../samples/generated/vendas_100000.csv
 """
@@ -32,6 +33,7 @@ from app.analytics.query import (
     quote_identifier,
     sandboxed_connection,
 )
+from app.core.config import get_settings
 from app.processing.export_writers import ExportColumn, write_csv, write_xlsx
 from app.processing.inference import infer_columns
 from app.processing.inspection import StreamInspector, parse_sample
@@ -104,31 +106,47 @@ def _bi_timings(data_path: Path, columns: list[ColumnConfig]) -> dict[str, float
     return timings
 
 
-def _export_timings(data_path: Path, columns: list[ColumnConfig], work: Path) -> dict[str, float]:
+def _export_timings(
+    data_path: Path, columns: list[ColumnConfig], work: Path
+) -> tuple[dict[str, float], dict[str, int]]:
+    """Exporta como o worker, até o limite de registros que a API aceita para cada formato."""
+    settings = get_settings()
     names = [c.name for c in columns]
     export_columns = [ExportColumn(c.name, c.data_type, c.scale) for c in columns]
+    exported: dict[str, int] = {}
 
-    def rows() -> Iterator[tuple[object, ...]]:
+    def rows(limit: int, fmt: str) -> Iterator[tuple[object, ...]]:
         con = sandboxed_connection(data_path.parent)
         try:
             cursor = con.execute(
                 f"SELECT {', '.join(quote_identifier(n) for n in names)} "  # noqa: S608
-                "FROM read_parquet($path) ORDER BY __df_row",
-                {"path": str(data_path)},
+                "FROM read_parquet($path) ORDER BY __df_row LIMIT $limit",
+                {"path": str(data_path), "limit": limit},
             )
             while batch := cursor.fetchmany(5_000):
+                exported[fmt] = exported.get(fmt, 0) + len(batch)
                 yield from batch
         finally:
             con.close()
 
     timings: dict[str, float] = {}
     start = time.perf_counter()
-    write_csv(work / "exportacao.csv", export_columns, rows(), "excel_br")
+    write_csv(
+        work / "exportacao.csv",
+        export_columns,
+        rows(settings.export_max_rows, "csv"),
+        "excel_br",
+    )
     timings["exportacao_csv_s"] = time.perf_counter() - start
     start = time.perf_counter()
-    write_xlsx(work / "exportacao.xlsx", export_columns, rows(), "dados")
+    write_xlsx(
+        work / "exportacao.xlsx",
+        export_columns,
+        rows(settings.export_xlsx_max_rows, "xlsx"),
+        "dados",
+    )
     timings["exportacao_xlsx_s"] = time.perf_counter() - start
-    return timings
+    return timings, exported
 
 
 def run(path: Path, batch_rows: int) -> dict[str, object]:
@@ -233,8 +251,9 @@ def run(path: Path, batch_rows: int) -> dict[str, object]:
         # Fase 4: consultas dos dashboards, com as colunas que o usuário escolheria.
         bi = _bi_timings(result.data_path, columns)
         timings.update(bi)
-        # Fase 5: exportação da versão inteira, como o worker faz (leitura em lotes + escrita).
-        timings.update(_export_timings(result.data_path, columns, Path(tmp)))
+        # Fase 5: exportação como o worker faz (leitura em lotes + escrita), até os limites.
+        export_timings, exported = _export_timings(result.data_path, columns, Path(tmp))
+        timings.update(export_timings)
         parquet_mb = result.data_path.stat().st_size / 1024 / 1024
 
     return {
@@ -247,6 +266,7 @@ def run(path: Path, batch_rows: int) -> dict[str, object]:
         "parquet_mb": round(parquet_mb, 2),
         "nota_qualidade": quality.score,
         "registros_filtrados": filtered,
+        "registros_exportados": exported,
         "tempos_s": {k: round(v, 3) for k, v in timings.items()},
         "registros_por_segundo": round(result.rows_total / timings["pipeline_total_s"]),
         "memoria_pico_python_mb": round(python_peak / 1024 / 1024, 1),

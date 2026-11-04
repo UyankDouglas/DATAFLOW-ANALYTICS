@@ -70,7 +70,11 @@ def _cell(ref: str, value: object) -> str:
 
 
 def _sheet(
-    rows: list[Row], start_row: int = 1, start_col: int = 1, dimension: str | None = None
+    rows: list[Row],
+    start_row: int = 1,
+    start_col: int = 1,
+    dimension: str | None = None,
+    raw_rows: str = "",
 ) -> str:
     body = []
     for r, row in enumerate(rows, start=start_row):
@@ -81,8 +85,13 @@ def _sheet(
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
         + (f'<dimension ref="{dimension}"/>' if dimension else "")
-        + f"<sheetData>{''.join(body)}</sheetData></worksheet>"
+        + f"<sheetData>{''.join(body)}{raw_rows}</sheetData></worksheet>"
     )
+
+
+def text_cell(column: int, row: int, text: str) -> str:
+    """Célula de texto em qualquer posição, para montar linhas à mão (`raw_rows`)."""
+    return _cell(f"{_column(column)}{row}", text)
 
 
 STYLES = (
@@ -106,7 +115,9 @@ def build_xlsx(
     offsets: dict[str, tuple[int, int]] | None = None,
     extra_entries: dict[str, bytes] | None = None,
     dimensions: dict[str, str] | None = None,
+    raw_rows: dict[str, str] | None = None,
 ) -> bytes:
+    """`raw_rows` acrescenta XML de linhas no fim da aba, sem validação (arquivos maliciosos)."""
     offsets = offsets or {}
     dimensions = dimensions or {}
     names = list(sheets)
@@ -160,7 +171,13 @@ def build_xlsx(
             start_row, start_col = offsets.get(name, (1, 1))
             archive.writestr(
                 f"xl/worksheets/sheet{i}.xml",
-                _sheet(sheets[name], start_row, start_col, dimensions.get(name)),
+                _sheet(
+                    sheets[name],
+                    start_row,
+                    start_col,
+                    dimensions.get(name),
+                    (raw_rows or {}).get(name, ""),
+                ),
             )
         for path, data in (extra_entries or {}).items():
             archive.writestr(path, data)

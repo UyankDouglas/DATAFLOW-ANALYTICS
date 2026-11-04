@@ -412,21 +412,21 @@ def run_transform_pipeline(
             started = time.perf_counter()
             timings["write"] += int((started - t_apply) * 1000)
             on_progress(Progress(rows_processed=processed))
+
+        if dedup:
+            outputs.writer.close()  # o estágio é relido; o escritor de exclusões segue aberto
+            t_dedup = time.perf_counter()
+            data_path = out_dir / "data.parquet"
+            removed = _deduplicate(
+                outputs, data_path, plan, source, input_schema, result, batch_rows
+            )
+            result.rows_duplicates = removed
+            result.reasons[DUPLICATE_REASON] += removed
+            outputs.data_path.unlink(missing_ok=True)
+            outputs.data_path = data_path
+            timings["deduplicate"] = int((time.perf_counter() - t_dedup) * 1000)
     finally:
         outputs.close()
-
-    if dedup:
-        t_dedup = time.perf_counter()
-        data_path = out_dir / "data.parquet"
-        removed, duplicate_rows = _deduplicate(
-            outputs.data_path, data_path, plan, source, input_schema, outputs
-        )
-        _collect_samples(result, duplicate_rows)
-        result.rows_duplicates = removed
-        result.reasons[DUPLICATE_REASON] += removed
-        outputs.data_path.unlink(missing_ok=True)
-        outputs.data_path = data_path
-        timings["deduplicate"] = int((time.perf_counter() - t_dedup) * 1000)
 
     result.rows_valid = pq.ParquetFile(outputs.data_path).metadata.num_rows
     result.data_path = outputs.data_path
@@ -442,35 +442,64 @@ def run_transform_pipeline(
 
 
 def _deduplicate(
-    stage: Path,
+    outputs: _Outputs,
     target: Path,
     plan: RulePlan,
     source: Path,
     input_schema: list[ColumnSpec],
-    outputs: _Outputs,
-) -> tuple[int, pl.DataFrame]:
-    """Mantém o primeiro/último registro de cada chave; os demais viram exclusões."""
-    marked = mark_duplicates(pl.scan_parquet(stage), plan).collect()
-    kept = marked.filter(pl.col("__df_keep")).drop("__df_keep", "__df_kept_row")
-    pq.write_table(kept.to_arrow().cast(outputs.valid_schema), target, compression="zstd")
+    result: PipelineResult,
+    batch_rows: int,
+) -> int:
+    """Mantém o primeiro/último registro de cada chave; os demais viram exclusões.
 
-    duplicates = marked.filter(~pl.col("__df_keep")).select("__df_row", "__df_kept_row")
+    Em memória ficam só as chaves, a marcação de cada registro e os pares (descartado, mantido).
+    Mantidos e exclusões são gravados em lotes, na ordem dos registros (ADR-031).
+    """
+    stage = outputs.data_path
+    keep, duplicates = mark_duplicates(pl.scan_parquet(stage), plan)
+
+    offset = 0
+    with pq.ParquetWriter(target, outputs.valid_schema, compression="zstd") as writer:
+        for batch in pq.ParquetFile(stage).iter_batches(batch_size=batch_rows):
+            kept = pa.Table.from_batches([batch]).filter(
+                keep.slice(offset, batch.num_rows).to_arrow()
+            )
+            offset += batch.num_rows
+            if kept.num_rows:
+                writer.write_table(kept.cast(outputs.valid_schema))
+    if offset != keep.len():
+        raise RuntimeError("A marcação de duplicados não cobre o estágio inteiro.")
     if not duplicates.height:
-        return 0, pl.DataFrame(schema=META_SCHEMA)
-    excluded = duplicate_exclusions(duplicates, plan)
-    originals = (
-        pl.scan_parquet(source)
-        .select(["__df_row", *[s.name for s in input_schema]])
-        .join(duplicates.lazy().select("__df_row"), on="__df_row", how="semi")
-        .collect()
-    )
-    # Reabre o escritor de exclusões se a 1ª passada não tiver criado o arquivo.
-    existing = pq.read_table(outputs.rejected_path) if outputs.rejected_path.exists() else None
-    rows = _with_input_values(excluded, originals, input_schema).sort("__df_row")
-    table = rows.to_arrow().cast(outputs.rejected_schema)
-    pq.write_table(
-        pa.concat_tables([existing, table]) if existing is not None else table,
-        outputs.rejected_path,
-        compression="zstd",
-    )
-    return duplicates.height, rows
+        return 0
+
+    names = [s.name for s in input_schema]
+    duplicates = duplicates.sort("__df_row")
+    duplicate_rows = duplicates.get_column("__df_row")
+    written = 0
+    for batch in pq.ParquetFile(source).iter_batches(
+        batch_size=batch_rows, columns=["__df_row", *names]
+    ):
+        frame = pl.from_arrow(batch)
+        assert isinstance(frame, pl.DataFrame)
+        if not frame.height:
+            continue
+        # Só os duplicados dentro da faixa de números do lote podem estar nele.
+        ids = frame.get_column("__df_row")
+        first, last = ids.min(), ids.max()
+        assert isinstance(first, int)
+        assert isinstance(last, int)
+        start = duplicate_rows.search_sorted(first, "left")
+        end = duplicate_rows.search_sorted(last, "right")
+        removed = duplicates.slice(start, end - start).join(
+            frame.select("__df_row"), on="__df_row", how="semi"
+        )
+        if not removed.height:
+            continue
+        excluded = duplicate_exclusions(removed, plan)
+        rows = _with_input_values(excluded, frame, input_schema).sort("__df_row")
+        outputs.write_rejected(rows)
+        _collect_samples(result, rows)
+        written += rows.height
+    if written != duplicates.height:
+        raise RuntimeError("Há duplicados sem o registro correspondente na versão de origem.")
+    return duplicates.height

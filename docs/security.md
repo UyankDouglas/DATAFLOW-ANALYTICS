@@ -1,6 +1,6 @@
 # Segurança e privacidade
 
-O sistema recebe arquivos de usuários; segurança é requisito central. Esta página lista o que está implementado na Fase 1 e o que fica para as próximas fases.
+O sistema recebe arquivos de usuários; segurança é requisito central. Esta página lista os controles implementados, o resultado da revisão de segurança da Fase 6 e o que continua em aberto.
 
 ## Autenticação e sessão
 
@@ -35,7 +35,8 @@ O sistema recebe arquivos de usuários; segurança é requisito central. Esta p�
 - Bucket privado, sem URLs públicas; todo acesso passa pela API autorizada.
 - Integridade: SHA-256 do original conferido pelo worker; SHA-256 do Parquet conferido ao popular o cache e antes de transformar uma versão; SHA-256 do XLSX conferido ao usar a cópia local da pré-visualização.
 - Importar outra aba como dataset copia o objeto no armazenamento: datasets nunca compartilham arquivos.
-- Limites de processamento: campo até 1 MB, até 500 colunas, lotes de 50 mil registros, tempo máximo de tarefa (soft 1 h).
+- Limites de processamento: campo até 1 MB, até 500 colunas, lotes de 50 mil registros, tempo máximo de tarefa (soft 1 h). Planilhas são lidas até a linha 1.048.576 (o limite do Excel; além dela a planilha é recusada) e cada linha só até a coluna 1.024 (ADR-029).
+- Cota de armazenamento por workspace (`WORKSPACE_STORAGE_QUOTA_MB`, 10 GB por padrão), conferida antes de ler o corpo e de novo antes de gravar (ADR-027).
 
 ## Consultas
 
@@ -46,21 +47,23 @@ O sistema recebe arquivos de usuários; segurança é requisito central. Esta p�
 - Consultas analíticas e widgets (`POST /datasets/{id}/analytics`, `POST /dashboards/{id}/query`): medidas, agregações e granularidades de listas fechadas, validadas por tipo de coluna; filtros com a mesma validação do explorer; valores parametrizados; no máximo 6 medidas, 100 grupos, 1.000 pontos por série e 10 s por consulta. Campos fora do contrato (ex.: `sql`) e agregações desconhecidas são recusados com 422 (`test_api_rejects_out_of_allowlist_requests`); nomes de coluna com aspas ou SQL viram `invalid_metric` (`test_plan_rejects_invalid_queries`). Dashboards guardam só a definição dos widgets, nunca resultados (ADR-021, ADR-022).
 - Relatórios de qualidade guardam só agregados no PostgreSQL; valores de texto dos registros (frequências, valor original de inconsistências) são lidos do Parquet sob demanda, após a checagem de workspace (ADR-019).
 - Identificadores validados contra o esquema da versão e citados; valores sempre parametrizados.
-- DuckDB isolado: sem acesso externo (rede/arquivos fora do cache), configuração travada, 2 threads e 512 MB por consulta, `page_size` máximo 200.
+- DuckDB isolado: sem acesso externo (rede/arquivos fora do cache), configuração travada, 2 threads e 512 MB por consulta, `page_size` máximo 200, no máximo 2 consultas simultâneas por processo (503 `query_busy` depois de 10 s de espera, ADR-028).
 
 ## Erros, logs e cabeçalhos
 
 - Erros padronizados `{"error": {code, message, details}, "request_id"}`; exceções inesperadas viram 500 genérico, com detalhes só no log.
-- Logs JSON com `request_id`, método, rota, status e duração. Não registram e-mails, senhas, tokens nem conteúdo de arquivos.
+- Logs JSON com `request_id`, método, rota, status e duração. Não registram e-mails, senhas, tokens nem conteúdo de arquivos. As tarefas de e-mail publicam `argsrepr` sem endereço nem token, e o formatador omite os argumentos que o Celery anexa às falhas. O Caddy troca o parâmetro `token` da URL e do `Referer` por `REDACTED` no log de acesso. A CI confere os logs depois do E2E de convite e de redefinição de senha.
 - Auditoria (`audit_logs`): cálculo de relatório de qualidade sob demanda, cadastro, login (sucesso e falha), logout, troca de workspace, redefinição de senha, upload aceito/recusado (com o código do motivo), aba importada como dataset, mudança de configuração, importação e transformação solicitadas, conjunto de regras criado/alterado/excluído, cancelamento, versão publicada (com tipo e versão de origem), falha e cancelamento de job.
-- Cabeçalhos: `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Cache-Control: no-store` na API; CSP restritiva e `Permissions-Policy` no SPA (Caddy).
+- Cabeçalhos: `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cache-Control: no-store` na API; CSP restritiva, `Permissions-Policy`, `Referrer-Policy: no-referrer` (os links de convite e redefinição levam o token na URL) e HSTS (`max-age=31536000`) no SPA (Caddy).
+- Documentação interativa da API (`/api/docs`, `/api/openapi.json`) desligada em produção, salvo `EXPOSE_API_DOCS=true`.
 
 ## Segredos e infraestrutura
 
 - Segredos apenas por variável de ambiente. Em produção a API **não sobe** com `SECRET_KEY` padrão/curta, `COOKIE_SECURE=false` ou senha padrão do S3.
 - Contêineres da aplicação rodam como usuário sem privilégios; MinIO (Chainguard) como UID 65532.
-- Produção expõe apenas o Caddy (80/443); PostgreSQL, Redis (com senha) e MinIO ficam na rede interna.
-- Worker com limites de CPU e memória (`deploy.resources.limits`) e `worker_max_tasks_per_child`.
+- Produção expõe apenas o Caddy (80/443). PostgreSQL, Redis (com senha) e MinIO ficam na rede `backend`, declarada `internal` (sem saída para a internet). A API tem uma segunda rede para o Caddy, e o worker, outra para o SMTP.
+- Contêineres da aplicação e o MinIO sem nenhuma capability (`cap_drop: [ALL]`), todos com `no-new-privileges`. O Caddy fica só com `NET_BIND_SERVICE`.
+- API e worker com limites de CPU, memória e processos (`deploy.resources.limits`) e `worker_max_tasks_per_child`.
 
 ## Exportações, convites, retenção e exclusão
 
@@ -70,7 +73,26 @@ O sistema recebe arquivos de usuários; segurança é requisito central. Esta p�
 - **Retenção**: originais apagados após o prazo configurado, nunca os de datasets sem versão ou em processamento; versões ficam (ADR-025).
 - **Exclusão controlada**: impacto mostrado antes, confirmação pelo nome, bloqueio com processamento ou exportação em andamento e com versão fixada por dashboard; banco limpo numa transação e objetos removidos depois (ADR-025).
 
-## Pendências (fases seguintes)
+- **Objetos órfãos**: varredura diária apaga do MinIO só chaves geradas pelo sistema, sem registro no banco, fora de processamento ou exportação em andamento e com mais de 24 h (ADR-026).
 
-- Limpeza periódica de objetos órfãos no MinIO (os que sobram quando a remoção falha depois do commit, ou quando o commit falha depois do envio).
-- Verificação de e-mail no cadastro e MFA (roadmap).
+## Revisão de segurança da Fase 6
+
+Feita por um revisor independente, só leitura, sobre o código inteiro, os Dockerfiles, os Compose e o Caddyfile. Cada achado foi conferido no código antes da correção:
+
+| Gravidade | Achado | Correção | Evidência |
+| --- | --- | --- | --- |
+| Alta | Uma planilha de 2 KB com uma linha `r="999999999999"` fazia o leitor gerar uma linha vazia por índice faltante: a pré-visualização (aberta a qualquer perfil) não terminava, e cerca de 20 pedidos esgotavam as conexões da API para todos os workspaces | Leitura até a linha 1.048.576, com recusa da planilha além disso; exame de cada linha até a coluna 1.024 | `test_row_index_beyond_excel_limit_is_rejected_quickly`, `test_cells_far_to_the_right_are_capped_and_flagged` |
+| Média | Endereço e token dos e-mails de convite e redefinição apareciam no log do Celery quando o envio falhava; o token da URL ia para o log de acesso do Caddy e para o `Referer` | `argsrepr` sem dados, formatador sem `args`/`kwargs`, filtro do Caddy, `Referrer-Policy: no-referrer` | `test_email_tasks_never_expose_address_or_token_in_task_logs`, `test_log_formatter_scrubs_task_arguments`, passo "Logs sem tokens nem e-mails" da CI |
+| Média | Sem verificação de e-mail no cadastro, quem obtém o link de um convidado ainda sem conta pode criá-la e aceitar; a ADR-024 dizia o contrário | ADR-024 corrigida; o vazamento pelos logs foi fechado | — (verificação de e-mail segue no roadmap) |
+| Média | Sem cota, uma conta podia encher o disco compartilhado com o banco | Cota por workspace (ADR-027) | `test_storage_quota_blocks_uploads_and_sheet_copies`, `test_quota_uses_the_real_size_when_content_length_is_missing` |
+| Baixa/média | Consultas DuckDB simultâneas sem teto podiam passar da memória da API; a análise de duplicidades não tinha tempo-limite | Teto por processo e tempo-limite (ADR-028) | `test_duckdb_queries_share_a_bounded_number_of_slots` |
+| Baixa | Sem HSTS; `/api/docs` em produção; contêineres com todas as capabilities e com saída para a internet | HSTS, docs desligadas, `cap_drop`, `no-new-privileges`, rede `internal` (ADR-029) | `test_api_docs_are_off_in_production_unless_requested`, passos "HSTS…" e "Banco, Redis e MinIO sem saída" da CI |
+
+Conferidos e sem problema: isolamento por workspace em todas as rotas, CSRF em todos os métodos não seguros, sessões geradas pelo servidor e revogadas no logout e na redefinição, chaves e caminhos montados só com UUIDs, nome de download restrito a `[a-z0-9_-]`, sandbox do DuckDB, identificadores validados e valores parametrizados, neutralização de fórmulas, erros 500 genéricos, verificações do ZIP e `defusedxml`.
+
+## Pendências
+
+- Verificação de e-mail no cadastro e MFA (roadmap). Até lá, o link do convite vale como prova de posse do e-mail (ADR-024).
+- Credenciais dedicadas: a API e o worker usam as credenciais raiz do MinIO e o usuário criado pelo contêiner do PostgreSQL (superusuário). O Caddy roda como root, só com `NET_BIND_SERVICE`.
+- Sistema de arquivos somente leitura nos contêineres (`read_only`) não foi aplicado: exige mapear cada diretório de escrita (cache, temporários, agenda do beat).
+- Varredura de dependências na CI. Em 03/11/2026, `pnpm audit --prod` no frontend não encontrou vulnerabilidades conhecidas; as dependências Python não foram auditadas (pip-audit não está instalado nesta máquina).

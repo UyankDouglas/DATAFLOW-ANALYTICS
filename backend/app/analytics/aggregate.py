@@ -20,9 +20,9 @@ from app.analytics.query import (
     WhereClause,
     build_where,
     combine_where,
+    query_connection,
     quote_identifier,
     run_limited,
-    sandboxed_connection,
     to_json_value,
 )
 from app.core.errors import ValidationFailed
@@ -427,8 +427,7 @@ def run_aggregate(path: Path, plan: AggregatePlan) -> AggregateResult:
     columns = ", ".join(_value_columns(plan))
     source = f"read_parquet($path){plan.where.apply()}"
     previous_rows = 0
-    con = sandboxed_connection(path.parent)
-    try:
+    with query_connection(path.parent) as con:
         if plan.dimension is None:
             row = run_limited(con, f"SELECT {columns} FROM {source}", params)[0]  # noqa: S608 - montado pelo backend
             current, previous = _split(plan, row)
@@ -441,8 +440,6 @@ def run_aggregate(path: Path, plan: AggregatePlan) -> AggregateResult:
             rows, matched, previous_rows, total_groups, others = _grouped(
                 con, plan, params, columns
             )
-    finally:
-        con.close()
     return AggregateResult(
         metrics=[
             MetricInfo(m.key, m.aggregation, m.column, m.label, m.data_type.value, m.scale)

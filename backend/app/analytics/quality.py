@@ -14,8 +14,8 @@ import pyarrow.parquet as pq
 
 from app.analytics.query import (
     duplicate_summary,
+    query_connection,
     quote_identifier,
-    sandboxed_connection,
     to_json_value,
 )
 
@@ -67,16 +67,13 @@ def _profile(path: Path, schema: list[dict[str, Any]]) -> tuple[int, list[dict[s
         selects += [f"count({name}) AS nn{i}", f"count(DISTINCT {name}) AS d{i}"]
         if column["data_type"] in _RANGE_TYPES:
             selects += [f"min({name}) AS mn{i}", f"max({name}) AS mx{i}"]
-    con = sandboxed_connection(path.parent)
-    try:
+    with query_connection(path.parent) as con:
         cursor = con.execute(
             f"SELECT {', '.join(selects)} FROM read_parquet($path)",  # noqa: S608 - identificadores do esquema
             {"path": str(path)},
         )
         names = [d[0] for d in cursor.description]
         row = dict(zip(names, cursor.fetchone() or (), strict=True))
-    finally:
-        con.close()
     total = int(row["total"])
     columns = []
     for i, column in enumerate(schema):
@@ -100,15 +97,12 @@ def _profile(path: Path, schema: list[dict[str, Any]]) -> tuple[int, list[dict[s
 def _null_distribution(path: Path, schema: list[dict[str, Any]]) -> list[dict[str, int]]:
     """Quantos registros têm 0, 1, 2… colunas nulas."""
     flags = " + ".join(f"({quote_identifier(c['name'])} IS NULL)::INTEGER" for c in schema)
-    con = sandboxed_connection(path.parent)
-    try:
+    with query_connection(path.parent) as con:
         rows = con.execute(
             f"SELECT nulls, count(*) FROM (SELECT {flags} AS nulls FROM read_parquet($path)) "  # noqa: S608
             "GROUP BY nulls ORDER BY nulls",
             {"path": str(path)},
         ).fetchall()
-    finally:
-        con.close()
     return [{"nulls": int(n), "rows": int(c)} for n, c in rows]
 
 
@@ -117,15 +111,12 @@ def _issue_groups(path: Path) -> list[IssueGroup]:
     names = set(pq.read_schema(path).names)
     category = "__df_category" if "__df_category" in names else "'rejeitado'"
     rule = "__df_rule" if "__df_rule" in names else "NULL::INTEGER"
-    con = sandboxed_connection(path.parent)
-    try:
+    with query_connection(path.parent) as con:
         rows = con.execute(
             f"SELECT {category}, __df_reason, __df_column, {rule}, count(*), min(__df_row) "  # noqa: S608
             "FROM read_parquet($path) GROUP BY ALL ORDER BY count(*) DESC, 2, 3",
             {"path": str(path)},
         ).fetchall()
-    finally:
-        con.close()
     return [
         IssueGroup(
             category=str(c),

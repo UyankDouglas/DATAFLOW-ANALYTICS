@@ -120,6 +120,17 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm exec playwright install --with-deps chromium
           pnpm test
+      - name: Logs sem tokens nem e-mails (o E2E passou por convite e redefinição de senha)
+        run: |
+          docker compose logs --no-color web >web.log
+          docker compose logs --no-color api worker beat >app.log
+          grep -q 'token=REDACTED' web.log
+          if grep -nE 'token=[A-Za-z0-9_-]{16,}' web.log app.log; then
+            echo "token de convite ou de redefinição no log"; exit 1
+          fi
+          if grep -nE '[A-Za-z0-9._%+-]+@example\.com' web.log app.log; then
+            echo "e-mail no log"; exit 1
+          fi
       - name: Logs dos contêineres em caso de falha
         if: failure()
         run: docker compose logs --no-color --tail 300
@@ -184,6 +195,20 @@ jobs:
           reply="$(docker compose exec -T redis redis-cli ping 2>&1 || true)"
           echo "$reply"
           grep -q NOAUTH <<<"$reply"
+      - name: Banco, Redis e MinIO sem saída para a internet
+        run: |
+          for service in postgres redis; do
+            docker compose exec -T "$service" sh -c 'command -v wget'  # a ferramenta existe
+            if docker compose exec -T "$service" wget -q -T 5 -O /dev/null http://example.com; then
+              echo "$service alcança a internet"; exit 1
+            fi
+          done
+          # Controle positivo: a API (atrás do Caddy) tem uma segunda rede, com saída.
+          docker compose exec -T api python -c "import socket; socket.create_connection(('example.com', 80), 5)"
+      - name: HSTS e documentação da API desligada em produção
+        run: |
+          curl --silent --insecure --include https://localhost/ | grep -iE '^strict-transport-security: max-age=31536000'
+          [[ "$(curl --silent --insecure --output /dev/null --write-out '%{http_code}' https://localhost/api/openapi.json)" == 404 ]]
       - name: Gerar arquivo de 100 mil linhas (acima do limite geral de 2 MB do proxy)
         run: python3 scripts/generate_samples.py --rows 100000 --only vendas
       - uses: pnpm/action-setup@v6
@@ -213,6 +238,84 @@ jobs:
           name: playwright-report-prod
           path: e2e/playwright-report
           retention-days: 7
+      - name: Backup, destruição dos volumes e restauração (docs/deploy.md)
+        run: |
+          counts() {
+            docker compose exec -T postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tA' <<'SQL'
+          SELECT (SELECT count(*) FROM users), (SELECT count(*) FROM datasets),
+                 (SELECT count(*) FROM dataset_versions), (SELECT count(*) FROM uploads),
+                 (SELECT count(*) FROM export_jobs), (SELECT count(*) FROM audit_logs);
+          SQL
+          }
+          before="$(counts)"
+          echo "antes do backup: $before"
+          bash scripts/backup.sh backup-ci
+          docker compose down --volumes
+          docker compose up --detach --wait --wait-timeout 300
+          fresh="$(counts)"
+          echo "instalação nova: $fresh"
+          [[ "$fresh" != "$before" ]]
+          bash scripts/restore.sh backup-ci || [[ $? == 2 ]]  # sem --yes: não altera nada
+          [[ "$(counts)" == "$fresh" ]]
+          bash scripts/restore.sh backup-ci --yes
+          after="$(counts)"
+          echo "depois da restauração: $after"
+          [[ "$after" == "$before" ]]
+          curl --fail --silent --insecure https://localhost/health/ready
+      - name: Logs dos contêineres em caso de falha do backup
+        if: failure()
+        run: docker compose logs --no-color --tail 100
+      - name: Encerrar ambiente
+        if: always()
+        run: docker compose down --volumes
+
+  benchmark:
+    name: Benchmark (1 milhão de linhas, XLSX de ~25 MB, exportações nos limites)
+    runs-on: ubuntu-24.04
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.13.6"
+      - name: Preparar o .env como no README
+        run: cp .env.example .env
+      - name: Build e subida do ambiente completo
+        run: docker compose up --build --detach --wait --wait-timeout 300
+      - name: Gerar os arquivos (seed 42, determinísticos)
+        run: |
+          python3 scripts/generate_samples.py --rows 1000000 500000 100000 --only vendas
+          uv run --no-project --with openpyxl==3.1.5 python scripts/generate_samples.py --xlsx --rows 280000
+          ls -l samples/generated
+      - name: Registrar o ambiente das medições
+        run: |
+          nproc
+          free -h
+          docker compose exec -T worker sh -c 'cat /sys/fs/cgroup/memory.max /sys/fs/cgroup/cpu.max' || true
+      - name: Benchmark pela API
+        run: >-
+          python3 scripts/benchmark_stack.py --base-url http://localhost:8080
+          --large samples/generated/vendas_1000000.csv
+          --csv-limit samples/generated/vendas_500000.csv
+          --xlsx-limit samples/generated/vendas_100000.csv
+          --workbook samples/generated/vendas_atendimentos_280000.xlsx
+          --work "$RUNNER_TEMP/benchmark" --out benchmark-stack.json
+      - name: Pico de memória dos contêineres (cgroup)
+        if: always()
+        run: |
+          for service in worker api; do
+            peak="$(docker compose exec -T "$service" cat /sys/fs/cgroup/memory.peak 2>/dev/null || echo indisponível)"
+            echo "$service: $peak bytes"
+          done
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: benchmark-stack
+          path: benchmark-stack.json
+          retention-days: 30
+      - name: Logs dos contêineres em caso de falha
+        if: failure()
+        run: docker compose logs --no-color --tail 300
       - name: Encerrar ambiente
         if: always()
         run: docker compose down --volumes

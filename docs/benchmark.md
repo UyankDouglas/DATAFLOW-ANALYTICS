@@ -128,11 +128,125 @@ Medido pelo mesmo `benchmark_pipeline`, que passou a exportar a versão inteira 
 
 O XLSX é cerca de 13 vezes mais lento, porque o openpyxl monta cada célula em Python. Numa medição isolada com as mesmas 900 mil células, a escrita levou 24,8 s com formato em todas as células, 21,3 s só tipando o texto e 17,4 s com valores puros. A formatação custa cerca de 30%, e o limite de 100 mil registros para XLSX segura o pior caso em torno de meio minuto, em segundo plano. O CSV ficou com 500 mil registros (≈ 10 s, por extrapolação linear, não medido).
 
+## Resultados — Fase 6: 1 milhão de registros, em processo (03/11/2026)
+
+Medido pelo mesmo `benchmark_pipeline`, no mesmo ambiente das fases anteriores (Windows 10 Pro, Intel Family 6 Model 79, Python 3.13.12, Polars 2.1.0, DuckDB 1.5.6, lote de 50.000 registros), uma execução. As exportações passaram a respeitar os limites que a API aceita, como o worker faz: até 500 mil registros em CSV e 100 mil em XLSX.
+
+**Arquivo:** `vendas_1000000.csv` (`generate_samples.py --rows 1000000 --only vendas`, seed 42), 80,3 MB, 1.000.000 registros → 1.000.000 válidos; Parquet de 10,9 MB.
+
+| Etapa | Tempo |
+| --- | --- |
+| Inspeção do upload (hash, UTF-8, delimitador) | 0,42 s |
+| Prévia (1.000 registros + inferência) | 0,12 s |
+| Pipeline completo | **8,1 s (123.344 registros/s)** — leitura 5,1 s, conversão 1,5 s, escrita 1,4 s |
+| Pico do heap Python no pipeline (`tracemalloc`) | **43,3 MB**, o mesmo das 100 mil linhas: a leitura é por lotes |
+| Página ordenada (`OFFSET 5000`) | 0,23 s |
+| Relatório de qualidade completo | 0,88 s |
+| Explorer: filtro + busca + contagem (varredura completa) | 0,25 s |
+| Dashboards: KPIs · por categoria com "Outros" · série mensal · comparação · comparação por categoria | 0,10 · 0,24 · 0,13 · 0,10 · 0,19 s |
+| Exportação CSV de 500 mil registros (o limite) | 10,1 s |
+| Exportação XLSX de 100 mil registros (o limite) | 28,0 s |
+
+Comparado às 100 mil linhas, o pipeline escalou de forma linear (0,8–1,0 s → 8,1 s) e as consultas, abaixo disso (0,05–0,09 s → 0,10–0,25 s). Todas ficaram longe do tempo-limite de 10 s. O CSV de 500 mil confirmou a extrapolação da Fase 5 (≈ 10 s). O pico de RSS não é medido no Windows; o do processo do worker em contêiner vem da CI.
+
+## Fluxo completo com infraestrutura real: `benchmark_stack` (Fase 6)
+
+`scripts/benchmark_stack.py` mede o fluxo inteiro contra uma instalação em execução, só pela API pública e com a biblioteca padrão do Python. Ele cadastra uma conta descartável e envia os arquivos em streaming. Depois processa, consulta, deduplica e exporta, e confere as contagens em cada etapa: falha se algo não bater. O job `benchmark` da CI roda o script contra o Docker Compose de desenvolvimento, com o worker limitado a 2 CPUs e 2 GB:
+
+```bash
+python3 scripts/generate_samples.py --rows 1000000 500000 100000 --only vendas
+uv run --no-project --with openpyxl==3.1.5 python scripts/generate_samples.py --xlsx --rows 280000
+python3 scripts/benchmark_stack.py --base-url http://localhost:8080 \
+  --large samples/generated/vendas_1000000.csv \
+  --csv-limit samples/generated/vendas_500000.csv \
+  --xlsx-limit samples/generated/vendas_100000.csv \
+  --workbook samples/generated/vendas_atendimentos_280000.xlsx --out benchmark-stack.json
+```
+
+| Etapa | O que mede |
+| --- | --- |
+| CSV de 1 milhão (≈ 80 MB) | upload pela borda, job de importação (tempos por etapa, registros/s, pico de RSS do processo do worker durante o job e RSS no início dele), página final com e sem cache, explorer com filtro e busca, KPIs, agrupamento com "Outros" e série mensal |
+| Exportação acima do limite | o pedido de CSV da versão de 1 milhão precisa ser recusado com `export_too_large` |
+| Deduplicação de 1 milhão | transformação versão → versão por vendedor + produto; a reconciliação precisa fechar (ADR-016) |
+| Exportações nos limites | CSV de 500 mil e XLSX de 100 mil gerados pelo worker, baixados pela API e conferidos (linhas, tamanho, assinatura ZIP) |
+| Planilha perto de 25 MB | `vendas_atendimentos_280000.xlsx` (24,7 MiB, gerada de forma determinística): prévia e importação da aba "Vendas" |
+
+O resumo sai no `$GITHUB_STEP_SUMMARY` e no artefato `benchmark-stack`. Localmente, sem Docker, o script foi validado de ponta a ponta contra a API com infraestrutura simulada e arquivos menores (100 mil linhas e a planilha de 8,8 MB). Esses números não servem de referência, porque o S3 e o worker rodam no mesmo processo.
+
+### Resultados na CI (04/11/2026)
+
+[Execução 41835630810](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41835630810), commit `d57434c`, uma execução. O runner do GitHub Actions tinha 4 vCPUs e 15 GiB de memória. O cgroup limitava o worker a 2 CPUs (`cpu.max` 200000 100000) e 2 GiB (`memory.max` 2147483648), com `WORKER_CONCURRENCY=2`. Todas as conferências do script passaram.
+
+O pico de cada job segue a ADR-030: é o pico de RSS do processo do worker durante o job e inclui o RSS que o processo já tinha no início, mostrado ao lado. Os valores estão em MiB, porque o `/proc` informa kB de 1.024 bytes.
+
+| Etapa | Resultado |
+| --- | --- |
+| CSV de 1 milhão (80,3 MB): envio pela borda | 0,71 s |
+| Importação do CSV de 1 milhão | **4,4 s (229.200 registros/s)**: leitura 3,0 s, conversão 0,6 s, escrita 0,35 s; pico de 366 MB, partindo de 143 MB |
+| Página final, sem cache · com cache | 291 · 263 ms |
+| Explorer: filtro + busca + contagem | 109 ms |
+| KPIs · por vendedor com "Outros" · série mensal | 36 · 76 · 44 ms |
+| Exportação CSV da versão de 1 milhão | recusada com `export_too_large`, como esperado |
+| Deduplicação por vendedor + produto (999.520 duplicados, 480 mantidos) | **1,6 s**, dos quais 0,92 s na deduplicação; pico de **611 MB**, partindo de 383 MB; reconciliação fechada |
+| Exportação CSV de 500 mil (o limite) | 4,1 s no worker; 42,6 MB, baixados em 43 ms |
+| Exportação XLSX de 100 mil (o limite) | 10,2 s no worker; 4,7 MB |
+| Planilha de 24,7 MiB (280 mil registros): envio · prévia | 0,20 · 0,65 s |
+| Importação da planilha | **47,9 s (5.850 registros/s)**; pico de 568 MB, partindo de 486 MB |
+| Pico do cgroup no fim do benchmark: worker · API | 802.779.136 bytes (766 MiB) · 361.467.904 bytes (345 MiB) |
+
+A primeira execução do mesmo job ([execução 41820017555](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41820017555), commit `37031d7`, antes das ADR-030 e ADR-031) rodou em outro runner. Nela, todas as etapas foram mais lentas, inclusive as que não mudaram entre os dois commits: a importação de 1 milhão levou 5,3 s, contra 4,4 s; a exportação XLSX, 16,6 s, contra 10,2 s; e a planilha, 69,2 s, contra 47,9 s. Por isso as duas execuções não servem para comparar tempos. A memória pode ser comparada:
+
+| Pico de memória | `37031d7` | `d57434c` |
+| --- | --- | --- |
+| Deduplicação de 1 milhão, processo do worker | 1.357,3 MB | **611,0 MB** (partindo de 382,7 MB) |
+| Importação da planilha, processo do worker | 1.357,3 MB, herdado da deduplicação (ADR-030) | **568,1 MB** (partindo de 485,6 MB) |
+| Importação de 1 milhão, processo do worker | 375,9 MB | 366,4 MB (partindo de 142,7 MB) |
+| cgroup do worker no fim do benchmark | 1.501.970.432 bytes (1.432 MiB) | **802.779.136 bytes (766 MiB)** |
+
+O benchmark usa o Compose de desenvolvimento. No de produção, em que o worker roda com `cap_drop: [ALL]` e `no-new-privileges`, o pico também foi zerado: o job de 100 mil linhas do E2E registrou 394,2 MB, partindo de 287,2 MB.
+
+## Memória da deduplicação de 1 milhão (Fase 6)
+
+Na primeira execução do job `benchmark` na CI ([execução 41820017555](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41820017555)), a deduplicação de 1 milhão de registros por vendedor + produto registrou 1.357,3 MB de pico de RSS no processo do worker, e o cgroup do worker chegou a 1.501.970.432 bytes, com limite de 2 GB. A importação da planilha, que rodou depois no mesmo processo, registrou os mesmos 1.357,3 MB: era o pico herdado, corrigido pela ADR-030.
+
+Medido localmente (04/11/2026, Windows 10, Python 3.13, Polars 2.1.0), com o mesmo `vendas_1000000.csv`, uma transformação "aparar + remover duplicidades" num processo novo por cenário (pico do working set):
+
+| Cenário | Pico antes da deduplicação | Pico no fim | Tempo |
+| --- | --- | --- | --- |
+| vendedor + produto (480 chaves, 999.520 duplicados), o do job `benchmark` | 249 MB | **1.358 MB** | 4,5 s |
+| chave de 6 colunas quase única (1 duplicado) | 230 MB | **1.085 MB** | 4,8 s |
+
+Por etapa, só a deduplicação, num processo novo que começa com cerca de 67 MB:
+
+| Etapa (pico acumulado) | 480 chaves | Chave quase única |
+| --- | --- | --- |
+| Marcar mantidos e de qual registro cada um é duplicado | 314 MB | 862 MB |
+| Gravar os mantidos | 331 MB | 963 MB |
+| Carregar os registros originais dos duplicados | 634 MB | 963 MB |
+| Montar as exclusões com os valores de entrada | 980 MB | 963 MB |
+| Gravar as exclusões | 1.222 MB | 963 MB |
+
+Na chave quase única, marcar só com `is_first_distinct` chega a 358 MB; a janela `first().over(chaves)`, que calcula de qual registro cada um é duplicado, sozinha chega a 762 MB. Selecionar só as colunas da chave antes de marcar não muda nada nesse cenário (802 MB), porque a chave já ocupa quase todas as colunas.
+
+São duas causas, e as duas crescem com o volume:
+- **Muitos duplicados:** as exclusões, com todas as colunas de entrada como texto (999.520 registros), são montadas inteiras em memória antes de gravar, cerca de 900 MB.
+- **Muitas chaves distintas:** a janela calcula o registro mantido para todos os registros, com um grupo por chave, cerca de 700 MB com 1 milhão de grupos.
+
+Com `WORKER_CONCURRENCY=2` e `WORKER_MEMORY=2g` (os valores do `.env.example`), duas deduplicações desse porte ao mesmo tempo somariam mais que o limite do contêiner. É uma conta a partir das medições acima, não um teste.
+
+**Depois da ADR-031** (só a chave em memória, mantido procurado só para os descartados, gravação em lotes), mesmo ambiente e mesmo método, três execuções de cada:
+
+| Cenário | Pico antes | Pico depois | Tempo antes | Tempo depois |
+| --- | --- | --- | --- | --- |
+| vendedor + produto (999.520 duplicados) | 1.358 MB | **513–536 MB** | 4,5–5,8 s | 6,5–6,8 s |
+| chave de 6 colunas quase única (1 duplicado) | 1.085 MB | **627–636 MB** | 4,3–4,8 s | 4,5–4,7 s |
+
+A reconciliação fechou em todas as execuções. O caso com muitos duplicados ficou mais lento porque as exclusões passaram a ser gravadas em grupos de 50 mil linhas, que o Parquet comprime mais devagar que um grupo único: 2,1 s contra 1,3 s para gravar as mesmas 999.520 linhas. Lotes de 250 mil devolviam o tempo (5,1–5,6 s), mas levavam o pico a cerca de 800 MB, e por isso ficaram os 50 mil das outras etapas.
+
+No contêiner, na CI, a mesma deduplicação ficou em 611 MB de pico, partindo de 383 MB; antes, 1.357 MB (ver os resultados na CI, acima). Os tempos da CI não confirmam nem descartam a perda de tempo medida localmente: a etapa de deduplicação levou 0,92 s, contra 1,30 s na primeira execução, mas naquele runner todas as etapas foram mais lentas.
+
 ## Pendente
 
-- Medições com 1 milhão de linhas e com arquivos próximos do limite de 100 MB. Até lá, não há evidência de como a memória e o tempo escalam acima de 100 mil linhas.
 - Mais repetições em um ambiente dedicado, para obter média e variação confiáveis.
-- XLSX perto do limite de 25 MB e transformações com 1 milhão de linhas, inclusive o pico de memória da deduplicação (ADR-016).
-- XLSX e transformação no fluxo completo com infraestrutura real (CI), como foi feito para o CSV.
-- Consultas dos dashboards com 1 milhão de registros e com muitos widgets abertos ao mesmo tempo (cada widget é uma requisição).
-- Exportação CSV no limite de 500 mil registros e XLSX no limite de 100 mil, no fluxo completo com MinIO e Celery reais.
+- Transformações com 1 milhão de linhas e outras regras além da deduplicação; consultas dos dashboards com muitos widgets abertos ao mesmo tempo (cada widget é uma requisição, e a API atende 2 consultas por vez por processo, ADR-028).
+- CSV perto do limite de 100 MB (o de 1 milhão tem 80 MB).

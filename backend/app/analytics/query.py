@@ -6,6 +6,8 @@ versão e citados com escaping; valores são sempre parâmetros.
 
 import datetime as dt
 import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from decimal import Decimal
 from pathlib import Path
@@ -13,7 +15,8 @@ from typing import Any, Literal
 
 import duckdb
 
-from app.core.errors import ValidationFailed
+from app.core.config import get_settings
+from app.core.errors import ServiceUnavailable, ValidationFailed
 from app.processing.transforms import (
     LIST_OPERATORS,
     NO_VALUE_OPERATORS,
@@ -39,11 +42,45 @@ def sandboxed_connection(allowed_dir: Path) -> duckdb.DuckDBPyConnection:
     # Limites de recursos e sandbox: só o diretório de cache pode ser lido, sem rede,
     # e a configuração fica travada para a sessão.
     con.execute("SET threads = 2")
-    con.execute("SET memory_limit = '512MB'")
+    con.execute(f"SET memory_limit = '{int(get_settings().query_memory_mb)}MB'")
     con.execute("SET allowed_directories = ?", [[str(allowed_dir)]])
     con.execute("SET enable_external_access = false")
     con.execute("SET lock_configuration = true")
     return con
+
+
+_slots: threading.BoundedSemaphore | None = None
+_slots_lock = threading.Lock()
+
+
+def _query_slots() -> threading.BoundedSemaphore:
+    global _slots
+    with _slots_lock:
+        if _slots is None:
+            _slots = threading.BoundedSemaphore(get_settings().query_concurrency)
+        return _slots
+
+
+@contextmanager
+def query_connection(allowed_dir: Path) -> Iterator[duckdb.DuckDBPyConnection]:
+    """Conexão isolada, contando no limite de consultas simultâneas do processo.
+
+    Cada conexão tem o próprio limite de memória; sem o teto de concorrência, várias consultas
+    pesadas ao mesmo tempo passariam do limite de memória do contêiner da API.
+    """
+    slots = _query_slots()
+    if not slots.acquire(timeout=QUERY_TIMEOUT_SECONDS):
+        raise ServiceUnavailable(
+            "Muitas consultas em andamento. Tente de novo em alguns segundos.", code="query_busy"
+        )
+    try:
+        con = sandboxed_connection(allowed_dir)
+        try:
+            yield con
+        finally:
+            con.close()
+    finally:
+        slots.release()
 
 
 def to_json_value(value: Any) -> Any:
@@ -219,15 +256,12 @@ def run_limited(
 
 
 def count_rows(path: Path, where: WhereClause) -> int:
-    con = sandboxed_connection(path.parent)
-    try:
+    with query_connection(path.parent) as con:
         rows = run_limited(
             con,
             f"SELECT count(*) FROM read_parquet($path){where.apply()}",  # noqa: S608 - montado pelo backend
             {"path": str(path), **where.params},
         )
-    finally:
-        con.close()
     return int(rows[0][0])
 
 
@@ -262,14 +296,11 @@ def fetch_page(
         f"SELECT {select_sql} FROM read_parquet($path){where.apply()} "  # noqa: S608 - identificadores validados
         f"ORDER BY {', '.join(order)} LIMIT $limit OFFSET $offset"
     )
-    con = sandboxed_connection(path.parent)
-    try:
+    with query_connection(path.parent) as con:
         found = run_limited(
             con, sql, {"path": str(path), "limit": limit, "offset": offset, **where.params}
         )
         rows = [[to_json_value(v) for v in row] for row in found]
-    finally:
-        con.close()
     return Page(columns=selected, rows=rows)
 
 
@@ -290,21 +321,19 @@ def duplicate_summary(path: Path, keys: list[str], *, top: int = 20) -> Duplicat
         f"list(__df_row ORDER BY __df_row)[1:10] AS sample_rows "
         f"FROM read_parquet($path) GROUP BY {columns}"
     )
-    con = sandboxed_connection(path.parent)
-    try:
-        totals = con.execute(
+    with query_connection(path.parent) as con:
+        totals = run_limited(
+            con,
             f"WITH g AS ({grouped}) SELECT COALESCE(SUM(n), 0), COUNT(*), "  # noqa: S608
             "COALESCE(SUM(n - 1), 0), COUNT(*) FILTER (WHERE n > 1) FROM g",
             {"path": str(path)},
-        ).fetchone()
-        assert totals is not None
-        top_rows = con.execute(
+        )[0]
+        top_rows = run_limited(
+            con,
             f"WITH g AS ({grouped}) SELECT * FROM g WHERE n > 1 "  # noqa: S608
             "ORDER BY n DESC, first_row LIMIT $top",
             {"path": str(path), "top": top},
-        ).fetchall()
-    finally:
-        con.close()
+        )
     width = len(keys)
     groups = [
         {

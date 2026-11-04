@@ -43,7 +43,7 @@ Implementação em `backend/app/processing/xlsx.py`, com openpyxl em modo soment
 - Datas entram como `aaaa-mm-dd`; com horário (ou formato de célula com horas) como `aaaa-mm-dd hh:mm:ss`.
 - Booleanos entram como `true`/`false`.
 
-**Intervalo de dados e cabeçalho.** As dimensões declaradas no arquivo são ignoradas (`reset_dimensions`), porque costumam estar erradas. Sem linha informada, o cabeçalho é a primeira linha "larga" entre as 50 primeiras: com mais da metade das colunas da tabela preenchidas. Isso pula títulos e notas acima da tabela. O usuário pode escolher a linha manualmente. As colunas lidas vão da primeira à última célula preenchida da linha do cabeçalho; valores fora desse intervalo contam como campos a mais.
+**Intervalo de dados e cabeçalho.** As dimensões declaradas no arquivo são ignoradas (`reset_dimensions`), porque costumam estar erradas. Sem linha informada, o cabeçalho é a primeira linha "larga" entre as 50 primeiras: com mais da metade das colunas da tabela preenchidas. Isso pula títulos e notas acima da tabela. O usuário pode escolher a linha manualmente. As colunas lidas vão da primeira à última célula preenchida da linha do cabeçalho; valores fora desse intervalo contam como campos a mais. A leitura vai no máximo até a linha 1.048.576, o limite do Excel, e recusa a planilha que declara linhas além dele: sem isso, uma única linha com índice enorme faria o leitor gerar uma linha vazia para cada índice faltante. Cada linha é examinada só até a coluna 1.024; conteúdo além dela conta como campo a mais e, no cabeçalho, deixa a largura acima do limite de colunas (ADR-029).
 
 **Linhas vazias.** Entre registros, viram `linha_vazia` (como no CSV). Ao final da aba, não são registros: são ignoradas e o job registra um aviso com a quantidade.
 
@@ -94,7 +94,7 @@ A identificação de duplicidades sem remover nada é a análise da versão inte
 ### Deduplicação
 
 - **Chave:** todas as colunas ou as escolhidas; nulos contam como iguais entre si.
-- **Execução:** segunda passada sobre o resultado inteiro da primeira passada (não por lote), com `is_first_distinct`/`is_last_distinct` do Polars sobre a chave. Cada duplicado registra `__df_duplicate_of`, o número do registro mantido.
+- **Execução:** segunda passada sobre o resultado inteiro da primeira passada. Primeiro marca o mantido de cada chave com `is_first_distinct`/`is_last_distinct` do Polars, lendo só a chave. Depois grava mantidos e exclusões em lotes (ADR-031). Cada duplicado registra `__df_duplicate_of`, o número do registro mantido, procurado só para os descartados.
 - **Análise sem alterar dados:** `POST /datasets/{id}/versions/{vid}/duplicates` conta, na versão inteira, registros duplicados, chaves distintas, chaves repetidas e as 20 chaves mais repetidas (DuckDB `GROUP BY`, que também agrupa nulos juntos). A suíte confere que a análise e o job contam o mesmo (`test_preview_reconciles_sample_and_matches_full_duplicate_analysis`).
 - **Prévia:** a prévia de transformações deduplica só a amostra (primeiros 200 registros) e avisa isso na tela.
 
@@ -152,4 +152,4 @@ Conjuntos de regras (`transformation_sets` + `transformation_rules`) são reutil
 
 ## Métricas registradas por job
 
-`timings_ms`: envio do arquivo (importação), leitura e validação, processamento (leitura, conversão ou regras, escrita Parquet, deduplicação), persistência e total; `rows_per_second`; `peak_memory_mb` (via `resource` no Linux; indisponível no Windows).
+`timings_ms`: envio do arquivo (importação), leitura e validação, processamento (leitura, conversão ou regras, escrita Parquet, deduplicação), persistência e total; `rows_per_second`; `peak_memory_mb`, o pico de RSS do processo do worker durante o job, e `start_memory_mb`, o RSS no início dele (Linux; nulos onde o pico não pode ser zerado, como no Windows; ADR-030).

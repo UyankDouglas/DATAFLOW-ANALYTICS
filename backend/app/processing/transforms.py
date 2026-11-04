@@ -921,21 +921,38 @@ def apply_rules(frame: pl.DataFrame, plan: RulePlan) -> TransformBatch:
     return result
 
 
-def mark_duplicates(frame: pl.LazyFrame, plan: RulePlan) -> pl.LazyFrame:
-    """Marca o registro mantido de cada chave (__df_keep) e qual é ele (__df_kept_row).
+def mark_duplicates(frame: pl.LazyFrame, plan: RulePlan) -> tuple[pl.Series, pl.DataFrame]:
+    """Marca o registro mantido de cada chave e, para cada descartado, qual é o mantido.
 
-    Nulos contam como valores iguais entre si — a mesma regra do GROUP BY da análise em DuckDB.
+    Devolve `__df_keep` na ordem do quadro e os pares (`__df_row`, `__df_kept_row`) dos
+    descartados, também na ordem do quadro. Nulos contam como valores iguais entre si — a mesma
+    regra do GROUP BY da análise em DuckDB. O mantido é procurado só para os descartados, pela
+    chave: calculá-lo para todos os registros (`first().over(chaves)`) ocupava cerca de 700 MB
+    com 1 milhão de chaves distintas.
     """
     assert plan.dedup is not None
     keys = plan.dedup_keys
-    keep_first = plan.dedup.rule.keep == "first"
     distinct = (
-        pl.struct(keys).is_first_distinct() if keep_first else pl.struct(keys).is_last_distinct()
+        pl.struct(keys).is_first_distinct()
+        if plan.dedup.rule.keep == "first"
+        else pl.struct(keys).is_last_distinct()
     )
-    kept_row = pl.col("__df_row").first() if keep_first else pl.col("__df_row").last()
-    return frame.with_columns(
-        distinct.alias("__df_keep"), kept_row.over(keys).alias("__df_kept_row")
+    marked = frame.select("__df_row", *keys, distinct.alias("__df_keep")).collect()
+    keep = marked.get_column("__df_keep")
+    removed = marked.filter(~pl.col("__df_keep")).drop("__df_keep")
+    kept = (
+        marked.lazy()
+        .filter(pl.col("__df_keep"))
+        .join(removed.lazy().select(keys), on=keys, how="semi", nulls_equal=True)
+        .select(pl.col("__df_row").alias("__df_kept_row"), *keys)
     )
+    pairs = (
+        removed.lazy()
+        .join(kept, on=keys, how="left", nulls_equal=True, maintain_order="left")
+        .select("__df_row", "__df_kept_row")
+        .collect()
+    )
+    return keep, pairs
 
 
 def duplicate_exclusions(duplicates: pl.DataFrame, plan: RulePlan) -> pl.DataFrame:

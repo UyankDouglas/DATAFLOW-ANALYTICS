@@ -38,3 +38,10 @@ def test_development_does_not_require_production_secrets() -> None:
     Settings(
         _env_file=None, environment="development", cookie_secure=False
     ).validate_for_production()  # type: ignore[call-arg]
+
+
+def test_empty_api_docs_variable_means_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("EXPOSE_API_DOCS", "")
+    assert Settings(_env_file=None, environment="production").api_docs is False  # type: ignore[call-arg]
+    monkeypatch.setenv("EXPOSE_API_DOCS", "true")
+    assert Settings(_env_file=None, environment="production").api_docs is True  # type: ignore[call-arg]

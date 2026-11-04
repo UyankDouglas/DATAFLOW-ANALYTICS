@@ -2,7 +2,7 @@
 
 Plataforma de engenharia de dados e Business Intelligence: transforma planilhas CSV e XLSX brutas em datasets tratados, versionados e consultáveis — com rastreabilidade de cada registro recebido.
 
-> **Status:** Fases 1 a 5 de 6 concluídas — fundação, motor ETL, qualidade e Data Explorer, Business Intelligence, relatórios, exportações e administração —, todas validadas na CI com a infraestrutura real (PostgreSQL, Redis, MinIO e Celery), nos Compose de desenvolvimento e de produção. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
+> **Status:** As 6 fases estão implementadas e validadas na CI com a infraestrutura real (PostgreSQL, Redis, MinIO e Celery), nos Compose de desenvolvimento e de produção. Na Fase 6, a CI também executa o ciclo de backup e restauração em produção e o benchmark com 1 milhão de registros. Veja [PROGRESS.md](PROGRESS.md) para o estado detalhado, testes executados e pendências.
 
 ![Visão geral](docs/screenshots/02-visao-geral.png)
 
@@ -11,6 +11,24 @@ Plataforma de engenharia de dados e Business Intelligence: transforma planilhas 
 Equipes de vendas, atendimento e operações vivem de planilhas exportadas de sistemas diferentes: delimitadores diferentes, `1.234,56` misturado com `1234.56`, datas em `dd/mm` e `mm/dd`, linhas incompletas. Ferramentas de BI costumam descartar ou converter esses dados em silêncio. O DataFlow trata a importação e o tratamento como um **pipeline auditável**: cada registro é contabilizado como válido, rejeitado, filtrado ou duplicado, com motivo, regra, coluna e valor original — e cada processamento gera uma **versão imutável** do dataset, com a origem e as regras que a produziram.
 
 ## Funcionalidades
+
+### Fase 6 — qualidade e produção
+
+- **E2E da jornada inteira** com um só dataset: login → upload → preview → configuração dos tipos → processamento → qualidade → dashboard → exportação, conferindo que o mesmo número de registros válidos aparece em cada etapa e no arquivo baixado.
+- **Benchmark do fluxo completo na CI** (`scripts/benchmark_stack.py`, só a API pública), com conferência das contagens em cada etapa:
+  - CSV de 1 milhão de registros e deduplicação dele;
+  - planilha XLSX perto do limite de 25 MB;
+  - exportações nos limites: CSV de 500 mil e XLSX de 100 mil registros.
+- **Revisão de segurança** independente, com os achados corrigidos e testados ([docs/security.md](docs/security.md#revisão-de-segurança-da-fase-6)):
+  - leitura limitada de planilhas, que fecha uma negação de serviço por XLSX de 2 KB;
+  - logs sem tokens nem e-mails;
+  - cota de armazenamento por workspace;
+  - teto de consultas simultâneas;
+  - HSTS;
+  - rede interna sem saída e contêineres sem capabilities.
+- **Limpeza diária de objetos órfãos** no armazenamento, com carência e só de chaves geradas pelo sistema.
+- **Backup e restauração** (`scripts/backup.sh`, `scripts/restore.sh`), com conferência de cada objeto contra o banco. A CI faz o ciclo inteiro: backup, destruição dos volumes, restauração e verificação.
+- **Dados de demonstração pela API** (`scripts/seed_demo.py`) e publicação das imagens no GitHub Container Registry a cada tag `v*`.
 
 ### Fase 5 — relatórios, exportações e administração
 
@@ -177,7 +195,7 @@ Para ver rejeições rastreáveis, importe `samples/qualidade_1000.csv` e defina
 ## Testes
 
 ```bash
-cd backend && uv run pytest                   # 205 testes (SQLite + S3/Redis simulados)
+cd backend && uv run pytest                   # 252 testes (SQLite + S3/Redis simulados)
 TEST_DATABASE_URL=postgresql+psycopg://dataflow:dataflow@localhost:5432/dataflow_test uv run pytest
 cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app
 
@@ -188,7 +206,13 @@ cd e2e && pnpm install && pnpm exec playwright install chromium
 E2E_BASE_URL=http://localhost:8080 pnpm test  # com o Docker Compose em execução
 ```
 
-A CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) roda lint, formatação, tipos, testes com PostgreSQL real, migrations em banco descartável (upgrade → check → downgrade → upgrade), build e a subida dos Compose de desenvolvimento e de produção (em HTTPS com a CA interna do Caddy), com E2E nos dois.
+A CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) roda:
+
+- lint, formatação, tipos e testes com PostgreSQL real;
+- migrations em banco descartável (upgrade → check → downgrade → upgrade) e o build;
+- a subida dos Compose de desenvolvimento e de produção (em HTTPS com a CA interna do Caddy), com E2E nos dois;
+- a conferência de que os logs não têm tokens nem e-mails e de que banco e Redis não alcançam a internet;
+- o ciclo de backup e restauração em produção e o benchmark do fluxo completo.
 
 ## Dados de demonstração
 
@@ -200,9 +224,17 @@ uv run --project backend python scripts/generate_samples.py --xlsx --rows 100000
 
 Vendas, atendimentos, um dataset com problemas propositais de qualidade e uma planilha XLSX com as mesmas vendas e atendimentos. Todos fictícios e reproduzíveis — ver [samples/README.md](samples/README.md).
 
+Para ter um workspace pronto para explorar, com os datasets processados, uma versão limpa das vendas, o dashboard "Comercial" e uma exportação:
+
+```bash
+DEMO_PASSWORD='uma-senha-forte' python3 scripts/seed_demo.py --base-url http://localhost:8080
+```
+
+O script usa só a API pública, como uma pessoa na interface. Sem `DEMO_PASSWORD`, gera uma senha e a mostra uma vez.
+
 ## API
 
-Base `/api/v1`, documentação interativa em `/api/docs`. Erros sempre no formato `{"error": {"code", "message", "details"}, "request_id"}`.
+Base `/api/v1`, documentação interativa em `/api/docs` (desligada em produção, salvo `EXPOSE_API_DOCS=true`). Erros sempre no formato `{"error": {"code", "message", "details"}, "request_id"}`.
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
@@ -252,7 +284,7 @@ Base `/api/v1`, documentação interativa em `/api/docs`. Erros sempre no format
 
 ## Deploy
 
-`docker-compose.prod.yml` sobe tudo em um host com HTTPS automático (Caddy), apenas as portas 80/443 expostas e segredos obrigatórios por variável de ambiente. Passo a passo, backups e escala em [docs/deploy.md](docs/deploy.md).
+`docker-compose.prod.yml` sobe tudo em um host com HTTPS automático (Caddy), apenas as portas 80/443 expostas, banco, Redis e MinIO numa rede sem saída para a internet e segredos obrigatórios por variável de ambiente. `scripts/backup.sh` e `scripts/restore.sh` fazem backup e restauração consistentes de banco e objetos. Passo a passo, imagens prontas, backups e escala em [docs/deploy.md](docs/deploy.md).
 
 ## Benchmark
 
@@ -266,10 +298,24 @@ Fase 5, no mesmo ambiente: exportar 100 mil registros leva cerca de 2 s em CSV e
 
 Fase 4, no mesmo ambiente: com 100 mil registros, os KPIs (seis medidas) saem em 0,04 a 0,05 s, a soma por categoria com "Outros" em 0,05 a 0,08 s, a série mensal em 0,05 s e a comparação entre períodos em 0,05 a 0,09 s.
 
+Fase 6, no mesmo ambiente, com **1 milhão de registros** (80 MB):
+
+- pipeline em 8,1 s (123 mil registros/s), com o mesmo pico de 43 MB de heap Python das 100 mil linhas;
+- consultas do explorer e dos dashboards entre 0,10 e 0,25 s;
+- exportação no limite: CSV de 500 mil registros em 10,1 s e XLSX de 100 mil em 28 s.
+
+O mesmo volume no fluxo completo, com infraestrutura real, na CI (worker limitado a 2 CPUs e 2 GB, uma execução):
+
+- CSV de 1 milhão importado em 4,4 s (229 mil registros/s), com pico de 366 MB no processo do worker;
+- página final, explorer e dashboards entre 36 e 291 ms;
+- deduplicação de 1 milhão (999.520 duplicados) em 1,6 s, com pico de 611 MB;
+- exportação no limite: CSV de 500 mil registros em 4,1 s e XLSX de 100 mil em 10,2 s;
+- planilha de 25 MB (280 mil registros) importada em 47,9 s, com pico de 568 MB.
+
 ## Limitações conhecidas
 
-- XLSX é lido em Python pelo openpyxl, em duas passadas: ~2,5 mil registros/s na medição local; o progresso mostra só a contagem de registros. A tabela de textos compartilhados da planilha fica inteira em memória.
-- A deduplicação carrega a chave de toda a versão em memória; não foi medida acima de 100 mil registros.
+- XLSX é lido em Python pelo openpyxl, em duas passadas: ~2,5 mil registros/s na medição local e ~5,9 mil na CI, com a planilha de 25 MB; o progresso mostra só a contagem de registros. A tabela de textos compartilhados da planilha fica inteira em memória.
+- A deduplicação mantém em memória a chave de todos os registros: com 1 milhão, o pico do processo do worker ficou em 611 MB na CI e entre 0,5 e 0,65 GB na medição local ([docs/benchmark.md](docs/benchmark.md#memória-da-deduplicação-de-1-milhão-fase-6)).
 - A prévia de transformações usa os primeiros 200 registros; a análise de duplicidades da versão inteira é separada.
 - Arredondamento de colunas derivadas é meio-para-par (1,005 → 1,00), diferente do "meio para cima" das planilhas.
 - A busca do Data Explorer cobre só colunas de texto.
@@ -277,7 +323,10 @@ Fase 4, no mesmo ambiente: com 100 mil registros, os KPIs (seis medidas) saem em
 - Relatórios de qualidade de versões publicadas antes da Fase 3 são calculados sob demanda na tela Qualidade.
 - Dashboards: vale a última gravação quando duas pessoas editam o mesmo dashboard; a ordem dos widgets muda pelas setas (sem arrastar e soltar); cada widget é uma consulta ao abrir, sem resultados guardados — medido até 100 mil registros. Decimais não servem como dimensão (use o filtro de faixa).
 - Convites dependem de SMTP funcionando; sem ele, o convite fica pendente e pode ser cancelado ou reenviado.
-- Objetos órfãos no armazenamento (quando a remoção falha depois do commit) ainda não têm limpeza periódica.
+- Objetos órfãos no armazenamento são apagados uma vez por dia, depois de 24 h; até lá, ocupam espaço.
+- Cada workspace tem cota de armazenamento (10 GB por padrão); transformações e exportações não são bloqueadas por ela, então o uso pode passar um pouco da cota.
+- A API atende 2 consultas DuckDB por vez por processo (ADR-028); sob carga, pedidos que esperam mais de 10 s recebem 503.
+- Não há verificação de e-mail no cadastro: o link de um convite para quem ainda não tem conta funciona como prova de posse do e-mail (ADR-024).
 - Gráfico da visão geral agrupa por dia em UTC (fuso por workspace chega com as configurações).
 - O MinIO Community foi arquivado; o projeto usa a imagem mantida pela Chainguard (ver ADR-006).
 - A CI usa a CA interna do Caddy e o Mailpit: certificado público com domínio real e SMTP real com TLS ainda não foram exercitados; ver PROGRESS.md.
@@ -291,4 +340,4 @@ Fase 4, no mesmo ambiente: com 100 mil registros, os KPIs (seis medidas) saem em
 | 3 ✅ | Qualidade dos dados (pontuação documentada), Data Explorer com filtros, busca e seleção de colunas |
 | 4 ✅ | Dashboards, KPIs, gráficos, filtros dinâmicos, comparação temporal, construtor de dashboards |
 | 5 ✅ | Relatórios, exportações CSV/XLSX em segundo plano, gestão de usuários, auditoria, retenção |
-| 6 | Testes ampliados, benchmarks com infraestrutura, revisão de segurança e performance, deploy |
+| 6 ✅ | Testes ampliados, benchmarks com infraestrutura, revisão de segurança e performance, backup e restauração, deploy |

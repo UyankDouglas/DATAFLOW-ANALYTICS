@@ -116,7 +116,15 @@ Nunca é apagado o original de um dataset sem versão publicada, nem o de um upl
 - Versões derivadas perdem a referência de origem; a linhagem registrada no JSON da versão continua.
 - As exportações da versão e o relatório de qualidade saem junto.
 
-Se a limpeza do armazenamento falhar depois do commit, sobram objetos órfãos. Eles ficam sem referência e sem rota que os alcance, e o erro vai para o log.
+Se a limpeza do armazenamento falhar depois do commit, sobram objetos órfãos, sem referência e sem rota que os alcance; o erro vai para o log. A varredura diária do beat os apaga depois de 24 h (ADR-026). Para conferir antes:
+
+```bash
+docker compose -f docker-compose.prod.yml exec api python -m app.scripts.sweep_orphans --dry-run
+```
+
+## Cota de armazenamento
+
+Cada workspace tem uma cota (`WORKSPACE_STORAGE_QUOTA_MB`, 10 GB por padrão; 0 desliga) que soma originais não expurgados, Parquet das versões e exportações prontas. Ao atingi-la, novos uploads e cópias de aba são recusados com 413 `storage_quota_exceeded` e uma mensagem com o uso. A tela Configurações mostra o uso e a cota. Versões geradas por transformação e exportações não são bloqueadas, só entram na conta (ADR-027).
 
 ## API
 

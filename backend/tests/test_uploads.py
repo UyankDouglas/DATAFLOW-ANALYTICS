@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -114,3 +116,65 @@ def test_preview_returns_first_rows_types_and_stats(client: TestClient) -> None:
     assert body["ragged_rows_in_sample"] == 1
     assert body["empty_rows_in_sample"] == 1
     assert body["parse_options"]["decimal_separator"] == ","
+
+
+# ---------------------------------------------------------------- cota de armazenamento
+
+
+def test_storage_quota_blocks_uploads_and_sheet_copies(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.core.config import MB, get_settings
+    from app.services import quota_service
+
+    register(client)
+    first = upload_csv(client, b"a;b\n1;2\n" * 1000)
+    assert first.status_code == 201
+    used = first.json()["upload"]["size_bytes"]
+    info = client.get("/api/v1/workspaces/current/settings").json()
+    assert info["storage_used_bytes"] == used
+    assert info["storage_quota_bytes"] == get_settings().workspace_storage_quota_mb * MB
+
+    monkeypatch.setattr(quota_service, "quota_bytes", lambda: used + 100)
+    # Recusado pelo Content-Length, antes de ler o corpo.
+    refused = upload_csv(client, b"a;b\n1;2\n" * 1000)
+    assert refused.status_code == 413
+    error = refused.json()["error"]
+    assert error["code"] == "storage_quota_exceeded"
+    assert error["details"] == {
+        "used_bytes": used,
+        "quota_bytes": used + 100,
+        "incoming_bytes": used,
+    }
+    assert "limite de armazenamento" in error["message"]
+    # Cabe: arquivos pequenos ainda entram.
+    assert upload_csv(client, b"a;b\n1;2\n").status_code == 201
+
+    monkeypatch.setattr(quota_service, "quota_bytes", lambda: None)  # sem cota
+    assert upload_csv(client, b"a;b\n1;2\n" * 1000).status_code == 201
+
+
+def test_quota_uses_the_real_size_when_content_length_is_missing(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services import quota_service
+
+    register(client)
+    monkeypatch.setattr(quota_service, "quota_bytes", lambda: 50)
+
+    def chunks() -> Iterator[bytes]:  # corpo em partes, sem Content-Length
+        yield b"a;b\n"
+        yield b"1;2\n" * 100
+
+    response = client.post(
+        "/api/v1/datasets/upload",
+        content=chunks(),
+        headers={
+            **csrf(client),
+            "X-File-Name": "grande.csv",
+            "Content-Type": "application/octet-stream",
+        },
+    )
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "storage_quota_exceeded"
+    assert client.get("/api/v1/datasets").json()["total"] == 0  # nada foi gravado

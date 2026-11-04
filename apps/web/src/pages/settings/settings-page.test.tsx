@@ -15,6 +15,8 @@ const current = {
   name: 'Comercial',
   slug: 'comercial',
   settings: { export_ttl_hours: 24, viewer_exports: false, original_retention_days: null },
+  storage_used_bytes: 2.5 * 1024 ** 3,
+  storage_quota_bytes: 10 * 1024 ** 3,
 }
 
 describe('SettingsPage', () => {
@@ -54,5 +56,30 @@ describe('SettingsPage', () => {
     expect(await screen.findByText(/Somente administradores alteram/)).toBeInTheDocument()
     expect(screen.getByLabelText('Nome')).toBeDisabled()
     expect(screen.queryByRole('button', { name: /Salvar configurações/ })).toBeNull()
+  })
+
+  it('mostra o uso do armazenamento contra a cota', async () => {
+    mockApi(['workspace:view'], {
+      'GET /workspaces/current/settings': () => jsonResponse(current),
+    })
+    renderWithProviders(<SettingsPage />)
+    expect(await screen.findByTestId('storage-usage')).toHaveTextContent(
+      /^2,5 GB de 10 GB \(25\s?%\)$/,
+    )
+    expect(
+      screen.getByRole('progressbar', { name: 'Uso do armazenamento do workspace' }),
+    ).toBeInTheDocument()
+  })
+
+  it('sem cota, mostra só o uso', async () => {
+    mockApi(['workspace:view'], {
+      'GET /workspaces/current/settings': () =>
+        jsonResponse({ ...current, storage_quota_bytes: null }),
+    })
+    renderWithProviders(<SettingsPage />)
+    expect(await screen.findByTestId('storage-usage')).toHaveTextContent(
+      'sem cota nesta instalação',
+    )
+    expect(screen.queryByRole('progressbar')).toBeNull()
   })
 })

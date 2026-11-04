@@ -6,6 +6,9 @@
 {$SITE_ADDRESS::8080} {
 	encode zstd gzip
 
+	# HSTS só tem efeito em HTTPS (o navegador ignora o cabeçalho em HTTP, como no desenvolvimento).
+	header Strict-Transport-Security "max-age=31536000"
+
 	# Uploads chegam em streaming até a API, que aplica o limite real por formato.
 	# Matchers exclusivos: request_body em sequência se acumulam e valeria o menor limite.
 	@upload path /api/v1/datasets/upload
@@ -33,7 +36,8 @@
 			Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 			X-Content-Type-Options nosniff
 			X-Frame-Options DENY
-			Referrer-Policy strict-origin-when-cross-origin
+			# Os links de convite e de redefinição de senha levam o token na URL.
+			Referrer-Policy no-referrer
 			Permissions-Policy "camera=(), microphone=(), geolocation=()"
 		}
 		@assets path /assets/*
@@ -42,8 +46,17 @@
 		file_server
 	}
 
+	# O token dos links de convite e de redefinição de senha nunca vai para o log de acesso.
 	log {
 		output stdout
-		format json
+		format filter {
+			wrap json
+			fields {
+				request>uri query {
+					replace token REDACTED
+				}
+				request>headers>Referer regexp "token=[^&#]*" "token=REDACTED"
+			}
+		}
 	}
 }

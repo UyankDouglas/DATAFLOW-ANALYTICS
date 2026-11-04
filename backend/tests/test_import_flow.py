@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import timedelta
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -104,6 +105,78 @@ def test_full_import_publishes_version_and_serves_rows(
     assert rejected["total"] == 3
     reasons = {r[2] for r in rejected["rows"]}
     assert reasons == {"tipo_invalido", "linha_vazia", "campos_a_menos"}
+
+
+def _fake_proc(monkeypatch: pytest.MonkeyPatch, directory: Path, status: str) -> Path:
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "status").write_text(status, encoding="ascii")
+    monkeypatch.setattr(job_runner, "_PROC_STATUS", directory / "status")
+    monkeypatch.setattr(job_runner, "_PROC_CLEAR_REFS", directory / "clear_refs")
+    return directory / "clear_refs"
+
+
+def test_job_records_its_own_memory_peak(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    clear_refs = _fake_proc(
+        monkeypatch, tmp_path, "Name:\tcelery\nVmHWM:\t  512000 kB\nVmRSS:\t  204800 kB\n"
+    )
+    register(client)
+    _, job = _start(client)
+
+    assert run_job(uuid.UUID(job["id"])) == "succeeded"
+
+    # O pico foi zerado no início do job (5 em clear_refs) e lido no fim.
+    assert clear_refs.read_text(encoding="ascii") == "5"
+    metrics = client.get(f"/api/v1/jobs/{job['id']}").json()["metrics"]
+    assert (metrics["start_memory_mb"], metrics["peak_memory_mb"]) == (200.0, 500.0)
+
+
+def test_memory_peak_is_omitted_when_it_cannot_be_reset(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # O status existe, mas clear_refs não pode ser gravado: o pico seria o da vida do processo.
+    _fake_proc(monkeypatch, tmp_path, "VmHWM:\t  512000 kB\nVmRSS:\t  204800 kB\n")
+    monkeypatch.setattr(job_runner, "_PROC_CLEAR_REFS", tmp_path / "ausente" / "clear_refs")
+    register(client)
+    _, job = _start(client)
+
+    assert run_job(uuid.UUID(job["id"])) == "succeeded"
+
+    metrics = client.get(f"/api/v1/jobs/{job['id']}").json()["metrics"]
+    assert (metrics["start_memory_mb"], metrics["peak_memory_mb"]) == (None, None)
+
+
+@pytest.mark.parametrize(
+    "status", ["VmRSS:\t  204800 kB\n", "VmHWM:\t  muito kB\n", "VmHWM:\n", ""]
+)
+def test_unreadable_memory_peak_is_none(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, status: str
+) -> None:
+    _fake_proc(monkeypatch, tmp_path, status)
+    assert job_runner._peak_memory_mb(100.0) is None
+
+
+@pytest.mark.skipif(
+    not Path("/proc/self/clear_refs").exists(), reason="só no Linux (a CI roda aqui)"
+)
+def test_memory_peak_reset_works_on_this_kernel() -> None:
+    start = job_runner._reset_peak_memory()
+    assert start is not None
+    buffer = bytearray(96 * 1024 * 1024)
+    for offset in range(0, len(buffer), 4096):  # toca cada página para entrar no RSS
+        buffer[offset] = 1
+    peak = job_runner._peak_memory_mb(start)
+    assert peak is not None
+    assert peak >= start + 80
+    del buffer
+
+    # Sem o reset, o pico continuaria acima de start + 80 MB.
+    again = job_runner._reset_peak_memory()
+    after = job_runner._peak_memory_mb(again)
+    assert again is not None
+    assert after is not None
+    assert after < peak - 80
 
 
 def test_rows_query_rejects_unknown_columns(client: TestClient) -> None:

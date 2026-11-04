@@ -305,6 +305,7 @@ export interface Job {
   metrics: {
     timings_ms?: Record<string, number | null>
     peak_memory_mb?: number | null
+    start_memory_mb?: number | null
     rows_per_second?: number
   }
   config: {
@@ -883,6 +884,9 @@ export interface WorkspaceSettingsInfo {
   name: string
   slug: string
   settings: WorkspaceSettings
+  storage_used_bytes: number
+  /** Vazio quando a instalação não define cota. */
+  storage_quota_bytes: number | null
 }
 
 export interface Invitation {

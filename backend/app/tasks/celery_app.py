@@ -46,6 +46,7 @@ celery_app.conf.update(
         "recover-exports": {"task": "maintenance.recover_exports", "schedule": 60.0},
         "expire-exports": {"task": "maintenance.expire_exports", "schedule": 600.0},
         "apply-retention": {"task": "maintenance.apply_retention", "schedule": 21600.0},
+        "sweep-orphans": {"task": "maintenance.sweep_orphans", "schedule": 86400.0},
     },
 )
 
