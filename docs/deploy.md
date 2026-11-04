@@ -50,11 +50,11 @@ Ordem de inicialização garantida pelo Compose: `postgres` saudável → `migra
 Uma tag `v*` publica as imagens no GitHub Container Registry (`.github/workflows/release.yml`). Com elas, o host não precisa compilar nada:
 
 ```bash
-export BACKEND_IMAGE=ghcr.io/<dono>/dataflow-backend:v1.0.0 WEB_IMAGE=ghcr.io/<dono>/dataflow-web:v1.0.0
+export BACKEND_IMAGE=ghcr.io/uyankdouglas/dataflow-backend:v1.0.0 WEB_IMAGE=ghcr.io/uyankdouglas/dataflow-web:v1.0.0
 docker compose -f docker-compose.prod.yml up -d --no-build
 ```
 
-O fluxo de publicação ainda não foi executado: nenhuma tag foi criada.
+A `v1.0.0` foi publicada em 04/11/2026, a partir do commit `48143cf` ([execução 41894805962](https://github.com/UyankDouglas/DATAFLOW-ANALYTICS/actions/runs/41894805962)). As imagens são públicas: o pull não exige login. Só existem para `linux/amd64`. Cada tag também atualiza `latest`. A imagem do backend serve a API, o worker, o beat, o `migrate` e o `storage-setup`. Subir o Compose com essas imagens ainda não foi exercitado: a CI compila a partir do código.
 
 ### Dados de demonstração
 
