@@ -81,21 +81,43 @@ O sistema recebe arquivos de usuários; segurança é requisito central. Esta p�
   - Qualquer vulnerabilidade conhecida falha o job. Os jobs de Compose e o benchmark dependem dele e, nesse caso, não rodam.
   - Com `--strict`, um pacote que não pode ser auditado também falha o job.
   - Os marcadores de ambiente são avaliados como no contêiner (Linux, CPython 3.13).
-  - As dependências de desenvolvimento ficam de fora, como no `pnpm audit --prod`, porque não entram na imagem (`uv sync --frozen --no-dev` no Dockerfile).
-- **Frontend**: `pnpm audit --prod`, rodado localmente. Não encontrou vulnerabilidades conhecidas em 03/11/2026. Ainda não roda na CI.
+  - As dependências de desenvolvimento ficam de fora, como no frontend, porque não entram na imagem (`uv sync --frozen --no-dev` no Dockerfile).
+- **Frontend (`apps/web`), na CI**: o último passo do job do frontend roda `pnpm audit --prod`, com o pnpm 10.34.7 da CI e do Dockerfile. O comando lê o `pnpm-lock.yaml` (não precisa de `node_modules`) e consulta o registro do npm, cujos avisos são os do GitHub (GHSA).
+  - Audita `dependencies` e `optionalDependencies`: 136 pacotes em 04/11/2026. É o que vai para o bundle, e a imagem só leva o `dist` servido pelo Caddy. As de desenvolvimento (Vite, ESLint, Vitest…) rodam só no build e nos testes.
+  - Sem `--audit-level`, qualquer aviso, a partir de "low", sai com código 1 e falha o job. Os jobs de Compose e o benchmark dependem dele e, nesse caso, não rodam.
+  - Sem `--ignore-registry-errors`: se o registro responder com erro, o job também falha, em vez de passar sem auditar. Nesse caso, rodar a CI de novo.
+  - A documentação do pnpm não descreve o código de saída. Ele foi conferido no código da versão 10.34.7 (`lockfile/plugin-commands-audit/src/audit.ts`) e num projeto de controle (ver `PROGRESS.md`).
+- **`e2e/` fica de fora**: só tem `devDependencies` (Playwright, `@types/node`, TypeScript), então o `--prod` não teria o que auditar. Nada dele entra numa imagem: a suíte roda só na CI e na máquina de quem desenvolve, contra o Compose local. Em 04/11/2026, o `pnpm audit` completo em `e2e/` não encontrou vulnerabilidades conhecidas.
+- **Aviso conhecido nas dependências de desenvolvimento do frontend**: o `pnpm audit` sem `--prod` em `apps/web` (423 pacotes) acusa, em 04/11/2026, um aviso moderado, o GHSA-g3hv-75wg-m249 (CVE-2026-118764).
+  - É uma negação de serviço no `minimatch` 10.2.6, a partir de um padrão de glob montado para isso. Chega pelo ESLint 10.13.0, pelo `@eslint/config-array` e pelo `@typescript-eslint/typescript-estree`.
+  - Não é ignorado: o passo da CI não o vê porque audita só produção.
+  - Por que não afeta o produto: o ESLint só roda no lint, com padrões da configuração do próprio repositório, e não entra no bundle.
+  - Por que não foi corrigido: a correção só existe no `minimatch` 11.0.1, e o ESLint mais recente (10.14.0) ainda pede `^10.2.6`. Forçar a versão 11 com `overrides` trocaria a versão principal de uma dependência do ESLint.
+  - Quando rever: a cada atualização do ESLint ou do `typescript-eslint`.
 - **Quando aparecer uma vulnerabilidade**:
-  1. Atualizar o pacote no `uv.lock` (`uv lock --upgrade-package <pacote>`).
-  2. Rodar a suíte do backend (`uv run pytest --cov=app`).
-  3. Registrar a mudança no `PROGRESS.md`.
+  - Backend:
+    1. Atualizar o pacote no `uv.lock` (`uv lock --upgrade-package <pacote>`).
+    2. Rodar a suíte do backend (`uv run pytest --cov=app`).
+  - Frontend:
+    1. Atualizar o pacote no `apps/web/pnpm-lock.yaml` (`pnpm update <pacote>`). Para uma dependência indireta, `pnpm audit --fix` grava os `overrides` que forçam a versão corrigida.
+    2. Rodar `pnpm install`, depois `pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build`.
 
-  Ignorar um aviso (`--ignore-vuln <ID>` no passo da CI) só com a justificativa aqui: o ID, por que o código não é afetado e quando rever. Hoje nenhum aviso é ignorado.
-- **Resultado em 04/11/2026**: nenhuma vulnerabilidade conhecida nos 61 pacotes de produção, nas bases OSV e PyPI. O `uv.lock` não precisou mudar.
+  Nos dois casos, registrar a mudança no `PROGRESS.md`.
+
+  Ignorar um aviso só com a justificativa aqui: o ID, por que o código não é afetado e quando rever. Hoje nenhum aviso é ignorado.
+  - No backend, `--ignore-vuln <ID>` no passo da CI.
+  - No frontend, o GHSA em `pnpm.auditConfig.ignoreGhsas`, no `apps/web/package.json`. O resumo passa a mostrar "(1 ignored)".
+  - Nunca `pnpm audit --ignore <CVE>` no passo da CI: no pnpm 10.34.7, ele grava o CVE na configuração e sai com 0 sem mostrar o relatório.
+- **Resultado em 04/11/2026**: nenhuma vulnerabilidade conhecida nas dependências de produção. São 61 pacotes no backend, nas bases OSV e PyPI, e 136 no frontend. O `uv.lock` e o `pnpm-lock.yaml` não precisaram mudar.
 - **Para rodar localmente**:
 
   ```bash
   cd backend
   uv export --frozen --no-dev --no-emit-project --format requirements.txt --output-file /tmp/requirements-audit.txt
   uvx --python 3.13 pip-audit@2.10.1 -r /tmp/requirements-audit.txt --disable-pip --strict --vulnerability-service osv
+
+  cd ../apps/web
+  pnpm audit --prod
   ```
 
   No Windows, o marcador do `uvloop` (`sys_platform != 'win32'`) o tira da conta. Na CI, ele é auditado.
@@ -120,4 +142,4 @@ Conferidos e sem problema: isolamento por workspace em todas as rotas, CSRF em t
 - Verificação de e-mail no cadastro e MFA (roadmap). Até lá, o link do convite vale como prova de posse do e-mail (ADR-024).
 - Credenciais dedicadas: a API e o worker usam as credenciais raiz do MinIO e o usuário criado pelo contêiner do PostgreSQL (superusuário). O Caddy roda como root, só com `NET_BIND_SERVICE`.
 - Sistema de arquivos somente leitura nos contêineres (`read_only`) não foi aplicado: exige mapear cada diretório de escrita (cache, temporários, agenda do beat).
-- Auditoria das dependências do frontend na CI: `pnpm audit --prod` só roda localmente. As do backend são auditadas a cada pull request e push na `main` (ver "Dependências").
+- As dependências de desenvolvimento não são auditadas na CI, nem no backend nem no frontend; só as de produção (ver "Dependências"). Nas do frontend há hoje um aviso moderado, no `minimatch` usado pelo ESLint, ainda sem correção compatível.
